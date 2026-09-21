@@ -1,0 +1,10 @@
+"use client";
+import Link from "next/link";
+import { useOrderState } from "@/lib/order-store";
+import { CustomerDetails, OrderSummary } from "./order-summary";
+export function OrderReceipt({ token }: { token: string }) {
+  const { ready, order } = useOrderState();
+  if (!ready) return <div className="container page-section"><p role="status">Loading your local receipt...</p></div>;
+  if (!order || order.trackingToken !== token) return <div className="container page-section"><h1>Order preview unavailable</h1><p>This tab has no matching local receipt. Only the latest mock order is kept; nothing was saved to a server.</p><Link href="/cart" className="button secondary">Return to cart</Link></div>;
+  return <div className="container page-section checkout-page"><div className="receipt-heading"><p className="eyebrow">TRAIT order preview</p><h1>Order received</h1><p className="receipt-number">{order.number} <span>&middot; Mock order</span></p><p>Thank you, {order.customer.name}. Your selection is ready to preview.</p></div><p className="order-preview-note">This is a local simulation, saved only in this browser tab when storage is available. No order was sent to a server or store. No payment was collected.</p><div className="checkout-layout"><section className="order-panel"><h2>What happens next?</h2><p>In the live service, TRAIT would confirm availability and {order.customer.deliveryMethod === "delivery" ? "delivery arrangements" : "pickup details"} before preparing your selection.</p><p>For this preview, tracking stays at &ldquo;Order received&rdquo;. You can explore sample statuses on the tracking page. Final payment handling will be connected later.</p><CustomerDetails customer={order.customer} /><div className="order-actions"><Link href={"/track-order/" + order.trackingToken} className="button primary">Track Order</Link><Link href="/search" className="button secondary">Continue shopping</Link></div></section><OrderSummary items={order.items} totals={order.totals} /></div></div>;
+}

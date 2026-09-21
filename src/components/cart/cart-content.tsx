@@ -23,7 +23,7 @@ export function CartContent() {
   return <div className="container page-section cart-page">
           <p className="eyebrow">Your choices, your way</p>
           <div className="cart-title"><h1 ref={heading} tabIndex={-1}>Your cart <span>({items.length})</span></h1><Link href="/search" className="button secondary">Continue shopping</Link></div>
-          <p className="page-intro">A preview of your selection. No order has been placed. Checkout is not available yet.</p>
+          <p className="page-intro">A preview of your selection. Continue to checkout to try a local mock order.</p>
           <p className="cart-notice">Prices are based on raw weight. Cleaning estimates are approximate, not guaranteed delivered weights. Cart choices are kept in this browser tab when storage is available.</p>
           <p role="status" className="cart-status">{message}</p>
           {error && <p role="alert" className="cart-error">{error}</p>}
@@ -149,7 +149,7 @@ export function CartContent() {
 );
       })}
       {confirmClear ? <div className="clear-confirm" role="group" aria-label="Confirm clearing cart"><p>Remove all items from your cart?</p><button type="button" className="button secondary" onClick={() => setConfirmClear(false)}>Keep items</button><button type="button" className="button primary" onClick={() => { clearCart(); setConfirmClear(false); setMessage("Cart cleared."); heading.current?.focus(); }}>Clear all items</button></div> : <button type="button" className="plain-button clear-cart" onClick={() => setConfirmClear(true)}>Clear cart</button>}
-    </div><aside className="cart-summary" aria-labelledby="summary-title"><h2 id="summary-title">Your selection</h2><p>{items.length} {items.length === 1 ? "item" : "items"} <span aria-hidden="true">&middot;</span> {formatWeight(items.reduce((sum, item) => sum + item.rawWeightGrams, 0))} raw weight</p><div className="subtotal"><span>Subtotal</span><strong aria-live="polite" data-subtotal>{formatMoney(cartSubtotalPaise(items))}</strong></div><p>Calculated from raw weight, before cleaning. Prices are from our sample catalogue.</p><p className="checkout-note">Checkout is coming later. No payment or order will be taken.</p></aside></div>}
+    </div><aside className="cart-summary" aria-labelledby="summary-title"><h2 id="summary-title">Your selection</h2><p>{items.length} {items.length === 1 ? "item" : "items"} <span aria-hidden="true">&middot;</span> {formatWeight(items.reduce((sum, item) => sum + item.rawWeightGrams, 0))} raw weight</p><div className="subtotal"><span>Subtotal</span><strong aria-live="polite" data-subtotal>{formatMoney(cartSubtotalPaise(items))}</strong></div><p>Calculated from raw weight, before cleaning. Prices are from our sample catalogue.</p><Link href="/checkout" className="button primary cart-checkout">Proceed to Checkout</Link><p className="checkout-note">Local preview only. No real order or payment will be taken.</p></aside></div>}
     {editing && editingProduct && <ProductSelection key={editing.id} product={editingProduct} item={editing} onClose={() => setEditingId(null)} onSaved={() => { setError(""); setMessage(editing.productName + " selection updated."); }} />}
   </div>;
 }

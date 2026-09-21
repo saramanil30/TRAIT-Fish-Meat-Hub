@@ -8,6 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
+    "test": "node --test tests/cart.test.mjs tests/order.test.mjs",
+    "test:checkout-browser": "node tests/checkout-browser.mjs",
     "test:cart": "node --test tests/cart.test.mjs",
     "test:cart-browser": "node tests/cart-browser.mjs"
   },
