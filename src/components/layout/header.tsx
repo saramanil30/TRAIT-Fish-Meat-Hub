@@ -1,3 +1,4 @@
+import { CartLink } from "@/components/cart/cart-link";
 import Image from "next/image";
 import Link from "next/link";
 import { Icon } from "@/components/ui/icon";
@@ -14,7 +15,7 @@ export function Header() {
         <div className="header-search"><SearchForm id="header-search" /></div>
         <nav aria-label="Customer navigation" className="header-actions">
           <Link href="/track-order" className="track-link" aria-label="Track Order"><Icon name="orders" /><span>Track Order</span></Link>
-          <Link href="/cart" aria-label="Cart, 0 items" className="cart-link"><Icon name="bag" /><span>Cart</span><span className="count">0</span></Link>
+          <CartLink />
         </nav>
       </div>
       <nav className="category-nav container" aria-label="Shop categories">

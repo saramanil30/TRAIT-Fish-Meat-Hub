@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "next typegen && tsc --noEmit"
+    "typecheck": "next typegen && tsc --noEmit",
+    "test:cart": "node --test tests/cart.test.mjs",
+    "test:cart-browser": "node tests/cart-browser.mjs"
   },
   "dependencies": {
     "next": "16.3.5",
