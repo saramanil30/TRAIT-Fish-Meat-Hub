@@ -1,0 +1,3 @@
+import Link from "next/link";
+import { SearchForm } from "@/components/ui/search-form";
+export function Discovery() { return <section className="container section"><div className="discovery"><div><p className="eyebrow">Made for your next meal</p><h2>What’s cooking today?</h2><p className="muted">Find a favourite by name, local name or cut.</p></div><div className="discovery-search"><SearchForm id="discovery-search"/><div className="suggestions"><span>Try:</span>{["Vanjaram", "Prawns", "Curry cut"].map(term => <Link key={term} href={"/search?q=" + encodeURIComponent(term)}>{term}</Link>)}</div></div></div></section>; }
