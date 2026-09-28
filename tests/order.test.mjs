@@ -13,16 +13,17 @@ const { products } = await import(moduleUrl('../src/data/catalog.ts'));
 const { createCartItem } = await import(moduleUrl('../src/lib/cart.ts'));
 const { validateCheckout, normalizeMobile, orderTotals, createMockOrder, trackingSteps, statusLabel, EMPTY_CHECKOUT } = await import(moduleUrl('../src/lib/order.ts'));
 const item = createCartItem(products.find(p => p.id === 'seer'), { preparationId: 'cleaned', rawWeightGrams: 1000, specialInstructions: 'Small pieces' }, 'fish');
-const details = { ...EMPTY_CHECKOUT, name: ' Test Customer ', mobile: '+91 98765 43210', address: '12 Sample Road', locality: 'Sample Area', pincode: '600001' };
+const details = { ...EMPTY_CHECKOUT, name: ' Test Customer ', mobile: '+91 98765 43210', address: '12 Sample Road', locality: 'Sample Area', pincode: '600001', city: 'Test City', state: 'Test State' };
 const identity = { number: 'TFM-000125', trackingToken: '2cac9340-67cd-423c-bc94-36b8dbad02c1', placedAt: '2026-09-22T00:00:00.000Z' };
 
 test('home delivery requires customer and delivery details', () => {
-  assert.deepEqual(Object.keys(validateCheckout(EMPTY_CHECKOUT)), ['name', 'mobile', 'address', 'locality', 'pincode']);
+  assert.deepEqual(Object.keys(validateCheckout(EMPTY_CHECKOUT)), ['name', 'mobile', 'address', 'locality', 'city', 'state', 'pincode']);
   assert.deepEqual(validateCheckout(details), {});
 });
-test('pickup only requires name and mobile; hidden delivery details are excluded from the receipt', () => {
+test('pickup requires mobile and accepts an optional name; hidden delivery details are excluded from the receipt', () => {
   const pickup = { ...EMPTY_CHECKOUT, name: 'Test Customer', mobile: '9876543210', deliveryMethod: 'pickup' };
   assert.deepEqual(validateCheckout(pickup), {});
+  assert.deepEqual(validateCheckout({...pickup,name:""}), {});
   const order = createMockOrder([item], { ...details, deliveryMethod: 'pickup' }, identity);
   for (const field of ['address', 'locality', 'landmark', 'pincode']) assert.equal(order.customer[field], '');
   assert.equal(order.totals.deliveryChargePaise, 0);

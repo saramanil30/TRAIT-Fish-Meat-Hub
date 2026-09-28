@@ -1,9 +1,10 @@
-export type CategorySlug = "fish" | "seafood" | "chicken" | "mutton";
-export type PreparationId = "whole" | "cleaned" | "curry-cut" | "fry-cut" | "boneless" | "skinless";
+export type CategorySlug = string;
+export type PreparationId = string;
 export interface PreparationOption {
   id: PreparationId;
   label: string;
   removesCleaningWaste: boolean;
+  cleaningLossPercent?: number;
 }
 export interface Category {
   slug: CategorySlug;

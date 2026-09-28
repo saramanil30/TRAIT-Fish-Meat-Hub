@@ -17,11 +17,13 @@ export function validateCheckout(details: CheckoutDetails): CheckoutErrors {
   const errors: CheckoutErrors = {};
   if (!["delivery", "pickup"].includes(details.deliveryMethod)) errors.deliveryMethod = "Choose a delivery method.";
   if (!["cash", "upi"].includes(details.paymentMethod)) errors.paymentMethod = "Choose a payment method.";
-  if (details.name.trim().length < 2 || details.name.trim().length > 80) errors.name = "Enter your name (2-80 characters).";
+  if ((details.deliveryMethod === "delivery" || details.name.trim()) && (details.name.trim().length < 2 || details.name.trim().length > 80)) errors.name = "Enter your name (2-80 characters).";
   if (!/^[6-9]\d{9}$/.test(normalizeMobile(details.mobile))) errors.mobile = "Enter a valid 10-digit Indian mobile number, optionally with +91.";
   if (details.deliveryMethod === "delivery") {
     if (details.address.trim().length < 5 || details.address.trim().length > 300) errors.address = "Enter your delivery address (5-300 characters).";
     if (details.locality.trim().length < 2 || details.locality.trim().length > 100) errors.locality = "Enter your area / locality (2-100 characters).";
+    if (!(details.city??"").trim() || (details.city??"").trim().length>120) errors.city="Enter your city (1-120 characters).";
+    if (!(details.state??"").trim() || (details.state??"").trim().length>120) errors.state="Enter your state (1-120 characters).";
     if (details.landmark.trim().length > 150) errors.landmark = "Keep the landmark within 150 characters.";
     if (!/^[1-9]\d{5}$/.test(details.pincode.trim())) errors.pincode = "Enter a valid 6-digit Indian pincode.";
   }

@@ -1,7 +1,8 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { products } from "@/data/catalog";
+import type { Product } from "@/types/catalog";
+let products: readonly Product[] = [];
 import type { CartItem, ProductSelection } from "@/types/cart";
 import { cartReducer, createCartItem, restoreCart, serializeCart, type CartAction } from "@/lib/cart";
 
@@ -11,10 +12,10 @@ let items = EMPTY;
 let hydrated = false;
 const listeners = new Set<() => void>();
 
-function hydrate() {
+async function hydrate() {
   if (hydrated || typeof window === "undefined") return;
   hydrated = true;
-  try { items = restoreCart(window.sessionStorage.getItem(STORAGE_KEY), products); }
+  try { const response = await fetch("/api/catalogue", {cache:"no-store"}); if (!response.ok) throw new Error("Catalogue unavailable"); products = await response.json(); items = restoreCart(window.sessionStorage.getItem(STORAGE_KEY), products); }
   catch { items = EMPTY; } // Storage may be blocked; the in-memory cart still works.
   listeners.forEach(listener => listener());
 }
@@ -49,3 +50,5 @@ export function clearCart() { dispatch({ type: "clear" }); }
 function getSnapshot() { return items; }
 function getServerSnapshot() { return EMPTY; }
 export function useCart() { return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot); }
+
+export function useCatalogue() { useCart(); return products; }

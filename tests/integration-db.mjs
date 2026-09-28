@@ -1,0 +1,43 @@
+import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
+import {PGlite} from "../node_modules/.staff-validation/node_modules/@electric-sql/pglite/dist/index.js";
+const db=new PGlite();
+await db.exec("CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role BYPASSRLS; CREATE SCHEMA auth; CREATE TABLE auth.users(id uuid PRIMARY KEY); CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$ SELECT nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;");
+for(const name of ["20260923041240_phase_5b_1_foundation","20260926000000_staff_access","20260926120000_phase_5b_2_catalogue","20260926140000_phase_5b_3_customers_delivery","20260926200000_core_orders_payments_audit","20260927000000_application_integration"]) await db.exec(readFileSync(new URL("../supabase/migrations/"+name+".sql",import.meta.url),"utf8"));
+const id=n=>"00000000-0000-4000-8000-"+String(n).padStart(12,"0");
+await db.query("INSERT INTO app.businesses(id,slug,display_name) VALUES($1,'test','Test')",[id(1)]);
+await db.query("INSERT INTO app.stores(id,business_id,code,name,address_line1,city,state) VALUES($1,$2,'test','Test','Street','City','State')",[id(2),id(1)]);
+for(const [n,role] of [[3,"OWNER"],[4,"OWNER"],[5,"EMPLOYEE"]]){
+ await db.query("INSERT INTO auth.users(id) VALUES($1)",[id(n)]);
+ await db.query("INSERT INTO app.staff_profiles(id,business_id,auth_user_id,display_name,role) VALUES($1,$2,$1,'Test',$3)",[id(n),id(1),role]);
+}
+await db.query("INSERT INTO app.staff_admin_grants(staff_profile_id) VALUES($1)",[id(3)]);
+async function as(n,sql,args=[]){await db.exec("SET ROLE authenticated");await db.query("SELECT set_config('request.jwt.claim.sub',$1,false)",[id(n)]);try{return await db.query(sql,args);}finally{await db.exec("RESET ROLE");}}
+await as(4,"SELECT api.save_business_policy(0,30,NULL,false,20,100000)");
+await assert.rejects(()=>as(4,"SELECT api.save_business_policy(0,30,NULL,false,20,100000)"),e=>e.code==="40001");
+await assert.rejects(()=>as(5,"SELECT api.business_policy()"),e=>e.code==="42501");
+await assert.rejects(()=>as(5,"SELECT api.integration_report($1,now()-interval '1 day',now())",[id(2)]),e=>e.code==="42501");
+await as(4,"SELECT api.integration_report($1,now()-interval '1 day',now())",[id(2)]);
+await assert.rejects(()=>as(4,"SELECT api.provision_staff($1,'Denied','OWNER',$2)",[id(7),id(2)]),e=>e.code==="42501");
+await db.query("INSERT INTO auth.users(id) VALUES($1),($2)",[id(7),id(8)]);
+await as(4,"SELECT api.provision_staff($1,'Employee','EMPLOYEE',$2)",[id(7),id(2)]);
+await as(3,"SELECT api.provision_staff($1,'Owner','OWNER',$2)",[id(8),id(2)]);
+await assert.rejects(()=>as(3,"SELECT api.provision_staff($1,'No elevation','ADMIN',$2)",[id(8),id(2)]),e=>e.code==="42501");
+assert.equal((await db.query("SELECT count(*)::integer n FROM app.audit_logs")).rows[0].n,3);
+console.log("PASS integration migration: ADMIN/OWNER/EMPLOYEE authorization, stale policy, provisioning, reports and audit");
+await db.exec(readFileSync(new URL("../supabase/migrations/20260927010000_staff_reporting_integration.sql",import.meta.url),"utf8"));
+await assert.rejects(()=>as(5,"SELECT api.staff_directory()"),e=>e.code==="42501");
+const directory=(await as(4,"SELECT api.staff_directory() AS result")).rows[0].result;
+assert.ok(directory.every(s=>s.role==="EMPLOYEE"));
+const employee=directory.find(s=>s.authUserId===id(7));
+await as(4,"SELECT api.save_staff_profile($1,1,'Updated',$2,true)",[employee.id,[id(2)]]);
+await assert.rejects(()=>as(4,"SELECT api.save_staff_profile($1,1,'Stale',$2,true)",[employee.id,[id(2)]]),e=>e.code==="40001");
+await assert.rejects(()=>as(4,"SELECT api.save_staff_profile($1,1,'Denied',$2,true)",[id(3),[id(2)]]),e=>e.code==="42501");
+await assert.rejects(()=>as(3,"SELECT api.save_staff_profile($1,1,'Owner',$2,false)",[id(4),[id(2)]]),e=>e.code==="23514");
+await assert.rejects(()=>as(5,"SELECT api.operations_report($1,now()-interval '1 day',now())",[id(2)]),e=>e.code==="42501");
+const report=(await as(4,"SELECT api.operations_report($1,now()-interval '1 day',now()) AS result",[id(2)])).rows[0].result;
+assert.equal(report.intake.count,0);
+assert.equal(report.fulfillment.fulfilledPaise,0);
+assert.deepEqual(report.collections,[]);
+console.log("PASS staff directory scope, versioned edits, owner guard and operations reporting");
+await db.close();

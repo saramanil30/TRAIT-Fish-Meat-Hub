@@ -24,7 +24,7 @@ export function estimateCleanedWeightGrams(rawWeightGrams: number, lossPercent?:
 }
 
 export function applicableCleaningLoss(product: Product, preparation: PreparationOption): number | undefined {
-  return preparation.removesCleaningWaste ? product.cleaningLossPercent : undefined;
+  return preparation.cleaningLossPercent ?? (preparation.removesCleaningWaste ? product.cleaningLossPercent : undefined);
 }
 
 export function createCartItem(product: Product, selection: ProductSelection, id: string): CartItem {
@@ -56,7 +56,7 @@ function isSameSelection(a: CartItem, b: CartItem): boolean {
     a.productId === b.productId &&
     a.preparationId === b.preparationId &&
     a.rawWeightGrams === b.rawWeightGrams &&
-    a.specialInstructions.trim() === b.specialInstructions.trim()
+    a.specialInstructions.normalize("NFC").trim() === b.specialInstructions.normalize("NFC").trim()
   );
 }
 export type CartAction =

@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local design imports and task instructions
+/stitch_trait_meat_hub_storefront*.zip
+/reference/
+/Readprompt.txt

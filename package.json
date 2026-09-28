@@ -8,15 +8,25 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
-    "test": "node --test tests/cart.test.mjs tests/order.test.mjs",
+    "test": "node --test tests/cart.test.mjs tests/order.test.mjs tests/admin-access.test.mjs tests/checkout-integration.test.mjs",
     "test:checkout-browser": "node tests/checkout-browser.mjs",
     "test:cart": "node --test tests/cart.test.mjs",
-    "test:cart-browser": "node tests/cart-browser.mjs"
+    "test:cart-browser": "node tests/cart-browser.mjs",
+    "test:stitch-browser": "node tests/stitch-browser.mjs",
+    "test:admin-browser": "node tests/admin-browser.mjs",
+    "test:staff-db": "node supabase/validation/check-staff-access.mjs",
+    "test:integration-db": "node tests/integration-db.mjs",
+    "test:reporting-db": "node supabase/validation/check-reporting.mjs",
+    "test:catalogue-db": "node supabase/validation/check-phase-5b-2.mjs",
+    "test:final-db": "node supabase/validation/check-final-integration.mjs",
+    "check:environment": "node scripts/check-environment.mjs"
   },
   "dependencies": {
     "next": "16.3.5",
+    "postgres": "^3.4.9",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "server-only": "^0.0.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

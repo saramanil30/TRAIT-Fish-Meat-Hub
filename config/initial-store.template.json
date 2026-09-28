@@ -1,0 +1,32 @@
+{
+  "business": {
+    "slug": "",
+    "displayName": "",
+    "legalName": null
+  },
+  "store": {
+    "code": "",
+    "name": "",
+    "addressLine1": "",
+    "addressLine2": null,
+    "locality": null,
+    "city": "",
+    "state": "",
+    "pincode": "",
+    "contactMobile": "",
+    "timezone": "Asia/Kolkata",
+    "openingHours": {},
+    "deliveryEnabled": false,
+    "pickupEnabled": false
+  },
+  "policy": {
+    "historyDays": null,
+    "cashLimitPaise": null,
+    "requirePaymentBeforeCompletion": null,
+    "maxOrderItems": null,
+    "maxOrderTotalPaise": null
+  },
+  "catalogue": [],
+  "deliveryAreas": [],
+  "staff": []
+}

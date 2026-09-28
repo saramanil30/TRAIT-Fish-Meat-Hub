@@ -1,0 +1,3213 @@
+{
+  "tables": [
+    [
+      "business_settings",
+      true,
+      true,
+      "{postgres=arwdDxtm/postgres}",
+      "postgres"
+    ],
+    [
+      "businesses",
+      true,
+      true,
+      "{postgres=arwdDxtm/postgres}",
+      "postgres"
+    ],
+    [
+      "categories",
+      true,
+      true,
+      "{postgres=arwdDxtm/postgres}",
+      "postgres"
+    ],
+    [
+      "preparation_options",
+      true,
+      true,
+      "{postgres=arwdDxtm/postgres}",
+      "postgres"
+    ],
+    [
+      "product_allowed_weights",
+      true,
+      true,
+      "{postgres=arwdDxtm/postgres}",
+      "postgres"
+    ],
+    [
+      "product_images",
+      true,
+      true,
+      "{postgres=arwdDxtm/postgres}",
+      "postgres"
+    ],
+    [
+      "product_preparation_options",
+      true,
+      true,
+      "{postgres=arwdDxtm/postgres}",
+      "postgres"
+    ],
+    [
+      "product_prices",
+      true,
+      true,
+      "{postgres=arwdDxtm/postgres}",
+      "postgres"
+    ],
+    [
+      "product_store_settings",
+      true,
+      true,
+      "{postgres=arwdDxtm/postgres}",
+      "postgres"
+    ],
+    [
+      "products",
+      true,
+      true,
+      "{postgres=arwdDxtm/postgres}",
+      "postgres"
+    ],
+    [
+      "staff_access_audit",
+      true,
+      true,
+      "{postgres=arwdDxtm/postgres}",
+      "postgres"
+    ],
+    [
+      "staff_admin_grants",
+      true,
+      true,
+      "{postgres=arwdDxtm/postgres}",
+      "postgres"
+    ],
+    [
+      "staff_profiles",
+      true,
+      true,
+      "{postgres=arwdDxtm/postgres}",
+      "postgres"
+    ],
+    [
+      "staff_store_assignments",
+      true,
+      true,
+      "{postgres=arwdDxtm/postgres}",
+      "postgres"
+    ],
+    [
+      "stores",
+      true,
+      true,
+      "{postgres=arwdDxtm/postgres}",
+      "postgres"
+    ]
+  ],
+  "columns": [
+    [
+      "app",
+      "business_settings",
+      "id",
+      "uuid",
+      true,
+      "gen_random_uuid()"
+    ],
+    [
+      "app",
+      "business_settings",
+      "business_id",
+      "uuid",
+      true,
+      null
+    ],
+    [
+      "app",
+      "business_settings",
+      "employee_operational_history_days",
+      "integer",
+      true,
+      null
+    ],
+    [
+      "app",
+      "business_settings",
+      "employee_cash_collection_limit_paise",
+      "bigint",
+      false,
+      null
+    ],
+    [
+      "app",
+      "business_settings",
+      "require_payment_before_completion",
+      "boolean",
+      true,
+      null
+    ],
+    [
+      "app",
+      "business_settings",
+      "max_order_items",
+      "integer",
+      true,
+      null
+    ],
+    [
+      "app",
+      "business_settings",
+      "max_order_total_paise",
+      "bigint",
+      true,
+      null
+    ],
+    [
+      "app",
+      "business_settings",
+      "revision",
+      "bigint",
+      true,
+      "1"
+    ],
+    [
+      "app",
+      "business_settings",
+      "created_at",
+      "timestamp with time zone",
+      true,
+      "statement_timestamp()"
+    ],
+    [
+      "app",
+      "business_settings",
+      "updated_at",
+      "timestamp with time zone",
+      true,
+      "statement_timestamp()"
+    ],
+    [
+      "app",
+      "businesses",
+      "id",
+      "uuid",
+      true,
+      "gen_random_uuid()"
+    ],
+    [
+      "app",
+      "businesses",
+      "slug",
+      "text",
+      true,
+      null
+    ],
+    [
+      "app",
+      "businesses",
+      "display_name",
+      "text",
+      true,
+      null
+    ],
+    [
+      "app",
+      "businesses",
+      "legal_name",
+      "text",
+      false,
+      null
+    ],
+    [
+      "app",
+      "businesses",
+      "currency",
+      "text",
+      true,
+      "'INR'::text"
+    ],
+    [
+      "app",
+      "businesses",
+      "is_active",
+      "boolean",
+      true,
+      "true"
+    ],
+    [
+      "app",
+      "businesses",
+      "deleted_at",
+      "timestamp with time zone",
+      false,
+      null
+    ],
+    [
+      "app",
+      "businesses",
+      "created_at",
+      "timestamp with time zone",
+      true,
+      "statement_timestamp()"
+    ],
+    [
+      "app",
+      "businesses",
+      "updated_at",
+      "timestamp with time zone",
+      true,
+      "statement_timestamp()"
+    ],
+    [
+      "app",
+      "categories",
+      "id",
+      "uuid",
+      true,
+      "gen_random_uuid()"
+    ],
+    [
+      "app",
+      "categories",
+      "business_id",
+      "uuid",
+      true,
+      null
+    ],
+    [
+      "app",
+      "categories",
+      "name",
+      "text",
+      true,
+      null
+    ],
+    [
+      "app",
+      "categories",
+      "parent_id",
+      "uuid",
+      false,
+      null
+    ],
+    [
+      "app",
+      "categories",
+      "sort_order",
+      "integer",
+      true,
+      "0"
+    ],
+    [
+      "app",
+      "categories",
+      "is_active",
+      "boolean",
+      true,
+      "true"
+    ],
+    [
+      "app",
+      "categories",
+      "created_at",
+      "timestamp with time zone",
+      true,
+      "statement_timestamp()"
+    ],
+    [
+      "app",
+      "categories",
+      "updated_at",
+      "timestamp with time zone",
+      true,
+      "statement_timestamp()"
+    ],
+    [
+      "app",
+      "preparation_options",
+      "id",
+      "uuid",
+      true,
+      "gen_random_uuid()"
+    ],
+    [
+      "app",
+      "preparation_options",
+      "business_id",
+      "uuid",
+      true,
+      null
+    ],
+    [
+      "app",
+      "preparation_options",
+      "name",
+      "text",
+      true,
+      null
+    ],
+    [
+      "app",
+      "preparation_options",
+      "is_active",
+      "boolean",
+      true,
+      "true"
+    ],
+    [
+      "app",
+      "preparation_options",
+      "sort_order",
+      "integer",
+      true,
+      "0"
+    ],
+    [
+      "app",
+      "preparation_options",
+      "created_at",
+      "timestamp with time zone",
+      true,
+      "statement_timestamp()"
+    ],
+    [
+      "app",
+      "preparation_options",
+      "updated_at",
+      "timestamp with time zone",
+      true,
+      "statement_timestamp()"
+    ],
+    [
+      "app",
+      "product_allowed_weights",
+      "id",
+      "uuid",
+      true,
+      "gen_random_uuid()"
+    ],
+    [
+      "app",
+      "product_allowed_weights",
+      "business_id",
+      "uuid",
+      true,
+      null
+    ],
+    [
+      "app",
+      "product_allowed_weights",
+      "product_id",
+      "uuid",
+      true,
+      null
+    ],
+    [
+      "app",
+      "product_allowed_weights",
+      "raw_weight_grams",
+      "integer",
+      true,
+      null
+    ],
+    [
+      "app",
+      "product_allowed_weights",
+      "is_active",
+      "boolean",
+      true,
+      "true"
+    ],
+    [
+      "app",
+      "product_allowed_weights",
+      "sort_order",
+      "integer",
+      true,
+      "0"
+    ],
+    [
+      "app",
+      "product_allowed_weights",
+      "created_at",
+      "timestamp with time zone",
+      true,
+      "statement_timestamp()"
+    ],
+    [
+      "app",
+      "product_allowed_weights",
+      "updated_at",
+      "timestamp with time zone",
+      true,
+      "statement_timestamp()"
+    ],
+    [
+      "app",
+      "product_images",
+      "id",
+      "uuid",
+      true,
+      "gen_random_uuid()"
+    ],
+    [
+      "app",
+      "product_images",
+      "business_id",
+      "uuid",
+      true,
+      null
+    ],
+    [
+      "app",
+      "product_images",
+      "product_id",
+      "uuid",
+      true,
+      null
+    ],
+    [
+      "app",
+      "product_images",
+      "asset_path",
+      "text",
+      false,
+      null
+    ],
+    [
+      "app",
+      "product_images",
+      "storage_bucket",
+      "text",
+      false,
+      null
+    ],
+    [
+      "app",
+      "product_images",
+      "storage_object_path",
+      "text",
+      false,
+      null
+    ],
+    [
+      "app",
+      "product_images",
+      "alt_text",
+      "text",
+      true,
+      "''::text"
+    ],
+    [
+      "app",
+      "product_images",
+      "is_primary",
+      "boolean",
+      true,
+      "false"
+    ],
+    [
+      "app",
+      "product_images",
+      "is_active",
+      "boolean",
+      true,
+      "true"
+    ],
+    [
+      "app",
+      "product_images",
+      "sort_order",
+      "integer",
+      true,
+      "0"
+    ],
+    [
+      "app",
+      "product_images",
+      "legacy",
+      "boolean",
+      true,
+      "false"
+    ],
+    [
+      "app",
+      "product_images",
+      "created_at",
+      "timestamp with time zone",
+      true,
+      "statement_timestamp()"
+    ],
+    [
+      "app",
+      "product_images",
+      "updated_at",
+      "timestamp with time zone",
+      true,
+      "statement_timestamp()"
+    ],
+    [
+      "app",
+      "product_preparation_options",
+      "id",
+      "uuid",
+      true,
+      "gen_random_uuid()"
+    ],
+    [
+      "app",
+      "product_preparation_options",
+      "business_id",
+      "uuid",
+      true,
+      null
+    ],
+    [
+      "app",
+      "product_preparation_options",
+      "product_id",
+      "uuid",
+      true,
+      null
+    ],
+    [
+      "app",
+      "product_preparation_options",
+      "preparation_option_id",
+      "uuid",
+      true,
+      null
+    ],
+    [
+      "app",
+      "product_preparation_options",
+      "cleaning_loss_percent",
+      "numeric",
+      false,
+      null
+    ],
+    [
+      "app",
+      "product_preparation_options",
+      "is_active",
+      "boolean",
+      true,
+      "true"
+    ],
+    [
+      "app",
+      "product_preparation_options",
+      "sort_order",
+      "integer",
+      true,
+      "0"
+    ],
+    [
+      "app",
+      "product_preparation_options",
+      "created_at",
+      "timestamp with time zone",
+      true,
+      "statement_timestamp()"
+    ],
+    [
+      "app",
+      "product_preparation_options",
+      "updated_at",
+      "timestamp with time zone",
+      true,
+      "statement_timestamp()"
+    ],
+    [
+      "app",
+      "product_prices",
+      "id",
+      "uuid",
+      true,
+      "gen_random_uuid()"
+    ],
+    [
+      "app",
+      "product_prices",
+      "business_id",
+      "uuid",
+      true,
+      null
+    ],
+    [
+      "app",
+      "product_prices",
+      "offering_id",
+      "uuid",
+      true,
+      null
+    ],
+    [
+      "app",
+      "product_prices",
+      "price_per_kg_paise",
+      "bigint",
+      true,
+      null
+    ],
+    [
+      "app",
+      "product_prices",
+      "offering_version",
+      "integer",
+      true,
+      null
+    ],
+    [
+      "app",
+      "product_prices",
+      "effective_from",
+      "timestamp with time zone",
+      true,
+      "clock_timestamp()"
+    ],
+    [
+      "app",
+      "product_prices",
+      "created_by",
+      "uuid",
+      true,
+      null
+    ],
+    [
+      "app",
+      "product_store_settings",
+      "id",
+      "uuid",
+      true,
+      "gen_random_uuid()"
+    ],
+    [
+      "app",
+      "product_store_settings",
+      "business_id",
+      "uuid",
+      true,
+      null
+    ],
+    [
+      "app",
+      "product_store_settings",
+      "store_id",
+      "uuid",
+      true,
+      null
+    ],
+    [
+      "app",
+      "product_store_settings",
+      "product_id",
+      "uuid",
+      true,
+      null
+    ],
+    [
+      "app",
+      "product_store_settings",
+      "available",
+      "boolean",
+      true,
+      "false"
+    ],
+    [
+      "app",
+      "product_store_settings",
+      "version",
+      "integer",
+      true,
+      "1"
+    ],
+    [
+      "app",
+      "product_store_settings",
+      "updated_at",
+      "timestamp with time zone",
+      true,
+      "statement_timestamp()"
+    ],
+    [
+      "app",
+      "product_store_settings",
+      "is_active",
+      "boolean",
+      true,
+      "true"
+    ],
+    [
+      "app",
+      "product_store_settings",
+      "featured_override",
+      "boolean",
+      false,
+      null
+    ],
+    [
+      "app",
+      "product_store_settings",
+      "sort_override",
+      "integer",
+      false,
+      null
+    ],
+    [
+      "app",
+      "products",
+      "id",
+      "uuid",
+      true,
+      "gen_random_uuid()"
+    ],
+    [
+      "app",
+      "products",
+      "business_id",
+      "uuid",
+      true,
+      null
+    ],
+    [
+      "app",
+      "products",
+      "category_id",
+      "uuid",
+      true,
+      null
+    ],
+    [
+      "app",
+      "products",
+      "name",
+      "text",
+      true,
+      null
+    ],
+    [
+      "app",
+      "products",
+      "local_name",
+      "text",
+      true,
+      "''::text"
+    ],
+    [
+      "app",
+      "products",
+      "description",
+      "text",
+      true,
+      "''::text"
+    ],
+    [
+      "app",
+      "products",
+      "image_path",
+      "text",
+      true,
+      "''::text"
+    ],
+    [
+      "app",
+      "products",
+      "allowed_weights",
+      "jsonb",
+      true,
+      "'[500, 1000, 1500, 2000]'::jsonb"
+    ],
+    [
+      "app",
+      "products",
+      "preparations",
+      "jsonb",
+      true,
+      "'[{\"name\": \"Whole\"}]'::jsonb"
+    ],
+    [
+      "app",
+      "products",
+      "is_active",
+      "boolean",
+      true,
+      "true"
+    ],
+    [
+      "app",
+      "products",
+      "featured",
+      "boolean",
+      true,
+      "false"
+    ],
+    [
+      "app",
+      "products",
+      "sort_order",
+      "integer",
+      true,
+      "0"
+    ],
+    [
+      "app",
+      "products",
+      "created_at",
+      "timestamp with time zone",
+      true,
+      "statement_timestamp()"
+    ],
+    [
+      "app",
+      "products",
+      "updated_at",
+      "timestamp with time zone",
+      true,
+      "statement_timestamp()"
+    ],
+    [
+      "app",
+      "staff_access_audit",
+      "id",
+      "uuid",
+      true,
+      "gen_random_uuid()"
+    ],
+    [
+      "app",
+      "staff_access_audit",
+      "business_id",
+      "uuid",
+      true,
+      null
+    ],
+    [
+      "app",
+      "staff_access_audit",
+      "actor_id",
+      "uuid",
+      true,
+      null
+    ],
+    [
+      "app",
+      "staff_access_audit",
+      "action",
+      "text",
+      true,
+      null
+    ],
+    [
+      "app",
+      "staff_access_audit",
+      "target_id",
+      "uuid",
+      true,
+      null
+    ],
+    [
+      "app",
+      "staff_access_audit",
+      "detail",
+      "jsonb",
+      true,
+      null
+    ],
+    [
+      "app",
+      "staff_access_audit",
+      "created_at",
+      "timestamp with time zone",
+      true,
+      "clock_timestamp()"
+    ],
+    [
+      "app",
+      "staff_admin_grants",
+      "staff_profile_id",
+      "uuid",
+      true,
+      null
+    ],
+    [
+      "app",
+      "staff_admin_grants",
+      "is_active",
+      "boolean",
+      true,
+      "true"
+    ],
+    [
+      "app",
+      "staff_admin_grants",
+      "created_at",
+      "timestamp with time zone",
+      true,
+      "statement_timestamp()"
+    ],
+    [
+      "app",
+      "staff_profiles",
+      "id",
+      "uuid",
+      true,
+      "gen_random_uuid()"
+    ],
+    [
+      "app",
+      "staff_profiles",
+      "business_id",
+      "uuid",
+      true,
+      null
+    ],
+    [
+      "app",
+      "staff_profiles",
+      "auth_user_id",
+      "uuid",
+      false,
+      null
+    ],
+    [
+      "app",
+      "staff_profiles",
+      "display_name",
+      "text",
+      true,
+      null
+    ],
+    [
+      "app",
+      "staff_profiles",
+      "role",
+      "text",
+      true,
+      null
+    ],
+    [
+      "app",
+      "staff_profiles",
+      "is_active",
+      "boolean",
+      true,
+      "true"
+    ],
+    [
+      "app",
+      "staff_profiles",
+      "disabled_at",
+      "timestamp with time zone",
+      false,
+      null
+    ],
+    [
+      "app",
+      "staff_profiles",
+      "disabled_by",
+      "uuid",
+      false,
+      null
+    ],
+    [
+      "app",
+      "staff_profiles",
+      "created_at",
+      "timestamp with time zone",
+      true,
+      "statement_timestamp()"
+    ],
+    [
+      "app",
+      "staff_profiles",
+      "updated_at",
+      "timestamp with time zone",
+      true,
+      "statement_timestamp()"
+    ],
+    [
+      "app",
+      "staff_store_assignments",
+      "id",
+      "uuid",
+      true,
+      "gen_random_uuid()"
+    ],
+    [
+      "app",
+      "staff_store_assignments",
+      "business_id",
+      "uuid",
+      true,
+      null
+    ],
+    [
+      "app",
+      "staff_store_assignments",
+      "store_id",
+      "uuid",
+      true,
+      null
+    ],
+    [
+      "app",
+      "staff_store_assignments",
+      "staff_profile_id",
+      "uuid",
+      true,
+      null
+    ],
+    [
+      "app",
+      "staff_store_assignments",
+      "is_active",
+      "boolean",
+      true,
+      "true"
+    ],
+    [
+      "app",
+      "staff_store_assignments",
+      "created_at",
+      "timestamp with time zone",
+      true,
+      "statement_timestamp()"
+    ],
+    [
+      "app",
+      "staff_store_assignments",
+      "updated_at",
+      "timestamp with time zone",
+      true,
+      "statement_timestamp()"
+    ],
+    [
+      "app",
+      "stores",
+      "id",
+      "uuid",
+      true,
+      "gen_random_uuid()"
+    ],
+    [
+      "app",
+      "stores",
+      "business_id",
+      "uuid",
+      true,
+      null
+    ],
+    [
+      "app",
+      "stores",
+      "code",
+      "text",
+      true,
+      null
+    ],
+    [
+      "app",
+      "stores",
+      "name",
+      "text",
+      true,
+      null
+    ],
+    [
+      "app",
+      "stores",
+      "timezone",
+      "text",
+      true,
+      "'Asia/Kolkata'::text"
+    ],
+    [
+      "app",
+      "stores",
+      "address_line1",
+      "text",
+      true,
+      null
+    ],
+    [
+      "app",
+      "stores",
+      "address_line2",
+      "text",
+      false,
+      null
+    ],
+    [
+      "app",
+      "stores",
+      "locality",
+      "text",
+      false,
+      null
+    ],
+    [
+      "app",
+      "stores",
+      "city",
+      "text",
+      true,
+      null
+    ],
+    [
+      "app",
+      "stores",
+      "state",
+      "text",
+      true,
+      null
+    ],
+    [
+      "app",
+      "stores",
+      "country_code",
+      "text",
+      true,
+      "'IN'::text"
+    ],
+    [
+      "app",
+      "stores",
+      "pincode",
+      "text",
+      false,
+      null
+    ],
+    [
+      "app",
+      "stores",
+      "contact_mobile_e164",
+      "text",
+      false,
+      null
+    ],
+    [
+      "app",
+      "stores",
+      "opening_hours",
+      "jsonb",
+      true,
+      "'{}'::jsonb"
+    ],
+    [
+      "app",
+      "stores",
+      "delivery_enabled",
+      "boolean",
+      true,
+      "false"
+    ],
+    [
+      "app",
+      "stores",
+      "pickup_enabled",
+      "boolean",
+      true,
+      "false"
+    ],
+    [
+      "app",
+      "stores",
+      "is_active",
+      "boolean",
+      true,
+      "true"
+    ],
+    [
+      "app",
+      "stores",
+      "deleted_at",
+      "timestamp with time zone",
+      false,
+      null
+    ],
+    [
+      "app",
+      "stores",
+      "created_at",
+      "timestamp with time zone",
+      true,
+      "statement_timestamp()"
+    ],
+    [
+      "app",
+      "stores",
+      "updated_at",
+      "timestamp with time zone",
+      true,
+      "statement_timestamp()"
+    ]
+  ],
+  "indexes": [
+    [
+      "app",
+      "business_settings_business_id_key",
+      "CREATE UNIQUE INDEX business_settings_business_id_key ON app.business_settings USING btree (business_id)"
+    ],
+    [
+      "app",
+      "business_settings_pkey",
+      "CREATE UNIQUE INDEX business_settings_pkey ON app.business_settings USING btree (id)"
+    ],
+    [
+      "app",
+      "businesses_pkey",
+      "CREATE UNIQUE INDEX businesses_pkey ON app.businesses USING btree (id)"
+    ],
+    [
+      "app",
+      "businesses_slug_key",
+      "CREATE UNIQUE INDEX businesses_slug_key ON app.businesses USING btree (slug)"
+    ],
+    [
+      "app",
+      "categories_business_id_id_key",
+      "CREATE UNIQUE INDEX categories_business_id_id_key ON app.categories USING btree (business_id, id)"
+    ],
+    [
+      "app",
+      "categories_business_id_name_key",
+      "CREATE UNIQUE INDEX categories_business_id_name_key ON app.categories USING btree (business_id, name)"
+    ],
+    [
+      "app",
+      "categories_parent_idx",
+      "CREATE INDEX categories_parent_idx ON app.categories USING btree (business_id, parent_id, sort_order)"
+    ],
+    [
+      "app",
+      "categories_pkey",
+      "CREATE UNIQUE INDEX categories_pkey ON app.categories USING btree (id)"
+    ],
+    [
+      "app",
+      "offerings_store_idx",
+      "CREATE INDEX offerings_store_idx ON app.product_store_settings USING btree (business_id, store_id, is_active)"
+    ],
+    [
+      "app",
+      "preparation_options_business_id_id_key",
+      "CREATE UNIQUE INDEX preparation_options_business_id_id_key ON app.preparation_options USING btree (business_id, id)"
+    ],
+    [
+      "app",
+      "preparation_options_pkey",
+      "CREATE UNIQUE INDEX preparation_options_pkey ON app.preparation_options USING btree (id)"
+    ],
+    [
+      "app",
+      "preparations_name_key",
+      "CREATE UNIQUE INDEX preparations_name_key ON app.preparation_options USING btree (business_id, lower(name))"
+    ],
+    [
+      "app",
+      "prices_effective_idx",
+      "CREATE INDEX prices_effective_idx ON app.product_prices USING btree (offering_id, effective_from DESC, offering_version DESC)"
+    ],
+    [
+      "app",
+      "product_allowed_weights_business_id_product_id_raw_weight_g_key",
+      "CREATE UNIQUE INDEX product_allowed_weights_business_id_product_id_raw_weight_g_key ON app.product_allowed_weights USING btree (business_id, product_id, raw_weight_grams)"
+    ],
+    [
+      "app",
+      "product_allowed_weights_pkey",
+      "CREATE UNIQUE INDEX product_allowed_weights_pkey ON app.product_allowed_weights USING btree (id)"
+    ],
+    [
+      "app",
+      "product_images_display_idx",
+      "CREATE INDEX product_images_display_idx ON app.product_images USING btree (business_id, product_id, is_active, sort_order)"
+    ],
+    [
+      "app",
+      "product_images_legacy_key",
+      "CREATE UNIQUE INDEX product_images_legacy_key ON app.product_images USING btree (business_id, product_id) WHERE legacy"
+    ],
+    [
+      "app",
+      "product_images_pkey",
+      "CREATE UNIQUE INDEX product_images_pkey ON app.product_images USING btree (id)"
+    ],
+    [
+      "app",
+      "product_images_primary_key",
+      "CREATE UNIQUE INDEX product_images_primary_key ON app.product_images USING btree (business_id, product_id) WHERE (is_primary AND is_active)"
+    ],
+    [
+      "app",
+      "product_preparation_option_idx",
+      "CREATE INDEX product_preparation_option_idx ON app.product_preparation_options USING btree (business_id, preparation_option_id)"
+    ],
+    [
+      "app",
+      "product_preparation_options_business_id_product_id_preparat_key",
+      "CREATE UNIQUE INDEX product_preparation_options_business_id_product_id_preparat_key ON app.product_preparation_options USING btree (business_id, product_id, preparation_option_id)"
+    ],
+    [
+      "app",
+      "product_preparation_options_pkey",
+      "CREATE UNIQUE INDEX product_preparation_options_pkey ON app.product_preparation_options USING btree (id)"
+    ],
+    [
+      "app",
+      "product_prices_current_idx",
+      "CREATE INDEX product_prices_current_idx ON app.product_prices USING btree (offering_id, offering_version DESC)"
+    ],
+    [
+      "app",
+      "product_prices_offering_id_offering_version_key",
+      "CREATE UNIQUE INDEX product_prices_offering_id_offering_version_key ON app.product_prices USING btree (offering_id, offering_version)"
+    ],
+    [
+      "app",
+      "product_prices_pkey",
+      "CREATE UNIQUE INDEX product_prices_pkey ON app.product_prices USING btree (id)"
+    ],
+    [
+      "app",
+      "product_store_settings_business_id_id_key",
+      "CREATE UNIQUE INDEX product_store_settings_business_id_id_key ON app.product_store_settings USING btree (business_id, id)"
+    ],
+    [
+      "app",
+      "product_store_settings_business_id_store_id_product_id_key",
+      "CREATE UNIQUE INDEX product_store_settings_business_id_store_id_product_id_key ON app.product_store_settings USING btree (business_id, store_id, product_id)"
+    ],
+    [
+      "app",
+      "product_store_settings_pkey",
+      "CREATE UNIQUE INDEX product_store_settings_pkey ON app.product_store_settings USING btree (id)"
+    ],
+    [
+      "app",
+      "products_business_id_id_key",
+      "CREATE UNIQUE INDEX products_business_id_id_key ON app.products USING btree (business_id, id)"
+    ],
+    [
+      "app",
+      "products_display_idx",
+      "CREATE INDEX products_display_idx ON app.products USING btree (business_id, category_id, is_active, sort_order)"
+    ],
+    [
+      "app",
+      "products_pkey",
+      "CREATE UNIQUE INDEX products_pkey ON app.products USING btree (id)"
+    ],
+    [
+      "app",
+      "staff_access_audit_pkey",
+      "CREATE UNIQUE INDEX staff_access_audit_pkey ON app.staff_access_audit USING btree (id)"
+    ],
+    [
+      "app",
+      "staff_admin_grants_pkey",
+      "CREATE UNIQUE INDEX staff_admin_grants_pkey ON app.staff_admin_grants USING btree (staff_profile_id)"
+    ],
+    [
+      "app",
+      "staff_profiles_active_owner_idx",
+      "CREATE INDEX staff_profiles_active_owner_idx ON app.staff_profiles USING btree (business_id, id) WHERE (is_active AND (role = 'OWNER'::text))"
+    ],
+    [
+      "app",
+      "staff_profiles_auth_user_key",
+      "CREATE UNIQUE INDEX staff_profiles_auth_user_key ON app.staff_profiles USING btree (auth_user_id) WHERE (auth_user_id IS NOT NULL)"
+    ],
+    [
+      "app",
+      "staff_profiles_business_id_id_key",
+      "CREATE UNIQUE INDEX staff_profiles_business_id_id_key ON app.staff_profiles USING btree (business_id, id)"
+    ],
+    [
+      "app",
+      "staff_profiles_disabled_by_idx",
+      "CREATE INDEX staff_profiles_disabled_by_idx ON app.staff_profiles USING btree (business_id, disabled_by) WHERE (disabled_by IS NOT NULL)"
+    ],
+    [
+      "app",
+      "staff_profiles_pkey",
+      "CREATE UNIQUE INDEX staff_profiles_pkey ON app.staff_profiles USING btree (id)"
+    ],
+    [
+      "app",
+      "staff_store_assignments_pkey",
+      "CREATE UNIQUE INDEX staff_store_assignments_pkey ON app.staff_store_assignments USING btree (id)"
+    ],
+    [
+      "app",
+      "staff_store_assignments_staff_store_key",
+      "CREATE UNIQUE INDEX staff_store_assignments_staff_store_key ON app.staff_store_assignments USING btree (business_id, staff_profile_id, store_id)"
+    ],
+    [
+      "app",
+      "staff_store_assignments_store_idx",
+      "CREATE INDEX staff_store_assignments_store_idx ON app.staff_store_assignments USING btree (business_id, store_id)"
+    ],
+    [
+      "app",
+      "stores_business_code_key",
+      "CREATE UNIQUE INDEX stores_business_code_key ON app.stores USING btree (business_id, code)"
+    ],
+    [
+      "app",
+      "stores_business_id_id_key",
+      "CREATE UNIQUE INDEX stores_business_id_id_key ON app.stores USING btree (business_id, id)"
+    ],
+    [
+      "app",
+      "stores_pkey",
+      "CREATE UNIQUE INDEX stores_pkey ON app.stores USING btree (id)"
+    ]
+  ],
+  "policies": 0,
+  "triggers": [
+    [
+      "app",
+      "business_settings",
+      "business_settings_lifecycle",
+      "CREATE TRIGGER business_settings_lifecycle BEFORE INSERT OR DELETE OR UPDATE ON app.business_settings FOR EACH ROW EXECUTE FUNCTION app.guard_row_lifecycle()",
+      "O"
+    ],
+    [
+      "app",
+      "business_settings",
+      "business_settings_revision",
+      "CREATE TRIGGER business_settings_revision BEFORE INSERT OR UPDATE ON app.business_settings FOR EACH ROW EXECUTE FUNCTION app.guard_settings_revision()",
+      "O"
+    ],
+    [
+      "app",
+      "businesses",
+      "businesses_lifecycle",
+      "CREATE TRIGGER businesses_lifecycle BEFORE INSERT OR DELETE OR UPDATE ON app.businesses FOR EACH ROW EXECUTE FUNCTION app.guard_row_lifecycle()",
+      "O"
+    ],
+    [
+      "app",
+      "categories",
+      "categories_lifecycle",
+      "CREATE TRIGGER categories_lifecycle BEFORE INSERT OR DELETE OR UPDATE ON app.categories FOR EACH ROW EXECUTE FUNCTION app.guard_row_lifecycle()",
+      "O"
+    ],
+    [
+      "app",
+      "preparation_options",
+      "preparation_options_lifecycle",
+      "CREATE TRIGGER preparation_options_lifecycle BEFORE INSERT OR DELETE OR UPDATE ON app.preparation_options FOR EACH ROW EXECUTE FUNCTION app.guard_row_lifecycle()",
+      "O"
+    ],
+    [
+      "app",
+      "product_allowed_weights",
+      "product_weights_lifecycle",
+      "CREATE TRIGGER product_weights_lifecycle BEFORE INSERT OR DELETE OR UPDATE ON app.product_allowed_weights FOR EACH ROW EXECUTE FUNCTION app.guard_row_lifecycle()",
+      "O"
+    ],
+    [
+      "app",
+      "product_images",
+      "product_images_lifecycle",
+      "CREATE TRIGGER product_images_lifecycle BEFORE INSERT OR DELETE OR UPDATE ON app.product_images FOR EACH ROW EXECUTE FUNCTION app.guard_row_lifecycle()",
+      "O"
+    ],
+    [
+      "app",
+      "product_preparation_options",
+      "product_preparations_lifecycle",
+      "CREATE TRIGGER product_preparations_lifecycle BEFORE INSERT OR DELETE OR UPDATE ON app.product_preparation_options FOR EACH ROW EXECUTE FUNCTION app.guard_row_lifecycle()",
+      "O"
+    ],
+    [
+      "app",
+      "product_prices",
+      "prices_immutable",
+      "CREATE TRIGGER prices_immutable BEFORE DELETE OR UPDATE ON app.product_prices FOR EACH ROW EXECUTE FUNCTION app.reject_history_mutation()",
+      "O"
+    ],
+    [
+      "app",
+      "products",
+      "products_catalogue_sync",
+      "CREATE TRIGGER products_catalogue_sync AFTER INSERT OR UPDATE OF allowed_weights, preparations, image_path ON app.products FOR EACH ROW EXECUTE FUNCTION app.sync_product_catalogue()",
+      "O"
+    ],
+    [
+      "app",
+      "products",
+      "products_lifecycle",
+      "CREATE TRIGGER products_lifecycle BEFORE INSERT OR DELETE OR UPDATE ON app.products FOR EACH ROW EXECUTE FUNCTION app.guard_row_lifecycle()",
+      "O"
+    ],
+    [
+      "app",
+      "staff_access_audit",
+      "access_audit_immutable",
+      "CREATE TRIGGER access_audit_immutable BEFORE DELETE OR UPDATE ON app.staff_access_audit FOR EACH ROW EXECUTE FUNCTION app.reject_history_mutation()",
+      "O"
+    ],
+    [
+      "app",
+      "staff_profiles",
+      "staff_profiles_authority",
+      "CREATE TRIGGER staff_profiles_authority BEFORE UPDATE ON app.staff_profiles FOR EACH ROW EXECUTE FUNCTION app.guard_staff_authority()",
+      "O"
+    ],
+    [
+      "app",
+      "staff_profiles",
+      "staff_profiles_lifecycle",
+      "CREATE TRIGGER staff_profiles_lifecycle BEFORE INSERT OR DELETE OR UPDATE ON app.staff_profiles FOR EACH ROW EXECUTE FUNCTION app.guard_row_lifecycle()",
+      "O"
+    ],
+    [
+      "app",
+      "staff_store_assignments",
+      "staff_store_assignments_identity",
+      "CREATE TRIGGER staff_store_assignments_identity BEFORE UPDATE ON app.staff_store_assignments FOR EACH ROW EXECUTE FUNCTION app.guard_assignment_identity()",
+      "O"
+    ],
+    [
+      "app",
+      "staff_store_assignments",
+      "staff_store_assignments_lifecycle",
+      "CREATE TRIGGER staff_store_assignments_lifecycle BEFORE INSERT OR DELETE OR UPDATE ON app.staff_store_assignments FOR EACH ROW EXECUTE FUNCTION app.guard_row_lifecycle()",
+      "O"
+    ],
+    [
+      "app",
+      "stores",
+      "stores_lifecycle",
+      "CREATE TRIGGER stores_lifecycle BEFORE INSERT OR DELETE OR UPDATE ON app.stores FOR EACH ROW EXECUTE FUNCTION app.guard_row_lifecycle()",
+      "O"
+    ],
+    [
+      "app",
+      "stores",
+      "stores_timezone",
+      "CREATE TRIGGER stores_timezone BEFORE INSERT OR UPDATE ON app.stores FOR EACH ROW EXECUTE FUNCTION app.guard_store_timezone()",
+      "O"
+    ]
+  ],
+  "functions": [
+    [
+      "api",
+      "catalogue",
+      "target_store uuid, category_filter uuid",
+      "CREATE OR REPLACE FUNCTION api.catalogue(target_store uuid, category_filter uuid DEFAULT NULL::uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nDECLARE business uuid;\nBEGIN\n SELECT s.business_id INTO business FROM app.stores s JOIN app.businesses b ON b.id=s.business_id\n WHERE s.id=target_store AND s.is_active AND s.deleted_at IS NULL AND b.is_active AND b.deleted_at IS NULL;\n IF business IS NULL THEN RETURN jsonb_build_object('categories','[]'::jsonb,'products','[]'::jsonb); END IF;\n RETURN jsonb_build_object(\n 'categories',COALESCE((SELECT jsonb_agg(jsonb_build_object('id',c.id,'parentId',c.parent_id,'name',c.name,'sortOrder',c.sort_order) ORDER BY c.sort_order,c.name,c.id)\n FROM app.categories c WHERE c.business_id=business AND app.category_is_visible(c.id,business)),'[]'::jsonb),\n 'products',COALESCE((\n WITH RECURSIVE selected AS (\n SELECT id FROM app.categories WHERE id=category_filter AND business_id=business\n UNION SELECT c.id FROM app.categories c JOIN selected t ON c.parent_id=t.id WHERE c.business_id=business\n )\n SELECT jsonb_agg(jsonb_build_object(\n 'id',p.id,'name',p.name,'localName',p.local_name,'description',p.description,\n 'categoryId',p.category_id,'category',c.name,'pricePerKgPaise',price.price_per_kg_paise,\n 'pricingBasis','RAW_WEIGHT','available',o.available,'featured',COALESCE(o.featured_override,p.featured),\n 'sortOrder',COALESCE(o.sort_override,p.sort_order),\n 'images',(SELECT COALESCE(jsonb_agg(jsonb_build_object('id',i.id,'assetPath',i.asset_path,'bucket',i.storage_bucket,'objectPath',i.storage_object_path,'alt',i.alt_text,'primary',i.is_primary) ORDER BY i.is_primary DESC,i.sort_order,i.id),'[]'::jsonb)\n FROM app.product_images i WHERE i.product_id=p.id AND i.is_active),\n 'weightsGrams',(SELECT jsonb_agg(w.raw_weight_grams ORDER BY w.sort_order,w.raw_weight_grams) FROM app.product_allowed_weights w WHERE w.product_id=p.id AND w.is_active),\n 'preparations',(SELECT jsonb_agg(jsonb_build_object('id',opt.id,'name',opt.name,'cleaningLossPercent',pp.cleaning_loss_percent) ORDER BY pp.sort_order,opt.sort_order,opt.id)\n FROM app.product_preparation_options pp JOIN app.preparation_options opt ON opt.id=pp.preparation_option_id\n WHERE pp.product_id=p.id AND pp.is_active AND opt.is_active))\n ORDER BY COALESCE(o.featured_override,p.featured) DESC,COALESCE(o.sort_override,p.sort_order),p.name,p.id)\n FROM app.product_store_settings o JOIN app.products p ON p.id=o.product_id JOIN app.categories c ON c.id=p.category_id\n JOIN LATERAL (SELECT price_per_kg_paise FROM app.product_prices pr WHERE pr.offering_id=o.id AND pr.effective_from<=statement_timestamp() ORDER BY pr.effective_from DESC,pr.offering_version DESC LIMIT 1) price ON true\n WHERE o.business_id=business AND o.store_id=target_store AND o.is_active AND p.is_active AND app.category_is_visible(c.id,business)\n AND (category_filter IS NULL OR p.category_id IN (SELECT id FROM selected))\n AND EXISTS(SELECT 1 FROM app.product_allowed_weights w WHERE w.product_id=p.id AND w.is_active)\n AND EXISTS(SELECT 1 FROM app.product_preparation_options pp JOIN app.preparation_options opt ON opt.id=pp.preparation_option_id WHERE pp.product_id=p.id AND pp.is_active AND opt.is_active)\n ),'[]'::jsonb));\nEND;\n$function$\n",
+      "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres}"
+    ],
+    [
+      "api",
+      "catalogue_master",
+      "",
+      "CREATE OR REPLACE FUNCTION api.catalogue_master()\n RETURNS jsonb\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nDECLARE actor app.staff_profiles;\nBEGIN\n actor:=app.require_staff(ARRAY['ADMIN']);\n RETURN jsonb_build_object(\n 'categories',COALESCE((SELECT jsonb_agg(to_jsonb(c) ORDER BY c.sort_order,c.name) FROM app.categories c WHERE c.business_id=actor.business_id),'[]'::jsonb),\n 'products',COALESCE((SELECT jsonb_agg(to_jsonb(p) ORDER BY p.sort_order,p.name) FROM app.products p WHERE p.business_id=actor.business_id),'[]'::jsonb),\n 'images',COALESCE((SELECT jsonb_agg(to_jsonb(i) ORDER BY i.sort_order,i.id) FROM app.product_images i WHERE i.business_id=actor.business_id),'[]'::jsonb),\n 'preparationOptions',COALESCE((SELECT jsonb_agg(to_jsonb(o) ORDER BY o.sort_order,o.name) FROM app.preparation_options o WHERE o.business_id=actor.business_id),'[]'::jsonb),\n 'productPreparations',COALESCE((SELECT jsonb_agg(to_jsonb(pp) ORDER BY pp.sort_order,pp.id) FROM app.product_preparation_options pp WHERE pp.business_id=actor.business_id),'[]'::jsonb),\n 'allowedWeights',COALESCE((SELECT jsonb_agg(to_jsonb(w) ORDER BY w.sort_order,w.id) FROM app.product_allowed_weights w WHERE w.business_id=actor.business_id),'[]'::jsonb));\nEND;\n$function$\n",
+      "{postgres=X/postgres,authenticated=X/postgres}"
+    ],
+    [
+      "api",
+      "create_offering",
+      "product uuid, target_store uuid",
+      "CREATE OR REPLACE FUNCTION api.create_offering(product uuid, target_store uuid)\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nDECLARE actor app.staff_profiles; result uuid;\nBEGIN\n actor := app.require_staff(ARRAY['ADMIN']);\n IF NOT app.can_access_store(actor.business_id,target_store) THEN RAISE EXCEPTION 'Forbidden' USING ERRCODE='42501'; END IF;\n INSERT INTO app.product_store_settings(business_id,store_id,product_id) VALUES(actor.business_id,target_store,product) RETURNING id INTO result;\n INSERT INTO app.staff_access_audit(business_id,actor_id,action,target_id,detail) VALUES(actor.business_id,actor.id,'OFFERING_CREATED',result,'{}');\n RETURN result;\nEND;\n$function$\n",
+      "{postgres=X/postgres,authenticated=X/postgres}"
+    ],
+    [
+      "api",
+      "daily_products",
+      "target_store uuid",
+      "CREATE OR REPLACE FUNCTION api.daily_products(target_store uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nDECLARE actor app.staff_profiles;\nBEGIN\n actor := app.require_staff(ARRAY['ADMIN','OWNER']);\n IF NOT app.can_access_store(actor.business_id,target_store) THEN RAISE EXCEPTION 'Forbidden' USING ERRCODE='42501'; END IF;\n RETURN COALESCE((SELECT jsonb_agg(jsonb_build_object('id',o.id,'name',p.name,'category',c.name,\n 'pricePaise',price.price_per_kg_paise,'available',o.available,'version',o.version,'updatedAt',o.updated_at) ORDER BY c.sort_order,p.name)\n FROM app.product_store_settings o JOIN app.products p ON p.id=o.product_id\n JOIN app.categories c ON c.id=p.category_id\n LEFT JOIN LATERAL (SELECT price_per_kg_paise FROM app.product_prices pr WHERE pr.offering_id=o.id ORDER BY offering_version DESC LIMIT 1) price ON true\n WHERE o.business_id=actor.business_id AND o.store_id=target_store AND p.is_active AND c.is_active AND o.is_active AND app.category_is_visible(p.category_id,p.business_id)), '[]'::jsonb);\nEND;\n$function$\n",
+      "{postgres=X/postgres,authenticated=X/postgres}"
+    ],
+    [
+      "api",
+      "employee_access",
+      "",
+      "CREATE OR REPLACE FUNCTION api.employee_access()\n RETURNS jsonb\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nDECLARE actor app.staff_profiles;\nBEGIN\n actor := app.require_staff(ARRAY['ADMIN','OWNER']);\n RETURN COALESCE((SELECT jsonb_agg(jsonb_build_object('id',sp.id,'name',sp.display_name,'active',sp.is_active) ORDER BY sp.display_name)\n FROM app.staff_profiles sp WHERE sp.business_id=actor.business_id AND sp.role='EMPLOYEE'\n AND NOT EXISTS(SELECT 1 FROM app.staff_admin_grants g WHERE g.staff_profile_id=sp.id AND g.is_active)), '[]'::jsonb);\nEND;\n$function$\n",
+      "{postgres=X/postgres,authenticated=X/postgres}"
+    ],
+    [
+      "api",
+      "save_category",
+      "target_id uuid, category_name text, parent uuid, sort integer, active boolean",
+      "CREATE OR REPLACE FUNCTION api.save_category(target_id uuid, category_name text, parent uuid, sort integer, active boolean)\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nDECLARE actor app.staff_profiles; result uuid;\nBEGIN\n actor := app.require_staff(ARRAY['ADMIN']);\n -- Serialize category hierarchy changes; prevent indirect cycles.\n PERFORM 1 FROM app.businesses WHERE id=actor.business_id FOR UPDATE;\n IF parent IS NOT NULL AND (parent=target_id OR NOT EXISTS(SELECT 1 FROM app.categories WHERE id=parent AND business_id=actor.business_id)) THEN RAISE EXCEPTION 'Invalid parent'; END IF;\n IF target_id IS NOT NULL AND EXISTS (\n WITH RECURSIVE ancestors AS (SELECT id,parent_id FROM app.categories WHERE id=parent AND business_id=actor.business_id\n UNION SELECT c.id,c.parent_id FROM app.categories c JOIN ancestors a ON c.id=a.parent_id)\n SELECT 1 FROM ancestors WHERE id=target_id) THEN RAISE EXCEPTION 'Category cycle'; END IF;\n IF target_id IS NULL THEN\n INSERT INTO app.categories(business_id,name,parent_id,sort_order,is_active) VALUES(actor.business_id,btrim(category_name),parent,sort,active) RETURNING id INTO result;\n ELSE UPDATE app.categories SET name=btrim(category_name),parent_id=parent,sort_order=sort,is_active=active WHERE id=target_id AND business_id=actor.business_id RETURNING id INTO result;\n END IF;\n IF result IS NULL THEN RAISE EXCEPTION 'Forbidden' USING ERRCODE='42501'; END IF;\n INSERT INTO app.staff_access_audit(business_id,actor_id,action,target_id,detail) VALUES(actor.business_id,actor.id,'CATEGORY_SAVED',result,jsonb_build_object('active',active));\n RETURN result;\nEND;\n$function$\n",
+      "{postgres=X/postgres,authenticated=X/postgres}"
+    ],
+    [
+      "api",
+      "save_preparation_option",
+      "target_id uuid, option_name text, active boolean, display_order integer",
+      "CREATE OR REPLACE FUNCTION api.save_preparation_option(target_id uuid, option_name text, active boolean, display_order integer)\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nDECLARE actor app.staff_profiles; result uuid;\nBEGIN\n actor:=app.require_staff(ARRAY['ADMIN']);\n -- Match save_product's lock order (products before preparation records).\n PERFORM 1 FROM app.products WHERE business_id=actor.business_id ORDER BY id FOR UPDATE;\n IF target_id IS NULL THEN\n INSERT INTO app.preparation_options(business_id,name,is_active,sort_order) VALUES(actor.business_id,btrim(option_name),active,display_order) RETURNING id INTO result;\n ELSE\n UPDATE app.preparation_options SET name=btrim(option_name),is_active=active,sort_order=display_order\n WHERE id=target_id AND business_id=actor.business_id RETURNING id INTO result;\n END IF;\n IF result IS NULL THEN RAISE EXCEPTION 'Forbidden' USING ERRCODE='42501'; END IF;\n -- Preserve the legacy input cache after a reusable preparation rename.\n UPDATE app.products p SET preparations=(\n SELECT jsonb_agg(jsonb_strip_nulls(jsonb_build_object('name',o.name,'cleaning_loss_percent',pp.cleaning_loss_percent)) ORDER BY pp.sort_order,pp.id)\n FROM app.product_preparation_options pp JOIN app.preparation_options o ON o.id=pp.preparation_option_id\n WHERE pp.product_id=p.id AND pp.is_active)\n WHERE p.business_id=actor.business_id AND EXISTS(SELECT 1 FROM app.product_preparation_options pp WHERE pp.product_id=p.id AND pp.preparation_option_id=result AND pp.is_active);\n INSERT INTO app.staff_access_audit(business_id,actor_id,action,target_id,detail) VALUES(actor.business_id,actor.id,'PREPARATION_SAVED',result,jsonb_build_object('active',active));\n RETURN result;\nEND;\n$function$\n",
+      "{postgres=X/postgres,authenticated=X/postgres}"
+    ],
+    [
+      "api",
+      "save_product",
+      "target_id uuid, category uuid, product_name text, local_name text, description text, image_path text, weights jsonb, preparation_choices jsonb, active boolean",
+      "CREATE OR REPLACE FUNCTION api.save_product(target_id uuid, category uuid, product_name text, local_name text, description text, image_path text, weights jsonb, preparation_choices jsonb, active boolean)\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nDECLARE actor app.staff_profiles; result uuid;\nBEGIN\n actor := app.require_staff(ARRAY['ADMIN']);\n IF target_id IS NULL THEN\n INSERT INTO app.products(business_id,category_id,name,local_name,description,image_path,allowed_weights,preparations,is_active)\n VALUES(actor.business_id,category,btrim(product_name),local_name,description,image_path,weights,preparation_choices,active) RETURNING id INTO result;\n ELSE UPDATE app.products p SET category_id=category,name=btrim(product_name),local_name=save_product.local_name,description=save_product.description,\n image_path=save_product.image_path,allowed_weights=weights,preparations=preparation_choices,is_active=active\n WHERE p.id=target_id AND p.business_id=actor.business_id RETURNING p.id INTO result;\n END IF;\n IF result IS NULL THEN RAISE EXCEPTION 'Forbidden' USING ERRCODE='42501'; END IF;\n INSERT INTO app.staff_access_audit(business_id,actor_id,action,target_id,detail) VALUES(actor.business_id,actor.id,'PRODUCT_SAVED',result,jsonb_build_object('active',active));\n RETURN result;\nEND;\n$function$\n",
+      "{postgres=X/postgres,authenticated=X/postgres}"
+    ],
+    [
+      "api",
+      "save_product_image",
+      "target_id uuid, product uuid, local_asset text, bucket text, object_path text, alternate_text text, primary_image boolean, active boolean, display_order integer",
+      "CREATE OR REPLACE FUNCTION api.save_product_image(target_id uuid, product uuid, local_asset text, bucket text, object_path text, alternate_text text, primary_image boolean, active boolean, display_order integer)\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nDECLARE actor app.staff_profiles; result uuid;\nBEGIN\n actor:=app.require_staff(ARRAY['ADMIN']);\n PERFORM 1 FROM app.products WHERE id=product AND business_id=actor.business_id FOR UPDATE;\n IF NOT FOUND THEN RAISE EXCEPTION 'Forbidden' USING ERRCODE='42501'; END IF;\n IF target_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM app.product_images WHERE id=target_id AND product_id=product AND business_id=actor.business_id AND NOT legacy) THEN\n RAISE EXCEPTION 'Forbidden' USING ERRCODE='42501'; END IF;\n IF primary_image AND active THEN UPDATE app.product_images SET is_primary=false WHERE product_id=product AND is_primary; END IF;\n IF target_id IS NULL THEN\n INSERT INTO app.product_images(business_id,product_id,asset_path,storage_bucket,storage_object_path,alt_text,is_primary,is_active,sort_order)\n VALUES(actor.business_id,product,local_asset,bucket,object_path,alternate_text,primary_image,active,display_order) RETURNING id INTO result;\n ELSE UPDATE app.product_images SET asset_path=local_asset,storage_bucket=bucket,storage_object_path=object_path,alt_text=alternate_text,is_primary=primary_image,is_active=active,sort_order=display_order\n WHERE id=target_id AND product_id=product AND business_id=actor.business_id RETURNING id INTO result;\n END IF;\n INSERT INTO app.staff_access_audit(business_id,actor_id,action,target_id,detail) VALUES(actor.business_id,actor.id,'PRODUCT_IMAGE',result,jsonb_build_object('active',active,'primary',primary_image));\n RETURN result;\nEND;\n$function$\n",
+      "{postgres=X/postgres,authenticated=X/postgres}"
+    ],
+    [
+      "api",
+      "save_store_operations",
+      "target_store uuid, store_name text, delivery boolean, pickup boolean, hours jsonb",
+      "CREATE OR REPLACE FUNCTION api.save_store_operations(target_store uuid, store_name text, delivery boolean, pickup boolean, hours jsonb)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nDECLARE actor app.staff_profiles;\nBEGIN\n actor := app.require_staff(ARRAY['ADMIN','OWNER']);\n IF NOT app.can_access_store(actor.business_id,target_store) THEN RAISE EXCEPTION 'Forbidden' USING ERRCODE='42501'; END IF;\n UPDATE app.stores SET name=store_name,delivery_enabled=delivery,pickup_enabled=pickup,opening_hours=hours WHERE id=target_store AND business_id=actor.business_id;\n INSERT INTO app.staff_access_audit(business_id,actor_id,action,target_id,detail) VALUES(actor.business_id,actor.id,'STORE_OPERATIONS',target_store,jsonb_build_object('delivery',delivery,'pickup',pickup));\nEND;\n$function$\n",
+      "{postgres=X/postgres,authenticated=X/postgres}"
+    ],
+    [
+      "api",
+      "set_employee_access",
+      "employee uuid, active boolean",
+      "CREATE OR REPLACE FUNCTION api.set_employee_access(employee uuid, active boolean)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nDECLARE actor app.staff_profiles; target app.staff_profiles;\nBEGIN\n actor := app.require_staff(ARRAY['ADMIN','OWNER']);\n SELECT * INTO target FROM app.staff_profiles WHERE id=employee AND business_id=actor.business_id FOR UPDATE;\n IF target.id IS NULL OR target.role <> 'EMPLOYEE' OR target.auth_user_id IS NULL OR active IS NULL\n OR EXISTS(SELECT 1 FROM app.staff_admin_grants WHERE staff_profile_id=employee AND is_active)\n THEN RAISE EXCEPTION 'Forbidden' USING ERRCODE='42501'; END IF;\n UPDATE app.staff_profiles SET is_active=active,disabled_at=CASE WHEN active THEN NULL ELSE pg_catalog.clock_timestamp() END,\n disabled_by=CASE WHEN active THEN NULL ELSE actor.id END WHERE id=employee;\n INSERT INTO app.staff_access_audit(business_id,actor_id,action,target_id,detail) VALUES(actor.business_id,actor.id,'EMPLOYEE_ACCESS',employee,jsonb_build_object('active',active));\nEND;\n$function$\n",
+      "{postgres=X/postgres,authenticated=X/postgres}"
+    ],
+    [
+      "api",
+      "set_offering_display",
+      "offering uuid, active boolean, featured boolean, display_order integer",
+      "CREATE OR REPLACE FUNCTION api.set_offering_display(offering uuid, active boolean, featured boolean, display_order integer)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nDECLARE actor app.staff_profiles;\nBEGIN\n actor:=app.require_staff(ARRAY['ADMIN']);\n UPDATE app.product_store_settings SET is_active=active,featured_override=featured,sort_override=display_order,version=version+1,updated_at=clock_timestamp()\n WHERE id=offering AND business_id=actor.business_id;\n IF NOT FOUND THEN RAISE EXCEPTION 'Forbidden' USING ERRCODE='42501'; END IF;\n INSERT INTO app.staff_access_audit(business_id,actor_id,action,target_id,detail) VALUES(actor.business_id,actor.id,'OFFERING_DISPLAY',offering,jsonb_build_object('active',active,'featured',featured,'sort',display_order));\nEND;\n$function$\n",
+      "{postgres=X/postgres,authenticated=X/postgres}"
+    ],
+    [
+      "api",
+      "set_product_configuration",
+      "product uuid, weights jsonb, preparation_choices jsonb",
+      "CREATE OR REPLACE FUNCTION api.set_product_configuration(product uuid, weights jsonb, preparation_choices jsonb)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nDECLARE actor app.staff_profiles;\nBEGIN\n actor:=app.require_staff(ARRAY['ADMIN']);\n UPDATE app.products SET allowed_weights=weights,preparations=preparation_choices WHERE id=product AND business_id=actor.business_id;\n IF NOT FOUND THEN RAISE EXCEPTION 'Forbidden' USING ERRCODE='42501'; END IF;\n INSERT INTO app.staff_access_audit(business_id,actor_id,action,target_id,detail) VALUES(actor.business_id,actor.id,'PRODUCT_CONFIGURATION',product,jsonb_build_object('weights',weights,'preparations',preparation_choices));\nEND;\n$function$\n",
+      "{postgres=X/postgres,authenticated=X/postgres}"
+    ],
+    [
+      "api",
+      "set_product_display",
+      "product uuid, is_featured boolean, display_order integer",
+      "CREATE OR REPLACE FUNCTION api.set_product_display(product uuid, is_featured boolean, display_order integer)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nDECLARE actor app.staff_profiles;\nBEGIN\n actor:=app.require_staff(ARRAY['ADMIN']);\n UPDATE app.products SET featured=is_featured,sort_order=display_order WHERE id=product AND business_id=actor.business_id;\n IF NOT FOUND THEN RAISE EXCEPTION 'Forbidden' USING ERRCODE='42501'; END IF;\n INSERT INTO app.staff_access_audit(business_id,actor_id,action,target_id,detail) VALUES(actor.business_id,actor.id,'PRODUCT_DISPLAY',product,jsonb_build_object('featured',is_featured,'sort',display_order));\nEND;\n$function$\n",
+      "{postgres=X/postgres,authenticated=X/postgres}"
+    ],
+    [
+      "api",
+      "staff_context",
+      "",
+      "CREATE OR REPLACE FUNCTION api.staff_context()\n RETURNS jsonb\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nDECLARE actor app.staff_profiles;\nBEGIN\n actor := app.require_staff(ARRAY['ADMIN','OWNER','EMPLOYEE']);\n RETURN jsonb_build_object('id',actor.id,'businessId',actor.business_id,'role',app.current_staff_role(),'name',actor.display_name,\n 'stores',COALESCE((SELECT jsonb_agg(jsonb_build_object('id',s.id,'name',s.name) ORDER BY s.name)\n FROM app.stores s WHERE app.can_access_store(s.business_id,s.id)), '[]'::jsonb));\nEND;\n$function$\n",
+      "{postgres=X/postgres,authenticated=X/postgres}"
+    ],
+    [
+      "api",
+      "store_operations",
+      "target_store uuid",
+      "CREATE OR REPLACE FUNCTION api.store_operations(target_store uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nDECLARE actor app.staff_profiles;\nBEGIN\n actor := app.require_staff(ARRAY['ADMIN','OWNER']);\n IF NOT app.can_access_store(actor.business_id,target_store) THEN RAISE EXCEPTION 'Forbidden' USING ERRCODE='42501'; END IF;\n RETURN (SELECT jsonb_build_object('name',name,'delivery',delivery_enabled,'pickup',pickup_enabled,'hours',opening_hours) FROM app.stores WHERE id=target_store);\nEND;\n$function$\n",
+      "{postgres=X/postgres,authenticated=X/postgres}"
+    ],
+    [
+      "api",
+      "update_daily_product",
+      "offering uuid, expected_version integer, price_paise bigint, is_available boolean",
+      "CREATE OR REPLACE FUNCTION api.update_daily_product(offering uuid, expected_version integer, price_paise bigint, is_available boolean)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nDECLARE actor app.staff_profiles; old_row app.product_store_settings; old_price bigint;\nBEGIN\n actor := app.require_staff(ARRAY['ADMIN','OWNER']);\n IF price_paise IS NULL OR price_paise NOT BETWEEN 1 AND 100000000 OR is_available IS NULL OR expected_version IS NULL THEN\n RAISE EXCEPTION 'Invalid daily product values' USING ERRCODE='22023'; END IF;\n SELECT o.* INTO old_row FROM app.product_store_settings o JOIN app.products p ON p.id=o.product_id JOIN app.categories c ON c.id=p.category_id\n WHERE o.id=offering AND o.business_id=actor.business_id AND p.is_active AND c.is_active AND o.is_active AND app.category_is_visible(p.category_id,p.business_id) FOR UPDATE OF o;\n IF old_row.id IS NULL OR NOT app.can_access_store(actor.business_id,old_row.store_id) THEN RAISE EXCEPTION 'Forbidden' USING ERRCODE='42501'; END IF;\n IF old_row.version <> expected_version THEN RAISE EXCEPTION 'Product changed; reload before saving' USING ERRCODE='40001'; END IF;\n SELECT price_per_kg_paise INTO old_price FROM app.product_prices WHERE offering_id=offering ORDER BY offering_version DESC LIMIT 1;\n IF old_price IS NOT DISTINCT FROM price_paise AND old_row.available = is_available THEN RETURN; END IF;\n UPDATE app.product_store_settings SET available=is_available,version=version+1,updated_at=pg_catalog.clock_timestamp() WHERE id=offering;\n IF old_price IS DISTINCT FROM price_paise THEN\n INSERT INTO app.product_prices(business_id,offering_id,price_per_kg_paise,offering_version,created_by)\n VALUES(actor.business_id,offering,price_paise,old_row.version+1,actor.id);\n END IF;\n INSERT INTO app.staff_access_audit(business_id,actor_id,action,target_id,detail)\n VALUES(actor.business_id,actor.id,'DAILY_PRODUCT_UPDATED',offering,jsonb_build_object('oldPricePaise',old_price,'pricePaise',price_paise,'wasAvailable',old_row.available,'available',is_available));\nEND;\n$function$\n",
+      "{postgres=X/postgres,authenticated=X/postgres}"
+    ],
+    [
+      "app",
+      "can_access_store",
+      "target_business_id uuid, target_store_id uuid",
+      "CREATE OR REPLACE FUNCTION app.can_access_store(target_business_id uuid, target_store_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\n SELECT EXISTS (\n SELECT 1 FROM app.stores s JOIN app.staff_profiles sp ON sp.business_id = s.business_id\n WHERE s.business_id = target_business_id AND s.id = target_store_id\n AND s.is_active AND s.deleted_at IS NULL AND sp.id = app.current_staff_profile_id()\n AND (app.current_staff_role() IN ('ADMIN','OWNER') OR app.is_store_employee(target_business_id,target_store_id)))\n$function$\n",
+      "{postgres=X/postgres}"
+    ],
+    [
+      "app",
+      "category_is_visible",
+      "category uuid, business uuid",
+      "CREATE OR REPLACE FUNCTION app.category_is_visible(category uuid, business uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\n WITH RECURSIVE ancestry AS (\n SELECT id,parent_id,is_active FROM app.categories WHERE id=category AND business_id=business\n UNION SELECT c.id,c.parent_id,c.is_active FROM app.categories c JOIN ancestry a ON c.id=a.parent_id WHERE c.business_id=business\n )\n SELECT count(*)>0 AND bool_and(is_active) FROM ancestry\n$function$\n",
+      "{postgres=X/postgres}"
+    ],
+    [
+      "app",
+      "current_staff_profile_id",
+      "",
+      "CREATE OR REPLACE FUNCTION app.current_staff_profile_id()\n RETURNS uuid\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\n  SELECT sp.id\n  FROM app.staff_profiles AS sp\n  JOIN app.businesses AS b ON b.id = sp.business_id\n  WHERE sp.auth_user_id = (SELECT auth.uid())\n    AND sp.is_active AND sp.disabled_at IS NULL\n    AND b.is_active AND b.deleted_at IS NULL\n$function$\n",
+      "{postgres=X/postgres}"
+    ],
+    [
+      "app",
+      "current_staff_role",
+      "",
+      "CREATE OR REPLACE FUNCTION app.current_staff_role()\n RETURNS text\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\n SELECT CASE WHEN EXISTS (SELECT 1 FROM app.staff_admin_grants g WHERE g.staff_profile_id = sp.id AND g.is_active)\n THEN 'ADMIN' ELSE sp.role END\n FROM app.staff_profiles sp WHERE sp.id = app.current_staff_profile_id()\n$function$\n",
+      "{postgres=X/postgres}"
+    ],
+    [
+      "app",
+      "guard_assignment_identity",
+      "",
+      "CREATE OR REPLACE FUNCTION app.guard_assignment_identity()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO ''\nAS $function$\nBEGIN\n  IF NEW.store_id IS DISTINCT FROM OLD.store_id\n     OR NEW.staff_profile_id IS DISTINCT FROM OLD.staff_profile_id THEN\n    RAISE EXCEPTION 'Assignment identity is immutable; deactivate it instead' USING ERRCODE = '23514';\n  END IF;\n  RETURN NEW;\nEND;\n$function$\n",
+      "{postgres=X/postgres}"
+    ],
+    [
+      "app",
+      "guard_row_lifecycle",
+      "",
+      "CREATE OR REPLACE FUNCTION app.guard_row_lifecycle()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO ''\nAS $function$\nBEGIN\n  IF TG_OP = 'DELETE' THEN\n    RAISE EXCEPTION 'Hard deletion is forbidden; retire or deactivate this record' USING ERRCODE = '23514';\n  ELSIF TG_OP = 'INSERT' THEN\n    NEW.created_at := pg_catalog.statement_timestamp();\n    NEW.updated_at := NEW.created_at;\n  ELSE\n    IF NEW.id IS DISTINCT FROM OLD.id THEN\n      RAISE EXCEPTION 'Internal identity is immutable' USING ERRCODE = '23514';\n    END IF;\n    IF TG_TABLE_NAME <> 'businesses' THEN\n      IF NEW.business_id IS DISTINCT FROM OLD.business_id THEN\n        RAISE EXCEPTION 'Business identity is immutable' USING ERRCODE = '23514';\n      END IF;\n    END IF;\n    NEW.created_at := OLD.created_at;\n    NEW.updated_at := GREATEST(OLD.updated_at, pg_catalog.statement_timestamp());\n  END IF;\n  RETURN NEW;\nEND;\n$function$\n",
+      "{postgres=X/postgres}"
+    ],
+    [
+      "app",
+      "guard_settings_revision",
+      "",
+      "CREATE OR REPLACE FUNCTION app.guard_settings_revision()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO ''\nAS $function$\nBEGIN\n  IF TG_OP = 'INSERT' THEN NEW.revision := 1;\n  ELSE NEW.revision := OLD.revision + 1;\n  END IF;\n  RETURN NEW;\nEND;\n$function$\n",
+      "{postgres=X/postgres}"
+    ],
+    [
+      "app",
+      "guard_staff_authority",
+      "",
+      "CREATE OR REPLACE FUNCTION app.guard_staff_authority()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO ''\nAS $function$\nBEGIN\n  IF OLD.is_active AND OLD.role = 'OWNER' AND (\n    NOT NEW.is_active OR NEW.role <> 'OWNER'\n    OR NEW.auth_user_id IS DISTINCT FROM OLD.auth_user_id\n    OR NEW.disabled_at IS NOT NULL\n  ) THEN\n    RAISE EXCEPTION 'Active OWNER removal is locked until the reviewed admin mutation phase' USING ERRCODE = '23514';\n  END IF;\n  IF OLD.auth_user_id IS NOT NULL AND NEW.auth_user_id IS DISTINCT FROM OLD.auth_user_id\n     AND (NEW.auth_user_id IS NOT NULL OR NEW.is_active) THEN\n    RAISE EXCEPTION 'Auth identity may only be unlinked from an inactive profile' USING ERRCODE = '23514';\n  END IF;\n  RETURN NEW;\nEND;\n$function$\n",
+      "{postgres=X/postgres}"
+    ],
+    [
+      "app",
+      "guard_store_timezone",
+      "",
+      "CREATE OR REPLACE FUNCTION app.guard_store_timezone()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO ''\nAS $function$\nBEGIN\n  IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_timezone_names AS z WHERE z.name = NEW.timezone) THEN\n    RAISE EXCEPTION 'Unknown timezone' USING ERRCODE = '23514';\n  END IF;\n  RETURN NEW;\nEND;\n$function$\n",
+      "{postgres=X/postgres}"
+    ],
+    [
+      "app",
+      "is_business_owner",
+      "target_business_id uuid",
+      "CREATE OR REPLACE FUNCTION app.is_business_owner(target_business_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\n  SELECT EXISTS (\n    SELECT 1 FROM app.staff_profiles AS sp\n    WHERE sp.id = app.current_staff_profile_id()\n      AND sp.business_id = target_business_id AND sp.role = 'OWNER'\n  )\n$function$\n",
+      "{postgres=X/postgres}"
+    ],
+    [
+      "app",
+      "is_store_employee",
+      "target_business_id uuid, target_store_id uuid",
+      "CREATE OR REPLACE FUNCTION app.is_store_employee(target_business_id uuid, target_store_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\n  SELECT EXISTS (\n    SELECT 1\n    FROM app.staff_profiles AS sp\n    JOIN app.staff_store_assignments AS a\n      ON a.business_id = sp.business_id AND a.staff_profile_id = sp.id\n    JOIN app.stores AS s ON s.business_id = a.business_id AND s.id = a.store_id\n    WHERE sp.id = app.current_staff_profile_id() AND sp.role = 'EMPLOYEE'\n      AND sp.business_id = target_business_id AND s.id = target_store_id\n      AND a.is_active AND s.is_active AND s.deleted_at IS NULL\n  )\n$function$\n",
+      "{postgres=X/postgres}"
+    ],
+    [
+      "app",
+      "reject_history_mutation",
+      "",
+      "CREATE OR REPLACE FUNCTION app.reject_history_mutation()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO ''\nAS $function$\nBEGIN RAISE EXCEPTION 'History is immutable' USING ERRCODE = '42501'; END;\n$function$\n",
+      "{postgres=X/postgres}"
+    ],
+    [
+      "app",
+      "require_staff",
+      "allowed_roles text[]",
+      "CREATE OR REPLACE FUNCTION app.require_staff(allowed_roles text[])\n RETURNS app.staff_profiles\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nDECLARE actor app.staff_profiles;\nBEGIN\n SELECT * INTO actor FROM app.staff_profiles WHERE id = app.current_staff_profile_id();\n IF actor.id IS NULL OR NOT (app.current_staff_role() = ANY(allowed_roles)) THEN\n  RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';\n END IF;\n RETURN actor;\nEND;\n$function$\n",
+      "{postgres=X/postgres}"
+    ],
+    [
+      "app",
+      "sync_product_catalogue",
+      "",
+      "CREATE OR REPLACE FUNCTION app.sync_product_catalogue()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nDECLARE item jsonb; ordinal bigint; prep uuid;\nBEGIN\n IF TG_OP='INSERT' OR NEW.allowed_weights IS DISTINCT FROM OLD.allowed_weights THEN\n UPDATE app.product_allowed_weights SET is_active=false WHERE product_id=NEW.id AND business_id=NEW.business_id;\n FOR item,ordinal IN SELECT value,ordinality FROM jsonb_array_elements(NEW.allowed_weights) WITH ORDINALITY LOOP\n  INSERT INTO app.product_allowed_weights(business_id,product_id,raw_weight_grams,sort_order)\n  VALUES(NEW.business_id,NEW.id,(item::text)::integer,ordinal::integer-1)\n  ON CONFLICT(business_id,product_id,raw_weight_grams) DO UPDATE SET is_active=true,sort_order=EXCLUDED.sort_order;\n END LOOP;\n END IF;\n IF TG_OP='INSERT' OR NEW.preparations IS DISTINCT FROM OLD.preparations THEN\n UPDATE app.product_preparation_options SET is_active=false WHERE product_id=NEW.id AND business_id=NEW.business_id;\n FOR item,ordinal IN SELECT value,ordinality FROM jsonb_array_elements(NEW.preparations) WITH ORDINALITY LOOP\n  INSERT INTO app.preparation_options(business_id,name)\n  VALUES(NEW.business_id,btrim(item->>'name'))\n  ON CONFLICT(business_id,lower(name)) DO NOTHING;\n  SELECT id INTO prep FROM app.preparation_options WHERE business_id=NEW.business_id AND lower(name)=lower(btrim(item->>'name'));\n  INSERT INTO app.product_preparation_options(business_id,product_id,preparation_option_id,cleaning_loss_percent,sort_order)\n  VALUES(NEW.business_id,NEW.id,prep,(item->>'cleaning_loss_percent')::numeric,ordinal::integer-1)\n  ON CONFLICT(business_id,product_id,preparation_option_id) DO UPDATE\n  SET is_active=true,cleaning_loss_percent=EXCLUDED.cleaning_loss_percent,sort_order=EXCLUDED.sort_order;\n END LOOP;\n END IF;\n IF TG_OP='INSERT' OR NEW.image_path IS DISTINCT FROM OLD.image_path THEN\n  UPDATE app.product_images SET is_active=false,is_primary=false WHERE product_id=NEW.id AND legacy;\n  IF NEW.image_path<>'' THEN\n   UPDATE app.product_images SET is_primary=false WHERE product_id=NEW.id AND is_primary;\n   INSERT INTO app.product_images(business_id,product_id,asset_path,alt_text,is_primary,legacy)\n   VALUES(NEW.business_id,NEW.id,NEW.image_path,NEW.name,true,true)\n   ON CONFLICT(business_id,product_id) WHERE legacy DO UPDATE\n   SET asset_path=EXCLUDED.asset_path,alt_text=EXCLUDED.alt_text,is_active=true,is_primary=true;\n  END IF;\n END IF;\n RETURN NEW;\nEND;\n$function$\n",
+      "{postgres=X/postgres}"
+    ],
+    [
+      "app",
+      "valid_opening_hours",
+      "value jsonb",
+      "CREATE OR REPLACE FUNCTION app.valid_opening_hours(value jsonb)\n RETURNS boolean\n LANGUAGE plpgsql\n IMMUTABLE\n SET search_path TO ''\nAS $function$\nDECLARE\n  day_entry record;\n  slot jsonb;\n  opens text;\n  closes text;\n  previous_close text;\nBEGIN\n  IF value IS NULL OR pg_catalog.jsonb_typeof(value) <> 'object'\n     OR pg_catalog.octet_length(value::text) > 8192 THEN\n    RETURN false;\n  END IF;\n  FOR day_entry IN SELECT key, val FROM pg_catalog.jsonb_each(value) AS d(key, val) LOOP\n    IF day_entry.key NOT IN ('mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun')\n       OR pg_catalog.jsonb_typeof(day_entry.val) <> 'array' THEN\n      RETURN false;\n    END IF;\n    IF pg_catalog.jsonb_array_length(day_entry.val) > 4 THEN RETURN false; END IF;\n    previous_close := NULL;\n    FOR slot IN SELECT v FROM pg_catalog.jsonb_array_elements(day_entry.val) AS s(v) LOOP\n      IF pg_catalog.jsonb_typeof(slot) <> 'object' THEN RETURN false; END IF;\n      IF NOT (slot ? 'opens' AND slot ? 'closes')\n         OR (slot - 'opens' - 'closes') <> '{}'::jsonb\n         OR pg_catalog.jsonb_typeof(slot -> 'opens') IS DISTINCT FROM 'string'\n         OR pg_catalog.jsonb_typeof(slot -> 'closes') IS DISTINCT FROM 'string' THEN\n        RETURN false;\n      END IF;\n      opens := slot ->> 'opens';\n      closes := slot ->> 'closes';\n      IF opens !~ '^([01][0-9]|2[0-3]):[0-5][0-9]$'\n         OR closes !~ '^(([01][0-9]|2[0-3]):[0-5][0-9]|24:00)$'\n         OR opens COLLATE pg_catalog.\"C\" >= closes COLLATE pg_catalog.\"C\"\n         OR (previous_close IS NOT NULL AND opens COLLATE pg_catalog.\"C\" < previous_close COLLATE pg_catalog.\"C\") THEN\n        RETURN false;\n      END IF;\n      previous_close := closes;\n    END LOOP;\n  END LOOP;\n  RETURN true;\nEND;\n$function$\n",
+      "{postgres=X/postgres}"
+    ],
+    [
+      "app",
+      "valid_product_configuration",
+      "weights jsonb, preparations jsonb",
+      "CREATE OR REPLACE FUNCTION app.valid_product_configuration(weights jsonb, preparations jsonb)\n RETURNS boolean\n LANGUAGE plpgsql\n IMMUTABLE\n SET search_path TO ''\nAS $function$\nDECLARE item jsonb;\nBEGIN\n IF jsonb_typeof(weights) IS DISTINCT FROM 'array' OR jsonb_typeof(preparations) IS DISTINCT FROM 'array' THEN RETURN false; END IF;\n IF jsonb_array_length(weights) NOT BETWEEN 1 AND 50 OR jsonb_array_length(preparations) NOT BETWEEN 1 AND 50 THEN RETURN false; END IF;\n FOR item IN SELECT value FROM jsonb_array_elements(weights) LOOP\n  IF jsonb_typeof(item) <> 'number' OR item::text !~ '^[0-9]+$' OR (item::text)::numeric NOT BETWEEN 1 AND 100000 THEN RETURN false; END IF;\n END LOOP;\n IF (SELECT count(DISTINCT value) FROM jsonb_array_elements(weights)) <> jsonb_array_length(weights) THEN RETURN false; END IF;\n FOR item IN SELECT value FROM jsonb_array_elements(preparations) LOOP\n  IF jsonb_typeof(item) <> 'object' OR (item - 'name' - 'cleaning_loss_percent') <> '{}'::jsonb\n   OR jsonb_typeof(item->'name') IS DISTINCT FROM 'string' OR length(btrim(item->>'name')) NOT BETWEEN 1 AND 100 THEN RETURN false; END IF;\n  IF item ? 'cleaning_loss_percent' THEN\n   IF jsonb_typeof(item->'cleaning_loss_percent') IS DISTINCT FROM 'number' THEN RETURN false; END IF;\n   IF (item->>'cleaning_loss_percent')::numeric < 0 OR (item->>'cleaning_loss_percent')::numeric >= 100 THEN RETURN false; END IF;\n  END IF;\n END LOOP;\n RETURN (SELECT count(DISTINCT lower(btrim(value->>'name'))) FROM jsonb_array_elements(preparations)) = jsonb_array_length(preparations);\nEND;\n$function$\n",
+      "{postgres=X/postgres}"
+    ]
+  ],
+  "constraints": [
+    [
+      "app",
+      "business_settings",
+      "business_settings_business_id_fkey",
+      "FOREIGN KEY (business_id) REFERENCES app.businesses(id) ON UPDATE RESTRICT ON DELETE RESTRICT"
+    ],
+    [
+      "app",
+      "business_settings",
+      "business_settings_business_id_key",
+      "UNIQUE (business_id)"
+    ],
+    [
+      "app",
+      "business_settings",
+      "business_settings_business_id_not_null",
+      "NOT NULL business_id"
+    ],
+    [
+      "app",
+      "business_settings",
+      "business_settings_created_at_not_null",
+      "NOT NULL created_at"
+    ],
+    [
+      "app",
+      "business_settings",
+      "business_settings_employee_cash_collection_limit_paise_check",
+      "CHECK (((employee_cash_collection_limit_paise >= 1) AND (employee_cash_collection_limit_paise <= '1000000000000'::bigint)))"
+    ],
+    [
+      "app",
+      "business_settings",
+      "business_settings_employee_operational_history_days_check",
+      "CHECK (((employee_operational_history_days >= 1) AND (employee_operational_history_days <= 365)))"
+    ],
+    [
+      "app",
+      "business_settings",
+      "business_settings_employee_operational_history_days_not_null",
+      "NOT NULL employee_operational_history_days"
+    ],
+    [
+      "app",
+      "business_settings",
+      "business_settings_id_not_null",
+      "NOT NULL id"
+    ],
+    [
+      "app",
+      "business_settings",
+      "business_settings_max_order_items_check",
+      "CHECK (((max_order_items >= 1) AND (max_order_items <= 500)))"
+    ],
+    [
+      "app",
+      "business_settings",
+      "business_settings_max_order_items_not_null",
+      "NOT NULL max_order_items"
+    ],
+    [
+      "app",
+      "business_settings",
+      "business_settings_max_order_total_paise_check",
+      "CHECK (((max_order_total_paise >= 1) AND (max_order_total_paise <= '1000000000000'::bigint)))"
+    ],
+    [
+      "app",
+      "business_settings",
+      "business_settings_max_order_total_paise_not_null",
+      "NOT NULL max_order_total_paise"
+    ],
+    [
+      "app",
+      "business_settings",
+      "business_settings_pkey",
+      "PRIMARY KEY (id)"
+    ],
+    [
+      "app",
+      "business_settings",
+      "business_settings_require_payment_before_completion_not_null",
+      "NOT NULL require_payment_before_completion"
+    ],
+    [
+      "app",
+      "business_settings",
+      "business_settings_revision_check",
+      "CHECK ((revision > 0))"
+    ],
+    [
+      "app",
+      "business_settings",
+      "business_settings_revision_not_null",
+      "NOT NULL revision"
+    ],
+    [
+      "app",
+      "business_settings",
+      "business_settings_timestamps",
+      "CHECK ((updated_at >= created_at))"
+    ],
+    [
+      "app",
+      "business_settings",
+      "business_settings_updated_at_not_null",
+      "NOT NULL updated_at"
+    ],
+    [
+      "app",
+      "businesses",
+      "businesses_created_at_not_null",
+      "NOT NULL created_at"
+    ],
+    [
+      "app",
+      "businesses",
+      "businesses_currency_check",
+      "CHECK ((currency = 'INR'::text))"
+    ],
+    [
+      "app",
+      "businesses",
+      "businesses_currency_not_null",
+      "NOT NULL currency"
+    ],
+    [
+      "app",
+      "businesses",
+      "businesses_display_name_check",
+      "CHECK ((((length(display_name) >= 1) AND (length(display_name) <= 160)) AND (display_name = btrim(display_name)) AND (display_name ~ '[^[:space:]]'::text)))"
+    ],
+    [
+      "app",
+      "businesses",
+      "businesses_display_name_not_null",
+      "NOT NULL display_name"
+    ],
+    [
+      "app",
+      "businesses",
+      "businesses_id_not_null",
+      "NOT NULL id"
+    ],
+    [
+      "app",
+      "businesses",
+      "businesses_is_active_not_null",
+      "NOT NULL is_active"
+    ],
+    [
+      "app",
+      "businesses",
+      "businesses_legal_name_check",
+      "CHECK ((((length(legal_name) >= 1) AND (length(legal_name) <= 240)) AND (legal_name = btrim(legal_name)) AND (legal_name ~ '[^[:space:]]'::text)))"
+    ],
+    [
+      "app",
+      "businesses",
+      "businesses_pkey",
+      "PRIMARY KEY (id)"
+    ],
+    [
+      "app",
+      "businesses",
+      "businesses_retirement",
+      "CHECK (((deleted_at IS NULL) OR (NOT is_active)))"
+    ],
+    [
+      "app",
+      "businesses",
+      "businesses_slug_check",
+      "CHECK ((((length(slug) >= 1) AND (length(slug) <= 63)) AND (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'::text)))"
+    ],
+    [
+      "app",
+      "businesses",
+      "businesses_slug_key",
+      "UNIQUE (slug)"
+    ],
+    [
+      "app",
+      "businesses",
+      "businesses_slug_not_null",
+      "NOT NULL slug"
+    ],
+    [
+      "app",
+      "businesses",
+      "businesses_timestamps",
+      "CHECK ((updated_at >= created_at))"
+    ],
+    [
+      "app",
+      "businesses",
+      "businesses_updated_at_not_null",
+      "NOT NULL updated_at"
+    ],
+    [
+      "app",
+      "categories",
+      "categories_business_id_fkey",
+      "FOREIGN KEY (business_id) REFERENCES app.businesses(id)"
+    ],
+    [
+      "app",
+      "categories",
+      "categories_business_id_id_key",
+      "UNIQUE (business_id, id)"
+    ],
+    [
+      "app",
+      "categories",
+      "categories_business_id_name_key",
+      "UNIQUE (business_id, name)"
+    ],
+    [
+      "app",
+      "categories",
+      "categories_business_id_not_null",
+      "NOT NULL business_id"
+    ],
+    [
+      "app",
+      "categories",
+      "categories_business_id_parent_id_fkey",
+      "FOREIGN KEY (business_id, parent_id) REFERENCES app.categories(business_id, id)"
+    ],
+    [
+      "app",
+      "categories",
+      "categories_check",
+      "CHECK ((parent_id IS DISTINCT FROM id))"
+    ],
+    [
+      "app",
+      "categories",
+      "categories_created_at_not_null",
+      "NOT NULL created_at"
+    ],
+    [
+      "app",
+      "categories",
+      "categories_id_not_null",
+      "NOT NULL id"
+    ],
+    [
+      "app",
+      "categories",
+      "categories_is_active_not_null",
+      "NOT NULL is_active"
+    ],
+    [
+      "app",
+      "categories",
+      "categories_name_check",
+      "CHECK (((length(btrim(name)) >= 1) AND (length(btrim(name)) <= 160)))"
+    ],
+    [
+      "app",
+      "categories",
+      "categories_name_not_null",
+      "NOT NULL name"
+    ],
+    [
+      "app",
+      "categories",
+      "categories_pkey",
+      "PRIMARY KEY (id)"
+    ],
+    [
+      "app",
+      "categories",
+      "categories_sort_order_check",
+      "CHECK ((sort_order >= 0))"
+    ],
+    [
+      "app",
+      "categories",
+      "categories_sort_order_not_null",
+      "NOT NULL sort_order"
+    ],
+    [
+      "app",
+      "categories",
+      "categories_updated_at_not_null",
+      "NOT NULL updated_at"
+    ],
+    [
+      "app",
+      "preparation_options",
+      "preparation_options_business_id_fkey",
+      "FOREIGN KEY (business_id) REFERENCES app.businesses(id)"
+    ],
+    [
+      "app",
+      "preparation_options",
+      "preparation_options_business_id_id_key",
+      "UNIQUE (business_id, id)"
+    ],
+    [
+      "app",
+      "preparation_options",
+      "preparation_options_business_id_not_null",
+      "NOT NULL business_id"
+    ],
+    [
+      "app",
+      "preparation_options",
+      "preparation_options_created_at_not_null",
+      "NOT NULL created_at"
+    ],
+    [
+      "app",
+      "preparation_options",
+      "preparation_options_id_not_null",
+      "NOT NULL id"
+    ],
+    [
+      "app",
+      "preparation_options",
+      "preparation_options_is_active_not_null",
+      "NOT NULL is_active"
+    ],
+    [
+      "app",
+      "preparation_options",
+      "preparation_options_name_check",
+      "CHECK ((((length(btrim(name)) >= 1) AND (length(btrim(name)) <= 100)) AND (name = btrim(name))))"
+    ],
+    [
+      "app",
+      "preparation_options",
+      "preparation_options_name_not_null",
+      "NOT NULL name"
+    ],
+    [
+      "app",
+      "preparation_options",
+      "preparation_options_pkey",
+      "PRIMARY KEY (id)"
+    ],
+    [
+      "app",
+      "preparation_options",
+      "preparation_options_sort_order_check",
+      "CHECK ((sort_order >= 0))"
+    ],
+    [
+      "app",
+      "preparation_options",
+      "preparation_options_sort_order_not_null",
+      "NOT NULL sort_order"
+    ],
+    [
+      "app",
+      "preparation_options",
+      "preparation_options_updated_at_not_null",
+      "NOT NULL updated_at"
+    ],
+    [
+      "app",
+      "product_allowed_weights",
+      "product_allowed_weights_business_id_not_null",
+      "NOT NULL business_id"
+    ],
+    [
+      "app",
+      "product_allowed_weights",
+      "product_allowed_weights_business_id_product_id_fkey",
+      "FOREIGN KEY (business_id, product_id) REFERENCES app.products(business_id, id)"
+    ],
+    [
+      "app",
+      "product_allowed_weights",
+      "product_allowed_weights_business_id_product_id_raw_weight_g_key",
+      "UNIQUE (business_id, product_id, raw_weight_grams)"
+    ],
+    [
+      "app",
+      "product_allowed_weights",
+      "product_allowed_weights_created_at_not_null",
+      "NOT NULL created_at"
+    ],
+    [
+      "app",
+      "product_allowed_weights",
+      "product_allowed_weights_id_not_null",
+      "NOT NULL id"
+    ],
+    [
+      "app",
+      "product_allowed_weights",
+      "product_allowed_weights_is_active_not_null",
+      "NOT NULL is_active"
+    ],
+    [
+      "app",
+      "product_allowed_weights",
+      "product_allowed_weights_pkey",
+      "PRIMARY KEY (id)"
+    ],
+    [
+      "app",
+      "product_allowed_weights",
+      "product_allowed_weights_product_id_not_null",
+      "NOT NULL product_id"
+    ],
+    [
+      "app",
+      "product_allowed_weights",
+      "product_allowed_weights_raw_weight_grams_check",
+      "CHECK (((raw_weight_grams >= 1) AND (raw_weight_grams <= 100000)))"
+    ],
+    [
+      "app",
+      "product_allowed_weights",
+      "product_allowed_weights_raw_weight_grams_not_null",
+      "NOT NULL raw_weight_grams"
+    ],
+    [
+      "app",
+      "product_allowed_weights",
+      "product_allowed_weights_sort_order_check",
+      "CHECK ((sort_order >= 0))"
+    ],
+    [
+      "app",
+      "product_allowed_weights",
+      "product_allowed_weights_sort_order_not_null",
+      "NOT NULL sort_order"
+    ],
+    [
+      "app",
+      "product_allowed_weights",
+      "product_allowed_weights_updated_at_not_null",
+      "NOT NULL updated_at"
+    ],
+    [
+      "app",
+      "product_images",
+      "product_images_alt_text_check",
+      "CHECK ((length(alt_text) <= 240))"
+    ],
+    [
+      "app",
+      "product_images",
+      "product_images_alt_text_not_null",
+      "NOT NULL alt_text"
+    ],
+    [
+      "app",
+      "product_images",
+      "product_images_business_id_not_null",
+      "NOT NULL business_id"
+    ],
+    [
+      "app",
+      "product_images",
+      "product_images_business_id_product_id_fkey",
+      "FOREIGN KEY (business_id, product_id) REFERENCES app.products(business_id, id)"
+    ],
+    [
+      "app",
+      "product_images",
+      "product_images_check",
+      "CHECK ((((asset_path IS NOT NULL) AND (storage_bucket IS NULL) AND (storage_object_path IS NULL) AND (length(asset_path) <= 500) AND (asset_path ~ '^/assets/[a-zA-Z0-9/_ .-]+\\.(jpg|jpeg|png|webp)$'::text) AND (POSITION(('..'::text) IN (asset_path)) = 0)) OR ((asset_path IS NULL) AND (storage_bucket IS NOT NULL) AND (storage_bucket = 'product-images'::text) AND (storage_object_path IS NOT NULL) AND (storage_object_path ~ (((('^'::text || (business_id)::text) || '/'::text) || (product_id)::text) || '/[a-zA-Z0-9_-]+\\.(jpg|jpeg|png|webp)$'::text)))))"
+    ],
+    [
+      "app",
+      "product_images",
+      "product_images_created_at_not_null",
+      "NOT NULL created_at"
+    ],
+    [
+      "app",
+      "product_images",
+      "product_images_id_not_null",
+      "NOT NULL id"
+    ],
+    [
+      "app",
+      "product_images",
+      "product_images_is_active_not_null",
+      "NOT NULL is_active"
+    ],
+    [
+      "app",
+      "product_images",
+      "product_images_is_primary_not_null",
+      "NOT NULL is_primary"
+    ],
+    [
+      "app",
+      "product_images",
+      "product_images_legacy_not_null",
+      "NOT NULL legacy"
+    ],
+    [
+      "app",
+      "product_images",
+      "product_images_pkey",
+      "PRIMARY KEY (id)"
+    ],
+    [
+      "app",
+      "product_images",
+      "product_images_product_id_not_null",
+      "NOT NULL product_id"
+    ],
+    [
+      "app",
+      "product_images",
+      "product_images_sort_order_check",
+      "CHECK ((sort_order >= 0))"
+    ],
+    [
+      "app",
+      "product_images",
+      "product_images_sort_order_not_null",
+      "NOT NULL sort_order"
+    ],
+    [
+      "app",
+      "product_images",
+      "product_images_updated_at_not_null",
+      "NOT NULL updated_at"
+    ],
+    [
+      "app",
+      "product_preparation_options",
+      "product_preparation_options_business_id_not_null",
+      "NOT NULL business_id"
+    ],
+    [
+      "app",
+      "product_preparation_options",
+      "product_preparation_options_business_id_preparation_option_fkey",
+      "FOREIGN KEY (business_id, preparation_option_id) REFERENCES app.preparation_options(business_id, id)"
+    ],
+    [
+      "app",
+      "product_preparation_options",
+      "product_preparation_options_business_id_product_id_fkey",
+      "FOREIGN KEY (business_id, product_id) REFERENCES app.products(business_id, id)"
+    ],
+    [
+      "app",
+      "product_preparation_options",
+      "product_preparation_options_business_id_product_id_preparat_key",
+      "UNIQUE (business_id, product_id, preparation_option_id)"
+    ],
+    [
+      "app",
+      "product_preparation_options",
+      "product_preparation_options_cleaning_loss_percent_check",
+      "CHECK (((cleaning_loss_percent >= (0)::numeric) AND (cleaning_loss_percent < (100)::numeric)))"
+    ],
+    [
+      "app",
+      "product_preparation_options",
+      "product_preparation_options_created_at_not_null",
+      "NOT NULL created_at"
+    ],
+    [
+      "app",
+      "product_preparation_options",
+      "product_preparation_options_id_not_null",
+      "NOT NULL id"
+    ],
+    [
+      "app",
+      "product_preparation_options",
+      "product_preparation_options_is_active_not_null",
+      "NOT NULL is_active"
+    ],
+    [
+      "app",
+      "product_preparation_options",
+      "product_preparation_options_pkey",
+      "PRIMARY KEY (id)"
+    ],
+    [
+      "app",
+      "product_preparation_options",
+      "product_preparation_options_preparation_option_id_not_null",
+      "NOT NULL preparation_option_id"
+    ],
+    [
+      "app",
+      "product_preparation_options",
+      "product_preparation_options_product_id_not_null",
+      "NOT NULL product_id"
+    ],
+    [
+      "app",
+      "product_preparation_options",
+      "product_preparation_options_sort_order_check",
+      "CHECK ((sort_order >= 0))"
+    ],
+    [
+      "app",
+      "product_preparation_options",
+      "product_preparation_options_sort_order_not_null",
+      "NOT NULL sort_order"
+    ],
+    [
+      "app",
+      "product_preparation_options",
+      "product_preparation_options_updated_at_not_null",
+      "NOT NULL updated_at"
+    ],
+    [
+      "app",
+      "product_prices",
+      "product_prices_business_id_created_by_fkey",
+      "FOREIGN KEY (business_id, created_by) REFERENCES app.staff_profiles(business_id, id)"
+    ],
+    [
+      "app",
+      "product_prices",
+      "product_prices_business_id_not_null",
+      "NOT NULL business_id"
+    ],
+    [
+      "app",
+      "product_prices",
+      "product_prices_business_id_offering_id_fkey",
+      "FOREIGN KEY (business_id, offering_id) REFERENCES app.product_store_settings(business_id, id)"
+    ],
+    [
+      "app",
+      "product_prices",
+      "product_prices_created_by_not_null",
+      "NOT NULL created_by"
+    ],
+    [
+      "app",
+      "product_prices",
+      "product_prices_effective_from_not_null",
+      "NOT NULL effective_from"
+    ],
+    [
+      "app",
+      "product_prices",
+      "product_prices_id_not_null",
+      "NOT NULL id"
+    ],
+    [
+      "app",
+      "product_prices",
+      "product_prices_offering_id_not_null",
+      "NOT NULL offering_id"
+    ],
+    [
+      "app",
+      "product_prices",
+      "product_prices_offering_id_offering_version_key",
+      "UNIQUE (offering_id, offering_version)"
+    ],
+    [
+      "app",
+      "product_prices",
+      "product_prices_offering_version_not_null",
+      "NOT NULL offering_version"
+    ],
+    [
+      "app",
+      "product_prices",
+      "product_prices_pkey",
+      "PRIMARY KEY (id)"
+    ],
+    [
+      "app",
+      "product_prices",
+      "product_prices_price_per_kg_paise_check",
+      "CHECK (((price_per_kg_paise >= 1) AND (price_per_kg_paise <= 100000000)))"
+    ],
+    [
+      "app",
+      "product_prices",
+      "product_prices_price_per_kg_paise_not_null",
+      "NOT NULL price_per_kg_paise"
+    ],
+    [
+      "app",
+      "product_store_settings",
+      "product_store_settings_available_not_null",
+      "NOT NULL available"
+    ],
+    [
+      "app",
+      "product_store_settings",
+      "product_store_settings_business_id_id_key",
+      "UNIQUE (business_id, id)"
+    ],
+    [
+      "app",
+      "product_store_settings",
+      "product_store_settings_business_id_not_null",
+      "NOT NULL business_id"
+    ],
+    [
+      "app",
+      "product_store_settings",
+      "product_store_settings_business_id_product_id_fkey",
+      "FOREIGN KEY (business_id, product_id) REFERENCES app.products(business_id, id)"
+    ],
+    [
+      "app",
+      "product_store_settings",
+      "product_store_settings_business_id_store_id_fkey",
+      "FOREIGN KEY (business_id, store_id) REFERENCES app.stores(business_id, id)"
+    ],
+    [
+      "app",
+      "product_store_settings",
+      "product_store_settings_business_id_store_id_product_id_key",
+      "UNIQUE (business_id, store_id, product_id)"
+    ],
+    [
+      "app",
+      "product_store_settings",
+      "product_store_settings_id_not_null",
+      "NOT NULL id"
+    ],
+    [
+      "app",
+      "product_store_settings",
+      "product_store_settings_is_active_not_null",
+      "NOT NULL is_active"
+    ],
+    [
+      "app",
+      "product_store_settings",
+      "product_store_settings_pkey",
+      "PRIMARY KEY (id)"
+    ],
+    [
+      "app",
+      "product_store_settings",
+      "product_store_settings_product_id_not_null",
+      "NOT NULL product_id"
+    ],
+    [
+      "app",
+      "product_store_settings",
+      "product_store_settings_sort_override_check",
+      "CHECK ((sort_override >= 0))"
+    ],
+    [
+      "app",
+      "product_store_settings",
+      "product_store_settings_store_id_not_null",
+      "NOT NULL store_id"
+    ],
+    [
+      "app",
+      "product_store_settings",
+      "product_store_settings_updated_at_not_null",
+      "NOT NULL updated_at"
+    ],
+    [
+      "app",
+      "product_store_settings",
+      "product_store_settings_version_check",
+      "CHECK ((version > 0))"
+    ],
+    [
+      "app",
+      "product_store_settings",
+      "product_store_settings_version_not_null",
+      "NOT NULL version"
+    ],
+    [
+      "app",
+      "products",
+      "products_allowed_weights_not_null",
+      "NOT NULL allowed_weights"
+    ],
+    [
+      "app",
+      "products",
+      "products_business_id_category_id_fkey",
+      "FOREIGN KEY (business_id, category_id) REFERENCES app.categories(business_id, id)"
+    ],
+    [
+      "app",
+      "products",
+      "products_business_id_fkey",
+      "FOREIGN KEY (business_id) REFERENCES app.businesses(id)"
+    ],
+    [
+      "app",
+      "products",
+      "products_business_id_id_key",
+      "UNIQUE (business_id, id)"
+    ],
+    [
+      "app",
+      "products",
+      "products_business_id_not_null",
+      "NOT NULL business_id"
+    ],
+    [
+      "app",
+      "products",
+      "products_category_id_not_null",
+      "NOT NULL category_id"
+    ],
+    [
+      "app",
+      "products",
+      "products_check",
+      "CHECK (app.valid_product_configuration(allowed_weights, preparations))"
+    ],
+    [
+      "app",
+      "products",
+      "products_created_at_not_null",
+      "NOT NULL created_at"
+    ],
+    [
+      "app",
+      "products",
+      "products_description_check",
+      "CHECK ((length(description) <= 4000))"
+    ],
+    [
+      "app",
+      "products",
+      "products_description_not_null",
+      "NOT NULL description"
+    ],
+    [
+      "app",
+      "products",
+      "products_featured_not_null",
+      "NOT NULL featured"
+    ],
+    [
+      "app",
+      "products",
+      "products_id_not_null",
+      "NOT NULL id"
+    ],
+    [
+      "app",
+      "products",
+      "products_image_path_check",
+      "CHECK (((length(image_path) <= 500) AND ((image_path = ''::text) OR (image_path ~ '^/assets/[a-zA-Z0-9/_ .-]+$'::text))))"
+    ],
+    [
+      "app",
+      "products",
+      "products_image_path_not_null",
+      "NOT NULL image_path"
+    ],
+    [
+      "app",
+      "products",
+      "products_is_active_not_null",
+      "NOT NULL is_active"
+    ],
+    [
+      "app",
+      "products",
+      "products_local_name_check",
+      "CHECK ((length(local_name) <= 160))"
+    ],
+    [
+      "app",
+      "products",
+      "products_local_name_not_null",
+      "NOT NULL local_name"
+    ],
+    [
+      "app",
+      "products",
+      "products_name_check",
+      "CHECK (((length(btrim(name)) >= 1) AND (length(btrim(name)) <= 160)))"
+    ],
+    [
+      "app",
+      "products",
+      "products_name_not_null",
+      "NOT NULL name"
+    ],
+    [
+      "app",
+      "products",
+      "products_pkey",
+      "PRIMARY KEY (id)"
+    ],
+    [
+      "app",
+      "products",
+      "products_preparations_not_null",
+      "NOT NULL preparations"
+    ],
+    [
+      "app",
+      "products",
+      "products_sort_order_check",
+      "CHECK ((sort_order >= 0))"
+    ],
+    [
+      "app",
+      "products",
+      "products_sort_order_not_null",
+      "NOT NULL sort_order"
+    ],
+    [
+      "app",
+      "products",
+      "products_updated_at_not_null",
+      "NOT NULL updated_at"
+    ],
+    [
+      "app",
+      "staff_access_audit",
+      "staff_access_audit_action_not_null",
+      "NOT NULL action"
+    ],
+    [
+      "app",
+      "staff_access_audit",
+      "staff_access_audit_actor_id_not_null",
+      "NOT NULL actor_id"
+    ],
+    [
+      "app",
+      "staff_access_audit",
+      "staff_access_audit_business_id_actor_id_fkey",
+      "FOREIGN KEY (business_id, actor_id) REFERENCES app.staff_profiles(business_id, id)"
+    ],
+    [
+      "app",
+      "staff_access_audit",
+      "staff_access_audit_business_id_fkey",
+      "FOREIGN KEY (business_id) REFERENCES app.businesses(id)"
+    ],
+    [
+      "app",
+      "staff_access_audit",
+      "staff_access_audit_business_id_not_null",
+      "NOT NULL business_id"
+    ],
+    [
+      "app",
+      "staff_access_audit",
+      "staff_access_audit_created_at_not_null",
+      "NOT NULL created_at"
+    ],
+    [
+      "app",
+      "staff_access_audit",
+      "staff_access_audit_detail_not_null",
+      "NOT NULL detail"
+    ],
+    [
+      "app",
+      "staff_access_audit",
+      "staff_access_audit_id_not_null",
+      "NOT NULL id"
+    ],
+    [
+      "app",
+      "staff_access_audit",
+      "staff_access_audit_pkey",
+      "PRIMARY KEY (id)"
+    ],
+    [
+      "app",
+      "staff_access_audit",
+      "staff_access_audit_target_id_not_null",
+      "NOT NULL target_id"
+    ],
+    [
+      "app",
+      "staff_admin_grants",
+      "staff_admin_grants_created_at_not_null",
+      "NOT NULL created_at"
+    ],
+    [
+      "app",
+      "staff_admin_grants",
+      "staff_admin_grants_is_active_not_null",
+      "NOT NULL is_active"
+    ],
+    [
+      "app",
+      "staff_admin_grants",
+      "staff_admin_grants_pkey",
+      "PRIMARY KEY (staff_profile_id)"
+    ],
+    [
+      "app",
+      "staff_admin_grants",
+      "staff_admin_grants_staff_profile_id_fkey",
+      "FOREIGN KEY (staff_profile_id) REFERENCES app.staff_profiles(id) ON DELETE RESTRICT"
+    ],
+    [
+      "app",
+      "staff_admin_grants",
+      "staff_admin_grants_staff_profile_id_not_null",
+      "NOT NULL staff_profile_id"
+    ],
+    [
+      "app",
+      "staff_profiles",
+      "staff_profiles_auth_user_id_fkey",
+      "FOREIGN KEY (auth_user_id) REFERENCES auth.users(id) ON UPDATE RESTRICT ON DELETE RESTRICT"
+    ],
+    [
+      "app",
+      "staff_profiles",
+      "staff_profiles_business_id_fkey",
+      "FOREIGN KEY (business_id) REFERENCES app.businesses(id) ON UPDATE RESTRICT ON DELETE RESTRICT"
+    ],
+    [
+      "app",
+      "staff_profiles",
+      "staff_profiles_business_id_id_key",
+      "UNIQUE (business_id, id)"
+    ],
+    [
+      "app",
+      "staff_profiles",
+      "staff_profiles_business_id_not_null",
+      "NOT NULL business_id"
+    ],
+    [
+      "app",
+      "staff_profiles",
+      "staff_profiles_created_at_not_null",
+      "NOT NULL created_at"
+    ],
+    [
+      "app",
+      "staff_profiles",
+      "staff_profiles_disabled_by_fkey",
+      "FOREIGN KEY (business_id, disabled_by) REFERENCES app.staff_profiles(business_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT"
+    ],
+    [
+      "app",
+      "staff_profiles",
+      "staff_profiles_display_name_check",
+      "CHECK ((((length(display_name) >= 1) AND (length(display_name) <= 160)) AND (display_name = btrim(display_name)) AND (display_name ~ '[^[:space:]]'::text)))"
+    ],
+    [
+      "app",
+      "staff_profiles",
+      "staff_profiles_display_name_not_null",
+      "NOT NULL display_name"
+    ],
+    [
+      "app",
+      "staff_profiles",
+      "staff_profiles_id_not_null",
+      "NOT NULL id"
+    ],
+    [
+      "app",
+      "staff_profiles",
+      "staff_profiles_is_active_not_null",
+      "NOT NULL is_active"
+    ],
+    [
+      "app",
+      "staff_profiles",
+      "staff_profiles_lifecycle",
+      "CHECK (((is_active AND (auth_user_id IS NOT NULL) AND (disabled_at IS NULL) AND (disabled_by IS NULL)) OR ((NOT is_active) AND (disabled_at IS NOT NULL))))"
+    ],
+    [
+      "app",
+      "staff_profiles",
+      "staff_profiles_pkey",
+      "PRIMARY KEY (id)"
+    ],
+    [
+      "app",
+      "staff_profiles",
+      "staff_profiles_role_check",
+      "CHECK ((role = ANY (ARRAY['OWNER'::text, 'EMPLOYEE'::text])))"
+    ],
+    [
+      "app",
+      "staff_profiles",
+      "staff_profiles_role_not_null",
+      "NOT NULL role"
+    ],
+    [
+      "app",
+      "staff_profiles",
+      "staff_profiles_timestamps",
+      "CHECK ((updated_at >= created_at))"
+    ],
+    [
+      "app",
+      "staff_profiles",
+      "staff_profiles_updated_at_not_null",
+      "NOT NULL updated_at"
+    ],
+    [
+      "app",
+      "staff_store_assignments",
+      "staff_store_assignments_business_id_fkey",
+      "FOREIGN KEY (business_id) REFERENCES app.businesses(id) ON UPDATE RESTRICT ON DELETE RESTRICT"
+    ],
+    [
+      "app",
+      "staff_store_assignments",
+      "staff_store_assignments_business_id_not_null",
+      "NOT NULL business_id"
+    ],
+    [
+      "app",
+      "staff_store_assignments",
+      "staff_store_assignments_created_at_not_null",
+      "NOT NULL created_at"
+    ],
+    [
+      "app",
+      "staff_store_assignments",
+      "staff_store_assignments_id_not_null",
+      "NOT NULL id"
+    ],
+    [
+      "app",
+      "staff_store_assignments",
+      "staff_store_assignments_is_active_not_null",
+      "NOT NULL is_active"
+    ],
+    [
+      "app",
+      "staff_store_assignments",
+      "staff_store_assignments_pkey",
+      "PRIMARY KEY (id)"
+    ],
+    [
+      "app",
+      "staff_store_assignments",
+      "staff_store_assignments_staff_fkey",
+      "FOREIGN KEY (business_id, staff_profile_id) REFERENCES app.staff_profiles(business_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT"
+    ],
+    [
+      "app",
+      "staff_store_assignments",
+      "staff_store_assignments_staff_profile_id_not_null",
+      "NOT NULL staff_profile_id"
+    ],
+    [
+      "app",
+      "staff_store_assignments",
+      "staff_store_assignments_staff_store_key",
+      "UNIQUE (business_id, staff_profile_id, store_id)"
+    ],
+    [
+      "app",
+      "staff_store_assignments",
+      "staff_store_assignments_store_fkey",
+      "FOREIGN KEY (business_id, store_id) REFERENCES app.stores(business_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT"
+    ],
+    [
+      "app",
+      "staff_store_assignments",
+      "staff_store_assignments_store_id_not_null",
+      "NOT NULL store_id"
+    ],
+    [
+      "app",
+      "staff_store_assignments",
+      "staff_store_assignments_timestamps",
+      "CHECK ((updated_at >= created_at))"
+    ],
+    [
+      "app",
+      "staff_store_assignments",
+      "staff_store_assignments_updated_at_not_null",
+      "NOT NULL updated_at"
+    ],
+    [
+      "app",
+      "stores",
+      "stores_address_line1_check",
+      "CHECK ((((length(address_line1) >= 1) AND (length(address_line1) <= 240)) AND (address_line1 = btrim(address_line1)) AND (address_line1 ~ '[^[:space:]]'::text)))"
+    ],
+    [
+      "app",
+      "stores",
+      "stores_address_line1_not_null",
+      "NOT NULL address_line1"
+    ],
+    [
+      "app",
+      "stores",
+      "stores_address_line2_check",
+      "CHECK ((((length(address_line2) >= 1) AND (length(address_line2) <= 240)) AND (address_line2 = btrim(address_line2)) AND (address_line2 ~ '[^[:space:]]'::text)))"
+    ],
+    [
+      "app",
+      "stores",
+      "stores_business_code_key",
+      "UNIQUE (business_id, code)"
+    ],
+    [
+      "app",
+      "stores",
+      "stores_business_id_fkey",
+      "FOREIGN KEY (business_id) REFERENCES app.businesses(id) ON UPDATE RESTRICT ON DELETE RESTRICT"
+    ],
+    [
+      "app",
+      "stores",
+      "stores_business_id_id_key",
+      "UNIQUE (business_id, id)"
+    ],
+    [
+      "app",
+      "stores",
+      "stores_business_id_not_null",
+      "NOT NULL business_id"
+    ],
+    [
+      "app",
+      "stores",
+      "stores_city_check",
+      "CHECK ((((length(city) >= 1) AND (length(city) <= 120)) AND (city = btrim(city)) AND (city ~ '[^[:space:]]'::text)))"
+    ],
+    [
+      "app",
+      "stores",
+      "stores_city_not_null",
+      "NOT NULL city"
+    ],
+    [
+      "app",
+      "stores",
+      "stores_code_check",
+      "CHECK ((((length(code) >= 1) AND (length(code) <= 32)) AND (code ~ '^[a-z0-9]+(-[a-z0-9]+)*$'::text)))"
+    ],
+    [
+      "app",
+      "stores",
+      "stores_code_not_null",
+      "NOT NULL code"
+    ],
+    [
+      "app",
+      "stores",
+      "stores_contact_mobile_e164_check",
+      "CHECK ((contact_mobile_e164 ~ '^\\+91[6-9][0-9]{9}$'::text))"
+    ],
+    [
+      "app",
+      "stores",
+      "stores_country_code_check",
+      "CHECK ((country_code = 'IN'::text))"
+    ],
+    [
+      "app",
+      "stores",
+      "stores_country_code_not_null",
+      "NOT NULL country_code"
+    ],
+    [
+      "app",
+      "stores",
+      "stores_created_at_not_null",
+      "NOT NULL created_at"
+    ],
+    [
+      "app",
+      "stores",
+      "stores_delivery_enabled_not_null",
+      "NOT NULL delivery_enabled"
+    ],
+    [
+      "app",
+      "stores",
+      "stores_id_not_null",
+      "NOT NULL id"
+    ],
+    [
+      "app",
+      "stores",
+      "stores_is_active_not_null",
+      "NOT NULL is_active"
+    ],
+    [
+      "app",
+      "stores",
+      "stores_locality_check",
+      "CHECK ((((length(locality) >= 1) AND (length(locality) <= 120)) AND (locality = btrim(locality)) AND (locality ~ '[^[:space:]]'::text)))"
+    ],
+    [
+      "app",
+      "stores",
+      "stores_name_check",
+      "CHECK ((((length(name) >= 1) AND (length(name) <= 160)) AND (name = btrim(name)) AND (name ~ '[^[:space:]]'::text)))"
+    ],
+    [
+      "app",
+      "stores",
+      "stores_name_not_null",
+      "NOT NULL name"
+    ],
+    [
+      "app",
+      "stores",
+      "stores_opening_hours_check",
+      "CHECK (app.valid_opening_hours(opening_hours))"
+    ],
+    [
+      "app",
+      "stores",
+      "stores_opening_hours_not_null",
+      "NOT NULL opening_hours"
+    ],
+    [
+      "app",
+      "stores",
+      "stores_pickup_enabled_not_null",
+      "NOT NULL pickup_enabled"
+    ],
+    [
+      "app",
+      "stores",
+      "stores_pincode_check",
+      "CHECK ((pincode ~ '^[1-9][0-9]{5}$'::text))"
+    ],
+    [
+      "app",
+      "stores",
+      "stores_pkey",
+      "PRIMARY KEY (id)"
+    ],
+    [
+      "app",
+      "stores",
+      "stores_retirement",
+      "CHECK (((deleted_at IS NULL) OR (NOT is_active)))"
+    ],
+    [
+      "app",
+      "stores",
+      "stores_state_check",
+      "CHECK ((((length(state) >= 1) AND (length(state) <= 120)) AND (state = btrim(state)) AND (state ~ '[^[:space:]]'::text)))"
+    ],
+    [
+      "app",
+      "stores",
+      "stores_state_not_null",
+      "NOT NULL state"
+    ],
+    [
+      "app",
+      "stores",
+      "stores_timestamps",
+      "CHECK ((updated_at >= created_at))"
+    ],
+    [
+      "app",
+      "stores",
+      "stores_timezone_check",
+      "CHECK ((((length(timezone) >= 1) AND (length(timezone) <= 100)) AND (timezone = btrim(timezone))))"
+    ],
+    [
+      "app",
+      "stores",
+      "stores_timezone_not_null",
+      "NOT NULL timezone"
+    ],
+    [
+      "app",
+      "stores",
+      "stores_updated_at_not_null",
+      "NOT NULL updated_at"
+    ]
+  ]
+}

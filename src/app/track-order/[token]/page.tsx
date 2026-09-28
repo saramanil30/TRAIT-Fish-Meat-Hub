@@ -1,7 +1,4 @@
-import type { Metadata } from "next";
-import { OrderTracking } from "@/components/checkout/order-tracking";
-export const metadata: Metadata = { title: "Track your order preview", robots: { index: false, follow: false } };
-export default async function Page({ params }: { params: Promise<{ token: string }> }) {
-  const { token } = await params;
-  return <OrderTracking token={token} />;
-}
+import { LiveTracking } from "@/components/checkout/live-tracking";
+export const dynamic = "force-dynamic";
+export const metadata = { title: "Your TRAIT order", robots: {index:false,follow:false}, referrer:"no-referrer" as const };
+export default async function Page({params}:{params:Promise<{token:string}>}) { return <LiveTracking token={(await params).token}/>; }

@@ -1,0 +1,34 @@
+{
+  "categories": [],
+  "products": [],
+  "deliveryAreas": [],
+  "instructions": {
+    "categoryFields": [
+      "name",
+      "parentCategory",
+      "displayOrder",
+      "active"
+    ],
+    "productFields": [
+      "category",
+      "name",
+      "localName",
+      "description",
+      "approvedImagePath",
+      "weightsGrams",
+      "preparations (name and optional cleaningLossPercent)",
+      "store",
+      "pricePerKgPaise",
+      "available"
+    ],
+    "deliveryFields": [
+      "store",
+      "pincode",
+      "name",
+      "feePaise",
+      "minimumPaise",
+      "active"
+    ],
+    "entry": "Enter approved records through ADMIN catalogue and OWNER/ADMIN delivery/price pages after initial staff provisioning. Empty lists are intentional; nothing is seeded."
+  }
+}

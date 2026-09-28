@@ -76,7 +76,7 @@ export function ProductSelection({ product, item, onClose, onSaved }: { product:
     <form onSubmit={submit} className="selection-form">
       <div className="selection-content">
         <div className="selection-product"><Image src={product.image} alt={product.imageAlt} width={160} height={120} /><div><h3>{product.name}</h3>{product.localName && <p>{product.localName}</p>}<p><strong>{formatPrice(product.pricePerKg)}</strong> /kg</p><span>{product.available ? "Available" : "Sold out"}</span></div></div>
-        <p id={id + "-intro"} className="selection-intro">Choose your raw weight and preparation. This preview cart does not place an order.</p>
+        <p id={id + "-intro"} className="selection-intro">Choose your raw weight and preparation. Final prices and availability are checked at checkout.</p>
         <fieldset><legend>Preparation</legend><div className="choice-grid">{product.preparationOptions.map(option => <label className="choice" key={option.id}><input type="radio" name={id + "-preparation"} value={option.id} checked={preparationId === option.id} onChange={() => setPreparationId(option.id)} /><span>{option.label}</span></label>)}</div></fieldset>
         <fieldset><legend>Raw weight</legend><div className="choice-grid weights">{product.selectableWeightsGrams.map(weight => <label className="choice" key={weight}><input type="radio" name={id + "-weight"} value={weight} checked={rawWeightGrams === weight} onChange={() => setRawWeightGrams(weight)} /><span>{formatWeight(weight)}</span></label>)}</div></fieldset>
         <label className="instructions-label" htmlFor={id + "-instructions"}>Special instructions <span>(optional)</span></label>

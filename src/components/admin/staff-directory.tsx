@@ -1,0 +1,7 @@
+import { staffRpc,type StaffContext } from "@/lib/admin/server";
+import { OperationalForm } from "./operational-form";
+export type StaffEntry={id:string;authUserId:string;name:string;role:string;active:boolean;version:number;storeIds:string[]};
+export async function StaffDirectory({token,context}:{token:string;context:StaffContext}){
+ const staff=await staffRpc<StaffEntry[]>(token,"staff_directory");
+ return <section><h2>Staff access</h2>{staff.map(s=><details key={s.id+":"+s.version}><summary>{s.name} · {s.role}</summary>{s.role==="ADMIN"?<p>Administrator elevation uses operator provisioning.</p>:<><OperationalForm operation="staff-profile" id={s.id} version={Number(s.version)}><label>Name<input name="name" required maxLength={160} defaultValue={s.name}/></label><label>Access<select name="active" defaultValue={String(s.active)}><option value="true">Active</option>{s.role==="EMPLOYEE"&&<option value="false">Disabled</option>}</select></label><fieldset><legend>Assigned stores</legend>{context.stores.map(store=><label key={store.id}><input type="checkbox" name="stores" value={store.id} defaultChecked={s.storeIds.includes(store.id)}/>{store.name}</label>)}</fieldset>{s.role==="OWNER"&&<p>Active OWNER removal remains protected by the database.</p>}</OperationalForm>{s.active&&<OperationalForm operation="recovery" id={s.id} label="Send password recovery email"/>}</>}</details>)}{!staff.length&&<p>No staff accounts configured.</p>}</section>;
+}

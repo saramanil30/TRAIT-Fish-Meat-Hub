@@ -12,6 +12,8 @@ export interface CheckoutDetails {
   locality: string;
   landmark: string;
   pincode: string;
+  city?: string;
+  state?: string;
 }
 export type CheckoutErrors = Partial<Record<keyof CheckoutDetails, string>>;
 export interface OrderTotals {

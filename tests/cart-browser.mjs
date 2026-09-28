@@ -8,8 +8,8 @@ const browserPath = ['C:/Program Files/Google/Chrome/Application/chrome.exe', 'C
 if (!browserPath) throw new Error('An existing Chrome or Edge installation is required.');
 const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'trait-cart-check-'));
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
-const server = spawn(process.execPath, ['node_modules/next/dist/bin/next', 'start', '--hostname', '127.0.0.1', '--port', '3213'], { stdio: 'ignore', windowsHide: true });
-const browser = spawn(browserPath, ['--headless=new', '--disable-gpu', '--no-first-run', '--remote-debugging-port=9233', '--user-data-dir=' + path.join(temporary, 'profile'), 'about:blank'], { stdio: 'ignore', windowsHide: true });
+const server = spawn(process.execPath, ['node_modules/next/dist/bin/next', 'start', '--hostname', '127.0.0.1', '--port', '3213'], { stdio: 'ignore', windowsHide: true, env: { ...process.env, SUPABASE_URL:'https://trait-test.invalid', SUPABASE_PUBLISHABLE_KEY:'isolated-test-key', TRAIT_STORE_ID:'00000000-0000-4000-8000-000000000001', NODE_OPTIONS:'--import=./tests/live-fixture-preload.mjs' } });
+const browser = spawn(browserPath, ['--headless=new', '--disable-gpu', '--no-first-run', '--remote-debugging-port=9233', '--user-data-dir=' + path.join(temporary, 'profile'), 'about:blank'], { stdio: 'ignore', windowsHide: true, env: { ...process.env, SUPABASE_URL:'https://trait-test.invalid', SUPABASE_PUBLISHABLE_KEY:'isolated-test-key', TRAIT_STORE_ID:'00000000-0000-4000-8000-000000000001', NODE_OPTIONS:'--import=./tests/live-fixture-preload.mjs' } });
 let socket;
 (async () => {
   try {
@@ -119,7 +119,7 @@ let socket;
       assert.equal(await evaluate('document.querySelector("[data-subtotal]").textContent.replace(/[^0-9]/g, "")'), '3845');
       const button = await evaluate('(()=>{const e=document.querySelector(".cart-title a");const s=getComputedStyle(e);return {text:e.textContent,color:s.color,border:s.borderTopColor,style:s.borderTopStyle,width:s.borderTopWidth,background:s.backgroundColor}})()');
       assert.equal(button.text, 'Continue shopping');
-      assert.equal(button.color, 'rgb(217, 0, 0)');
+      assert.equal(button.color, 'rgb(196, 18, 26)');
       assert.equal(button.border, button.color);
       assert.equal(button.style, 'solid');
       assert.equal(button.width, '1px');
