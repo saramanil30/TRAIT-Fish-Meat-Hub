@@ -27,4 +27,3 @@ Employee preview supports Main-store fulfilment, record-only dispatch weights, a
 Run `npm test`, `npm run typecheck`, `npm run lint`, `npm run build`, then `npm run test:admin-browser`. The browser test uses installed headless Chrome/Edge and a local production server on port 3217. It verifies denied routes, employee scope, meaningful editing workflows, payment evidence, store-price isolation and layouts at 320/390/768/1440 px. Screenshots are generated under `.next/admin-validation`.
 
 The later approved access-model change adds a proposed forward migration without applying it. See [staff access model](database/staff-access.md) for implemented boundaries, setup, validation and remaining backend work.
-

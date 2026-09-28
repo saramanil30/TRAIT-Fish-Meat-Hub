@@ -19,4 +19,3 @@ export function Orders({ role, section, store, notify }: { role: PreviewRole; se
  {edit && <Editor title={edit.title} fields={edit.fields} note={edit.note} onSave={edit.save} onClose={() => setEdit(null)} />}
  </>;
 }
-

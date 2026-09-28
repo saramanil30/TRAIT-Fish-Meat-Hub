@@ -8,4 +8,3 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
   const admin = pathname === "/admin" || pathname.startsWith("/admin/");
   return <>{!admin && <Header />}<main id="main-content" tabIndex={-1}>{children}</main>{!admin && <><Footer /><MobileNav /></>}</>;
 }
-

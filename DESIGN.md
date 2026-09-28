@@ -180,7 +180,7 @@ The palette establishes an appetizing, clinical, and premium delivery environmen
 - **Primary Accent (`#C4121A`)**: A rich, visceral butchery red reserved for critical conversion moments: "Add to Cart", primary checkout CTA, discount badges, and active weight-selector states.
 - **Secondary / Deep Slate (`#121417`)**: Near-black charcoal used for dark hero containers, primary headings, promotional callouts, and dark-mode mobile navigation bars.
 - **Tertiary Accent (`#F47A1F`)**: Searing flame amber used exclusively for flash sale banners, express delivery badges (e.g., "90-Min Delivery"), and star ratings.
-- **Neutral Palette (`#71767F` base)**: 
+- **Neutral Palette (`#71767F` base)**:
   - Canvas & Substrates: Crisp White (`#FFFFFF`) for product cards; Soft Slate Tint (`#F8F9FA`) for page background; Light Divider Gray (`#E9ECEF`) for hairline separations.
   - Text Tiers: Primary Ink (`#121417`), Secondary Body (`#495057`), Muted Captions/Units (`#868E96`).
 - **Semantic Feedback**: Forest Fresh Green (`#0E8A3C`) for strict "In Stock", "100% Antibiotic-Free", and UPI success statuses.

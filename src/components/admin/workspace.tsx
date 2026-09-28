@@ -24,4 +24,3 @@ export function AdminWorkspace({ role, section }: { role: PreviewRole; section: 
  {section === "settings" && <Settings key={store} notify={notify} />}
  <footer className="admin-footer"><strong>TRAIT</strong><span>Fresh food. Thoughtful operations.</span><span>Frontend preview · No live transactions</span></footer></div></div></div>;
 }
-

@@ -418,9 +418,9 @@ Single store now, but retain business/store keys for future branches.
   Version           Date              Change            Approved By
   ----------------- ----------------- ----------------- -----------------
   1.0               2026-09           Initial formal    Project Owner
-                                      PRD based on      
-                                      approved TRAIT    
-                                      requirements      
+                                      PRD based on
+                                      approved TRAIT
+                                      requirements
 
   -----------------------------------------------------------------------
 

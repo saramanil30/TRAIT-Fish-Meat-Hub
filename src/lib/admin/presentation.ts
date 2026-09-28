@@ -23,4 +23,3 @@ export function nextStatus(order: PreviewOrder): Status | undefined {
   return next[order.status];
 }
 export function canPreviewSection(role: PreviewRole, section: Section) { return role === "admin" || (role === "owner" && section !== "catalogue" && section !== "categories") || (role === "employee" && section === "orders"); }
-

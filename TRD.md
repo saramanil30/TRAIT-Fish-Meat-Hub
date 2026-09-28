@@ -32,7 +32,7 @@ The browser is never authoritative for:
   ----------------------- ----------------------- -----------------------
   Frontend                Next.js 16, React 19,   Mobile-first
                           TypeScript, Tailwind    customer/admin UI
-                          CSS                     
+                          CSS
 
   Trusted application     Next.js server          Validation,
                           routes/actions on       authorization,
@@ -604,9 +604,9 @@ When Codex works on this project:
   Version           Date              Change            Approved By
   ----------------- ----------------- ----------------- -----------------
   1.0               2026-09           Initial formal    Project Owner
-                                      TRD based on      
-                                      approved TRAIT    
-                                      architecture      
+                                      TRD based on
+                                      approved TRAIT
+                                      architecture
 
   -----------------------------------------------------------------------
 
