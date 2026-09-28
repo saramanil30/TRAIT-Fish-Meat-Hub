@@ -1,7 +1,7 @@
 ﻿import "server-only";
 
 /** Server-only access to allowlisted public database projections. */
-export async function publicRpc<T>(name: "catalogue" | "storefront_info" | "fulfillment_options" | "track_order", args: Record<string, unknown>): Promise<T> {
+export async function publicRpc<T>(name: "business_catalogue" | "catalogue" | "storefront_info" | "fulfillment_options" | "track_order", args: Record<string, unknown>): Promise<T> {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_PUBLISHABLE_KEY;
   if (!url || !key || new URL(url).protocol !== "https:") throw new Error("Store connection is not configured.");

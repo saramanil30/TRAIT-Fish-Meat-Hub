@@ -1,3 +1,4 @@
+import {quantityText} from "@/lib/pricing";
 import Image from "next/image";
 import Link from "next/link";
 import type { CartItem } from "@/types/cart";
@@ -7,11 +8,11 @@ import { formatMoney, formatWeight } from "@/lib/format";
 export function OrderSummary({ items, totals, editable = false, deliveryConfirmed = true }: { items: readonly CartItem[]; totals: OrderTotals; editable?: boolean; deliveryConfirmed?: boolean }) {
   return <section className="order-panel order-summary" aria-labelledby="order-summary-title">
     <div className="summary-heading"><h2 id="order-summary-title">Order summary <span className="item-badge">{items.length} {items.length === 1 ? "item" : "items"}</span></h2>{editable && <Link href="/cart">Edit cart</Link>}</div>
-    <p className="raw-price-note">Pricing is based on <strong>RAW WEIGHT</strong>, before cleaning.</p>
+    <p className="raw-price-note">Each item is priced using its displayed weight or unit.</p>
     <ul className="order-lines">{items.map(item => <li key={item.id}>
       <Image className="order-item-image" src={item.image} alt={item.imageAlt} width={64} height={64} />
       <div className="order-item-copy"><div className="order-line-heading"><h3>{item.productName}</h3><strong>{formatMoney(item.lineTotalPaise)}</strong></div>
-      <p>{item.preparation.label} <span aria-hidden="true">&middot;</span> {formatWeight(item.rawWeightGrams)} raw ordered weight</p>
+      <p>{item.preparation.label} <span aria-hidden="true">&middot;</span> {quantityText(item,item.rawWeightGrams??item.quantity??0)}</p>
       {item.estimatedCleanedWeightGrams !== undefined && <p className="order-cleaned">Estimated cleaned weight: ~{formatWeight(item.estimatedCleanedWeightGrams)}</p>}
       {item.specialInstructions && <p className="order-instructions">Notes: {item.specialInstructions}</p>}</div>
     </li>)}</ul>

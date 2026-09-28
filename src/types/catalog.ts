@@ -12,7 +12,16 @@ export interface Category {
   description: string;
   image: string;
 }
-export interface Product {
+export type PricingBasis = 'RAW_WEIGHT' | 'NET_WEIGHT' | 'UNIT' | 'TRAY';
+export interface SalePricing {
+  pricingBasis?: PricingBasis;
+  pricePaise?: number | null;
+  priceUnitGrams?: number | null;
+  unitsPerPack?: number | null;
+}
+export interface Product extends SalePricing {
+  saleQuantities?: readonly number[];
+  orderable?: boolean;
   id: string;
   name: string;
   localName?: string;

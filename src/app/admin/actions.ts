@@ -48,6 +48,10 @@ export async function saveMaster(_state: ActionState,form: FormData): Promise<Ac
    await staffRpc(token,"save_category",{target_id:id?uuid(id):null,category_name:text(form,"name"),parent:parent?uuid(parent):null,sort:Number(text(form,"sort")),active:boolean(form,"active")});
   } else if(kind==="product") {
    await staffRpc(token,"save_product",{target_id:id?uuid(id):null,category:uuid(text(form,"category")),product_name:text(form,"name"),local_name:text(form,"local"),description:text(form,"description"),image_path:text(form,"image"),weights:JSON.parse(text(form,"weights")),preparation_choices:JSON.parse(text(form,"preparations")),active:boolean(form,"active")});
+  } else if(kind==="pricing") {
+   const quantities=text(form,"quantities").split(",").map(v=>Number(v.trim()));
+   if(!quantities.length||quantities.some(v=>!Number.isSafeInteger(v)||v<1))throw new Error("Invalid quantities");
+   await staffRpc(token,"configure_product_pricing",{product:uuid(id),basis:text(form,"basis"),unit_grams:text(form,"unitGrams")?Number(text(form,"unitGrams")):null,pack_count:text(form,"packCount")?Number(text(form,"packCount")):null,quantities,reference_price:text(form,"referencePrice")?parseDailyPrice(text(form,"referencePrice")):null,published:boolean(form,"published")});
   } else if(kind==="offering") {
    await staffRpc(token,"create_offering",{product:uuid(text(form,"product")),target_store:uuid(text(form,"store"))});
   } else throw new Error("Invalid operation.");

@@ -1,3 +1,4 @@
+import { isRaw, quantityOptions, saleTotal } from "./pricing";
 import type { Product, PreparationOption } from "../types/catalog";
 import type { CartItem, ProductSelection } from "../types/cart";
 
@@ -24,18 +25,23 @@ export function estimateCleanedWeightGrams(rawWeightGrams: number, lossPercent?:
 }
 
 export function applicableCleaningLoss(product: Product, preparation: PreparationOption): number | undefined {
+  if (!isRaw(product)) return undefined;
   return preparation.cleaningLossPercent ?? (preparation.removesCleaningWaste ? product.cleaningLossPercent : undefined);
 }
 
 export function createCartItem(product: Product, selection: ProductSelection, id: string): CartItem {
-  if (!product.available) throw new Error("This product is currently sold out.");
+  if (!product.available || product.orderable===false) throw new Error("This product is currently sold out.");
   const preparation = product.preparationOptions.find(option => option.id === selection.preparationId);
   if (!preparation) throw new Error("Please choose an available preparation.");
-  if (!product.selectableWeightsGrams.includes(selection.rawWeightGrams)) throw new Error("Please choose an available raw weight.");
+  const quantity=isRaw(product)?selection.rawWeightGrams:selection.quantity;
+  if (quantity===undefined || !quantityOptions(product).includes(quantity)) throw new Error("Please choose an available raw weight.");
   if (selection.specialInstructions.length > MAX_INSTRUCTIONS_LENGTH) throw new Error("Please keep instructions within 300 characters.");
   const cleaningLossPercent = applicableCleaningLoss(product, preparation);
   return {
     ...selection,
+    rawWeightGrams:isRaw(product)?quantity:undefined,
+    quantity:isRaw(product)?undefined:quantity,
+    pricingBasis:product.pricingBasis,pricePaise:product.pricePaise,priceUnitGrams:product.priceUnitGrams,unitsPerPack:product.unitsPerPack,
     specialInstructions: selection.specialInstructions.trim(),
     id,
     productId: product.id,
@@ -45,9 +51,9 @@ export function createCartItem(product: Product, selection: ProductSelection, id
     imageAlt: product.imageAlt,
     preparation,
     pricePerKg: product.pricePerKg,
-    lineTotalPaise: calculateLineTotalPaise(product.pricePerKg, selection.rawWeightGrams),
+    lineTotalPaise: saleTotal(product,quantity),
     cleaningLossPercent,
-    estimatedCleanedWeightGrams: estimateCleanedWeightGrams(selection.rawWeightGrams, cleaningLossPercent),
+    estimatedCleanedWeightGrams: isRaw(product)?estimateCleanedWeightGrams(quantity, cleaningLossPercent):undefined,
   };
 }
 
@@ -55,7 +61,7 @@ function isSameSelection(a: CartItem, b: CartItem): boolean {
   return (
     a.productId === b.productId &&
     a.preparationId === b.preparationId &&
-    a.rawWeightGrams === b.rawWeightGrams &&
+    a.rawWeightGrams === b.rawWeightGrams && a.quantity === b.quantity &&
     a.specialInstructions.normalize("NFC").trim() === b.specialInstructions.normalize("NFC").trim()
   );
 }
@@ -99,7 +105,7 @@ export function cartSubtotalPaise(items: readonly CartItem[]): number {
 // Store only choices, never authoritative prices. Restore against the current mock
 // catalogue and discard invalid/stale entries. This is UX hygiene, not a security boundary.
 export function serializeCart(items: readonly CartItem[]): string {
-  return JSON.stringify({ version: 1, items: items.map(({ id, productId, preparationId, rawWeightGrams, specialInstructions }) => ({ id, productId, preparationId, rawWeightGrams, specialInstructions })) });
+  return JSON.stringify({ version: 1, items: items.map(({ id, productId, preparationId, rawWeightGrams, quantity, specialInstructions }) => ({ id, productId, preparationId, rawWeightGrams, quantity, specialInstructions })) });
 }
 export function restoreCart(value: string | null, products: readonly Product[]): readonly CartItem[] {
   if (!value) return [];
@@ -108,13 +114,13 @@ export function restoreCart(value: string | null, products: readonly Product[]):
     if (!parsed || typeof parsed !== "object" || !("version" in parsed) || parsed.version !== 1 || !("items" in parsed) || !Array.isArray(parsed.items)) return [];
     const result: CartItem[] = [];
     for (const entry of parsed.items) {
-      if (!entry || typeof entry !== "object" || typeof entry.id !== "string" || typeof entry.productId !== "string" || typeof entry.preparationId !== "string" || typeof entry.rawWeightGrams !== "number" || typeof entry.specialInstructions !== "string") continue;
+      if (!entry || typeof entry !== "object" || typeof entry.id !== "string" || typeof entry.productId !== "string" || typeof entry.preparationId !== "string" || (typeof entry.rawWeightGrams !== "number" && typeof entry.quantity !== "number") || typeof entry.specialInstructions !== "string") continue;
       if (result.some(item => item.id === entry.id)) continue;
       const product = products.find(product => product.id === entry.productId);
       const preparation = product?.preparationOptions.find(option => option.id === entry.preparationId);
       if (!product || !preparation) continue;
       try {
-        const item = createCartItem(product, { preparationId: preparation.id, rawWeightGrams: entry.rawWeightGrams, specialInstructions: entry.specialInstructions }, entry.id);
+        const item = createCartItem(product, { preparationId: preparation.id, rawWeightGrams: entry.rawWeightGrams, quantity:entry.quantity, specialInstructions: entry.specialInstructions }, entry.id);
         if (!result.some(existing => isSameSelection(existing, item))) result.push(item);
       } catch { /* Discard stale choices, for example a now-unavailable product. */ }
     }

@@ -1,10 +1,11 @@
-import type { PreparationId, PreparationOption } from "./catalog";
+import type { PreparationId, PreparationOption, SalePricing } from "./catalog";
 export interface ProductSelection {
   preparationId: PreparationId;
-  rawWeightGrams: number;
+  rawWeightGrams?: number;
+  quantity?: number;
   specialInstructions: string;
 }
-export interface CartItem extends ProductSelection {
+export interface CartItem extends ProductSelection, SalePricing {
   id: string;
   productId: string;
   productName: string;

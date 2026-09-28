@@ -4,11 +4,13 @@ import { readFileSync } from 'node:fs';
 import ts from 'typescript';
 // Use the installed TypeScript compiler for these pure, type-import-only modules.
 // This keeps test module semantics explicit without changing the application's package type.
-async function loadTypeScript(relativePath) {
-  const source = readFileSync(new URL(relativePath, import.meta.url), 'utf8');
-  const result = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ES2022 } });
-  return import('data:text/javascript;base64,' + Buffer.from(result.outputText).toString('base64'));
+function moduleUrl(relativePath) {
+ const url=new URL(relativePath,import.meta.url);
+ let output=ts.transpileModule(readFileSync(url,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText;
+ output=output.replace(/from "(\.\.?\/[^"\n]+)"/g,(_,dependency)=>'from "'+moduleUrl(new URL(dependency+'.ts',url).href)+'"');
+ return 'data:text/javascript;base64,'+Buffer.from(output).toString('base64');
 }
+async function loadTypeScript(path){return import(moduleUrl(path));}
 const { products } = await loadTypeScript('../src/data/catalog.ts');
 const { calculateLineTotalPaise, estimateCleanedWeightGrams, createCartItem, cartReducer, cartSubtotalPaise, restoreCart, serializeCart } = await loadTypeScript('../src/lib/cart.ts');
 const seer = products.find(p => p.id === 'seer');
@@ -126,4 +128,18 @@ test('edit collision rejects without changing either row or subtotal; editing it
   assert.deepEqual(cart, [original, other]);
   assert.equal(cartSubtotalPaise(cart), 147000);
   assert.deepEqual(cartReducer(cart, { type: 'update', item: original }), cart);
+});
+
+test('tray and NET units retain exact prices, quantity identity and storage semantics',()=>{
+ const eggs={...seer,id:'eggs',pricingBasis:'TRAY',pricePaise:45000,priceUnitGrams:null,unitsPerPack:30,pricePerKg:0,selectableWeightsGrams:[],saleQuantities:[1,2]};
+ const fish={...eggs,id:'net',pricingBasis:'NET_WEIGHT',pricePaise:80000,priceUnitGrams:500,unitsPerPack:null,saleQuantities:[500,1000]};
+ const a=createCartItem(eggs,{preparationId:'cleaned',quantity:1,specialInstructions:''},'egg');
+ const b=createCartItem(fish,{preparationId:'cleaned',quantity:500,specialInstructions:''},'net');
+ assert.equal(a.lineTotalPaise,45000);assert.equal(b.lineTotalPaise,80000);
+ assert.equal(a.rawWeightGrams,undefined);assert.equal(b.rawWeightGrams,undefined);
+ assert.equal(b.estimatedCleanedWeightGrams,undefined);
+ assert.equal(createCartItem(fish,{preparationId:'cleaned',quantity:1000,specialInstructions:''},'two').lineTotalPaise,160000);
+ assert.throws(()=>createCartItem(eggs,selection(1000),'bad'));
+ assert.throws(()=>createCartItem({...eggs,orderable:false},{preparationId:'cleaned',quantity:1,specialInstructions:''},'bad'));
+ assert.deepEqual(restoreCart(serializeCart([a,b]),[eggs,fish]),[a,b]);
 });

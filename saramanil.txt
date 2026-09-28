@@ -1,0 +1,15 @@
+Fix the /admin staff login completely.
+
+- Enable real Supabase Auth sign-in.
+- One login for ADMIN, OWNER and EMPLOYEE.
+- Remove "Sign in unavailable", developer/security messages, and unnecessary role explanation.
+- Keep email + password and add Forgot Password.
+- Verify ADMIN (saramanil) and OWNER (SrinuRayudu) login and correct role permissions.
+- OWNER must be able to create/manage EMPLOYEE logins for their own store.
+- Verify sessions, logout, protected routes and unauthorized access.
+- Do not weaken RLS or change existing passwords.
+- Fix all authentication release blockers you find.
+- Run affected tests/build only.
+- Do not commit yet.
+
+Report what was fixed and anything genuinely still blocking login.

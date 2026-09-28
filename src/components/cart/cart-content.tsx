@@ -1,4 +1,5 @@
 "use client";
+import {isRaw,priceLabel,quantityLabel,quantityOptions,quantityText} from "@/lib/pricing";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -6,7 +7,7 @@ import { useRef, useState } from "react";
 import { useCatalogue } from "@/lib/cart-store";
 import { useCart, removeCartItem, clearCart, updateCartItem } from "@/lib/cart-store";
 import { cartSubtotalPaise } from "@/lib/cart";
-import { formatPrice, formatMoney, formatWeight } from "@/lib/format";
+import { formatMoney, formatWeight } from "@/lib/format";
 import { ProductSelection } from "@/components/product/product-selection";
 
 
@@ -53,7 +54,7 @@ export function CartContent() {
                   )}
 
                   <p className="cart-unit-price">
-                    {formatPrice(item.pricePerKg)}/kg
+                    {priceLabel(item)}
                   </p>
                 </div>
               </div>
@@ -68,17 +69,17 @@ export function CartContent() {
                 className="cart-column-label"
                 htmlFor={"weight-" + item.id}
               >
-                Raw weight
+                {quantityLabel(item)}
               </label>
 
         <select
           id={"weight-" + item.id}
-          value={item.rawWeightGrams}
+          value={item.rawWeightGrams??item.quantity}
           onChange={event => {
             try {
               updateCartItem(item.id, {
                 preparationId: item.preparationId,
-                rawWeightGrams: Number(event.target.value),
+                ...(isRaw(product)?{rawWeightGrams:Number(event.target.value)}:{quantity:Number(event.target.value)}),
                 specialInstructions: item.specialInstructions,
               });
 
@@ -93,9 +94,9 @@ export function CartContent() {
             }
           }}
         >
-        {product.selectableWeightsGrams.map(weight => (
+        {quantityOptions(product).map(weight => (
           <option key={weight} value={weight}>
-            {formatWeight(weight)}
+            {quantityText(product,weight)}
           </option>
         ))}
       </select>
@@ -150,7 +151,7 @@ export function CartContent() {
 );
       })}
       {confirmClear ? <div className="clear-confirm" role="group" aria-label="Confirm clearing cart"><p>Remove all items from your cart?</p><button type="button" className="button secondary" onClick={() => setConfirmClear(false)}>Keep items</button><button type="button" className="button primary" onClick={() => { clearCart(); setConfirmClear(false); setMessage("Cart cleared."); heading.current?.focus(); }}>Clear all items</button></div> : <button type="button" className="plain-button clear-cart" onClick={() => setConfirmClear(true)}>Clear cart</button>}
-    </div><aside className="cart-summary" aria-labelledby="summary-title"><h2 id="summary-title">Order summary <span className="item-badge">{items.length} {items.length === 1 ? "item" : "items"}</span></h2><p>{items.length} {items.length === 1 ? "item" : "items"} <span aria-hidden="true">&middot;</span> {formatWeight(items.reduce((sum, item) => sum + item.rawWeightGrams, 0))} raw weight</p><div className="subtotal"><span>Subtotal</span><strong aria-live="polite" data-subtotal>{formatMoney(cartSubtotalPaise(items))}</strong></div><p className="summary-note">Calculated from raw weight, before cleaning. Delivery charges are shown at checkout after choosing delivery or pickup.</p><Link href="/checkout" className="button primary cart-checkout">Proceed to Checkout</Link><p className="checkout-note">Final prices and delivery eligibility are checked at checkout.</p></aside></div>}
+    </div><aside className="cart-summary" aria-labelledby="summary-title"><h2 id="summary-title">Order summary <span className="item-badge">{items.length} {items.length === 1 ? "item" : "items"}</span></h2><p>{items.length} {items.length === 1 ? "item" : "items"} <span aria-hidden="true">&middot;</span> {formatWeight(items.reduce((sum, item) => sum + (item.rawWeightGrams??0), 0))} raw weight</p><div className="subtotal"><span>Subtotal</span><strong aria-live="polite" data-subtotal>{formatMoney(cartSubtotalPaise(items))}</strong></div><p className="summary-note">Each item uses its displayed raw-weight, NET-weight or unit price. Delivery charges are shown at checkout after choosing delivery or pickup.</p><Link href="/checkout" className="button primary cart-checkout">Proceed to Checkout</Link><p className="checkout-note">Final prices and delivery eligibility are checked at checkout.</p></aside></div>}
     {editing && editingProduct && <ProductSelection key={editing.id} product={editingProduct} item={editing} onClose={() => setEditingId(null)} onSaved={() => { setError(""); setMessage(editing.productName + " selection updated."); }} />}
   </div>;
 }
