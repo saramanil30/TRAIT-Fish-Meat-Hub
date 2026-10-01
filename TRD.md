@@ -172,8 +172,10 @@ Allowed raw weights per product.
 
 Immutable/effective-dated price history.
 
-Key concepts: - store/product offering - `price_per_kg_paise` -
-`effective_from` - `created_by` - cancellation/supersession metadata
+Key concepts: - store/product offering - `pricing_basis` -
+`price_per_kg_paise` (RAW_WEIGHT) or `unit_price_paise` with
+`price_unit_grams`/`units_per_pack` (other bases) - `effective_from` -
+`created_by` - cancellation/supersession metadata
 
 Never rewrite old order prices when current price changes.
 
@@ -283,7 +285,7 @@ weights
 
 Canonical duplicate identity:
 
-`product_id + preparation_option_id + raw_weight_grams + trim(normalize(instructions))`
+`product_id + preparation_option_id + (raw_weight_grams | sale_quantity) + trim(normalize(instructions))`
 
 Rules: - Client rejects exact duplicate for UX. - Server repeats
 validation. - Different preparation, weight or instructions creates a
@@ -300,6 +302,34 @@ totals. - Effective price comes from current effective price history. -
 Order item stores price provenance plus immutable price snapshot. -
 Cleaning estimate is informational. - Actual cleaned/dispatch grams do
 not automatically reprice.
+
+### 6.1 Other Pricing Bases
+
+`app.products.pricing_basis` is one of `RAW_WEIGHT` (default), `NET_WEIGHT`,
+`UNIT` or `TRAY`. Table check constraints enforce one consistent shape per
+basis on products, price history and order items:
+
+  -------------------------------------------------------------------------------
+  Basis         Unit fields                    Customer choices      Line total
+  ------------- ------------------------------ --------------------- ------------------------------------------------------------
+  RAW_WEIGHT    `price_unit_grams = 1000`      `allowed_weights`     `round(price_per_kg_paise * raw_weight_grams / 1000)`
+                                               (grams)
+
+  NET_WEIGHT    `price_unit_grams` 1--100000   `sale_quantities`     `round(unit_price_paise * sale_quantity / price_unit_grams)`
+                                               (net grams)
+
+  UNIT / TRAY   `units_per_pack` 1--1000       `sale_quantities`     `unit_price_paise * sale_quantity`
+                (descriptive)                  (counts)
+  -------------------------------------------------------------------------------
+
+- Cart lines send `rawWeightGrams` for RAW_WEIGHT and `quantity` otherwise; the
+  quote rejects the wrong field or a value outside the configured choices.
+- Cleaned-weight estimates are produced only for RAW_WEIGHT lines.
+- `app.guard_sale_basis` blocks changing basis/unit size once any price row
+  exists for the product; retire it and create a new product instead.
+- The quote rejects a price row whose basis/unit differs from the product's
+  (`40001`, re-review). `app.guard_order_item_provenance` checks the stored
+  basis, unit and price against the referenced price row.
 
 ## 7. Order Placement Transaction
 
@@ -688,3 +718,30 @@ A new forward-only migration adds twelve private tables (orders/items/fulfillmen
 NOLOGIN trait_checkout and trait_payment_verifier roles expose only quote/place or provider binding/verified-event RPCs respectively; no runtime memberships or credentials are provisioned. Checkout locks relevant catalogue/store configuration, calculates raw-weight integer-paise totals, checks a reviewed quote digest, and atomically creates snapshots and pending payment under a unique row-locked request key. A server utility generates 256-bit random tracking tokens; only SHA-256 digests reach the database. Staff RPCs repeat active business/store authorization and configured employee visibility/cash policy. Payment/refund mutations serialize on order/payment/refund locks; bounded allocation reservations and event/request digests prevent over-refunds and conflicting replay. UTR/browser success cannot settle online payment. Real provider proof must be verified by a future isolated adapter before invoking its restricted capability.
 
 Production integration still requires protected/rate-limited server routes, runtime connection provisioning, business_settings and actual commerce data, merchant configuration/provider adapter, secure envelope/token handling, staging multi-connection tests and approved operational/retention/refund policies. PGlite validates local behaviors and rollback; it does not simulate independent concurrent database sessions.
+
+### Sale units (proposed 2026-10-02, PENDING Project Owner approval)
+
+Records `20260928010000_catalogue_sale_units.sql`, already applied to the hosted project; product rules are in PRD Section 5.1. Adds the pricing-basis columns to `app.products`, `app.product_prices` and `app.order_items` with per-basis check constraints (Section 6.1). `price_per_kg_paise` and `raw_weight_grams` become nullable for non-raw bases.
+
+- `api.configure_product_pricing` (authenticated; ADMIN enforced in-function, business-scoped, audited) sets basis, unit, sale quantities, reference price and publish flag.
+- `api.update_daily_product` and `api.daily_products` (ADMIN/OWNER) write and read the price for the product's existing unit. Version checks and price-history append are unchanged.
+- `api.catalogue`, `app.build_order_quote`, `api.place_order` and `app.guard_order_item_provenance` were replaced to handle all four bases.
+- `api.business_catalogue` (anon, authenticated) is a public, non-orderable preview. It returns only active products with `catalogue_published` and a reference `catalogue_price_paise`, for use until a real store is configured. Its reference prices are not order prices.
+
+Hosted state 2026-10-02: 21 RAW_WEIGHT products, 1 NET_WEIGHT (500 g unit) and 1 TRAY (30 per tray).
+
+### Store offers (proposed 2026-10-02, PENDING Project Owner approval)
+
+Records `20260929000000_store_offers.sql`, implemented and applied to hosted project igiujohtycixboaohjby on 2026-09-29; product rules are in the matching PRD entry and `docs/store-offers.md`. Adds one private table, `app.offers`, with composite `(business_id, store_id)` tenant key, integer-paise or basis-point discount values, a version column and product/category UUID arrays. It forces RLS and revokes all privileges from PUBLIC, anon, authenticated, service_role, trait_checkout and trait_payment_verifier.
+
+- `api.save_offer` (authenticated; ADMIN/OWNER enforced in-function): store-scoped via `app.can_access_store`. Every target product and category is checked against the actor's business. It holds a per-store advisory lock and checks expected-version optimistic concurrency, then writes an audit entry through `app.core_audit`.
+- `api.offer_workspace` (authenticated): ADMIN/OWNER receive the store's full offer list and target choices; EMPLOYEE receives current offers only, for assigned stores.
+- `api.store_offers` (anon, authenticated): public projection of active, current offers for active stores/businesses only.
+- `app.offer_discount` (no client EXECUTE): selects the single largest eligible discount, breaks ties by UUID and rounds down to whole paise. `app.build_order_quote` and `api.place_order` were replaced so the quote digest includes the offer ID, version, discount and total. Placement recomputes it and requires re-review when it changes. Order snapshots store the applied offer and discount; idempotent retries return the committed order.
+- `api.track_order` was replaced to surface the order-level discount; its token-digest, scope and revocation checks are unchanged.
+
+Validation: `npm run test:offers-db`, `npm test`, typecheck, build and isolated browser checks (see `docs/store-offers.md`). Hosted verification after apply: 23 catalogue products unchanged, offers table empty, direct table access denied to all client and capability roles.
+
+Hosted-database correction: the 2026-09-26 entry above states the hosted project "is not contacted or mutated". That is superseded. As of 2026-10-02 all eleven migrations are applied to igiujohtycixboaohjby (checked via Supabase MCP `list_migrations`). The hosted history records different version numbers from the local filenames for every migration except `20260923041240` (e.g. local `20260929000000_store_offers` is hosted `20260929053138`). Reconcile before using `supabase db push` or migration-diff tooling.
+
+Data API exposure correction: the access-model entry says only `api` is exposed. As of 2026-10-02 the Supabase security advisor reaches `public.rls_auto_enable` through `/rest/v1/rpc`, so `public` is also exposed. That function is an event-trigger function, which cannot be invoked directly, so there is no current impact. Remove `public` from the exposed schemas, or revoke its EXECUTE from anon/authenticated, to restore the documented model.

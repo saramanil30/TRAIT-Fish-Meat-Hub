@@ -55,7 +55,9 @@ cannot be granted by OWNER or editable Auth metadata.
 Shop/business operator. Business-wide permitted orders, necessary customer
 information, status updates, policy-controlled payments, reports, employee
 access and operational settings. For existing products, OWNER may change
-only daily selling price and Available / Sold Out state.
+only daily selling price and Available / Sold Out state. OWNER may also
+create and manage order-level store offers (Section 10.3); offers never
+alter catalogue masters, selling prices or price history.
 
 Hierarchy: **ADMIN > OWNER > EMPLOYEE**.
 
@@ -64,7 +66,8 @@ Hierarchy: **ADMIN > OWNER > EMPLOYEE**.
 Assigned-store operations only: order queue, necessary customer/delivery
 information, permitted fulfillment/status updates, operational
 measurements, cash receipt within policy, and UPI reference submission.
-EMPLOYEE cannot administer catalogue, prices, staff or reports.
+EMPLOYEE may view current store offers for assigned stores.
+EMPLOYEE cannot administer catalogue, prices, offers, staff or reports.
 
 ## 4. Customer Storefront
 
@@ -92,7 +95,8 @@ Each product card should support:
 -   Product image
 -   Display name
 -   Optional local name
--   Price per kg
+-   Price for the product's sale unit (per kg for raw-weight products; see
+    Section 5.1)
 -   Availability
 -   Add action
 
@@ -139,17 +143,35 @@ For Chicken, Mutton or any non-loss preparation, do not display an
 Actual cleaned/dispatch weight may be recorded operationally but must
 not silently reprice the order.
 
+### 5.1 Other Sale Units
+
+Raw weight remains the default. ADMIN may instead configure a product with
+one of these pricing bases:
+
+-   **Net weight** --- priced per a configured net-weight unit (for
+    example ₹X per 500 g net). Customers choose from configured net
+    quantities in grams. No "After cleaning" estimate is shown.
+-   **Unit** or **Tray** --- priced per unit or per tray, with a configured
+    pieces-per-unit/tray count shown to customers (for example a tray of
+    30). Customers choose from configured counts.
+
+Each product has exactly one pricing basis. Once a product has a price
+history, its basis and unit size cannot be changed; ADMIN retires it and
+creates a new product instead, so historical orders and prices stay
+unambiguous. OWNER daily price changes set the price for the product's
+existing sale unit only.
+
 ## 6. Cart Requirements
 
 -   Customer can edit weight/preparation/instructions, remove lines and
     clear cart.
 -   Exact duplicate selections must not be added twice.
 -   Duplicate identity is:
-    `product + preparation + raw weight + normalized/trimmed instructions`.
--   Same product with a different preparation, weight or instructions is
-    a valid separate line.
--   Cart shows raw weight, preparation, unit price and calculated line
-    total.
+    `product + preparation + raw weight (or sale quantity) + normalized/trimmed instructions`.
+-   Same product with a different preparation, weight/quantity or
+    instructions is a valid separate line.
+-   Cart shows raw weight or sale quantity, preparation, unit price and
+    calculated line total.
 -   Client totals are display-only. Production server must revalidate
     product, availability, price, weight, preparation, delivery fee and
     total.
@@ -265,20 +287,31 @@ ADMIN alone can:
 -   Configure featured state
 -   Configure product preparation choices
 -   Configure allowed weights
+-   Configure pricing basis, sale unit and sale quantities (Section 5.1)
 -   Add new catalogue items without code changes
 
 ADMIN and OWNER can change existing store offerings through a simple
-**Prices & Availability** page: product, category, current/new price per kg,
+**Prices & Availability** page: product, category, current/new price for
+the product's sale unit,
 Available / Sold Out, last updated and save action. OWNER cannot create or
 remove offerings or alter any catalogue-master field.
 
 Price changes append immutable price history; historical order pricing is
 never rewritten. Availability-only changes are audited without a fake price change.
 
+ADMIN and OWNER can create and edit **store offers** for stores in their
+business: title/message, percentage or fixed-rupee discount, start/end time,
+whole-store, product or category scope (categories include descendants), and
+active state. An offer is an order-level discount: it does not change
+catalogue masters, selling prices or price history, and line prices remain
+pre-discount. Pricing rules for offers are recorded in the Change Log entry
+for store offers and in `docs/store-offers.md`.
+
 OWNER cannot create, delete, rename or modify categories/products, images,
 descriptions/local names, preparations, allowed weights, cleaning-loss rules,
-or catalogue structure. EMPLOYEE cannot change prices, availability or any
-catalogue data. These restrictions apply to direct API calls as well as UI.
+or catalogue structure. EMPLOYEE cannot change prices, availability, offers or
+any catalogue data; EMPLOYEE may only view current offers for assigned stores.
+These restrictions apply to direct API calls as well as UI.
 
 ### 10.4 Inventory
 
@@ -433,3 +466,14 @@ Approved update (2026-09-26, Phase 5B.2): Catalogue backend now includes reusabl
 Approved update (2026-09-26, Phase 5B.3): Private customer/address foundations preserve guest checkout without automatic account creation or phone-based authorization. Home Delivery eligibility is configured explicitly per store/pincode with integer-paise fee/minimum and active state; Store Pickup uses existing store flags. ADMIN/OWNER manage delivery configuration, EMPLOYEE cannot. Saved-address/account access remains closed pending verified customer workflows. No customer or delivery configuration seed data is added.
 
 Approved update (2026-09-26, core backend run requested through ReadPrompt.txt): Added server-repriced atomic guest orders, immutable purchase/fulfillment snapshots, token-digest tracking, role-scoped status/weight operations, pending cash/online payments, policy-controlled cash receipt, provider-only settlement boundaries, bounded OWNER/ADMIN refunds and immutable operational audit. Pickup completes from READY; Home Delivery uses OUT_FOR_DELIVERY. Any quote change requires review. No provider, real operational policy, customer account or customer cancellation rule is seeded; production HTTP/provider integration and business-policy approval remain required.
+
+Proposed update (2026-10-02, PENDING Project Owner approval --- store offers): Records the store-offers capability already implemented in `20260929000000_store_offers.sql` and applied to the hosted project on 2026-09-29 (see `docs/store-offers.md`). This extends OWNER authority beyond daily price and Available / Sold Out changes; Sections 3 (OWNER, EMPLOYEE) and 10.3 have been amended to match, and those amendments are also pending this approval. Rules as implemented:
+-   ADMIN and OWNER may create and edit store offers for stores in their business: title/message, percentage or fixed-rupee discount, start/end time, whole-store/product/category scope (categories include descendants) and active state. EMPLOYEE may view current offers for assigned stores only and cannot create or change them. Guests see only active, current offers.
+-   Offers do not alter catalogue masters, selling prices or price history. The discount is applied at order level; line prices remain pre-discount.
+-   One offer applies per order: the eligible offer giving the largest merchandise discount. Offers do not stack. Fixed discounts apply once per order and never exceed eligible merchandise; merchandise payable is at least ₹0.01, including for 100% offers, and this is disclosed to customers and staff.
+-   Delivery fees are not discounted, and delivery-minimum eligibility uses the pre-discount merchandise subtotal.
+-   Eligibility uses server time (start inclusive, end exclusive). If an offer is edited, expires or is deactivated so that the accepted quote changes, the customer must review the new quote before ordering (Section 7).
+-   Orders preserve the applied offer and discount as an immutable snapshot (Section 9); payment amounts use the final order total. Offer changes are audited.
+No store or offer data is seeded. Open business decision to add to Section 15: who may approve promotions, and any maximum discount or offer-duration policy.
+
+Proposed update (2026-10-02, PENDING Project Owner approval --- sale units): Records the non-raw-weight pricing already implemented in `20260928010000_catalogue_sale_units.sql` and applied to the hosted project. Adds Section 5.1 (Net weight, Unit and Tray pricing bases) and amends Sections 4.2, 6 and 10.3, which previously assumed price per kg for every product. Raw-weight pricing (Section 5) is unchanged and remains the default. ADMIN alone configures a product's basis, unit and sale quantities; OWNER changes only the price for the existing unit. Bases cannot change once a product has been priced. As of 2026-10-02 the hosted catalogue has 21 raw-weight products, 1 net-weight product (per 500 g) and 1 tray product (30 per tray). The same migration added a public, non-orderable catalogue preview (ADMIN-set reference price and publish flag) shown until a real store is configured; ordering still requires a store offering and daily price.
