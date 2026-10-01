@@ -16,7 +16,7 @@ export function OrderSummary({ items, totals, editable = false, deliveryConfirme
       {item.estimatedCleanedWeightGrams !== undefined && <p className="order-cleaned">Estimated cleaned weight: ~{formatWeight(item.estimatedCleanedWeightGrams)}</p>}
       {item.specialInstructions && <p className="order-instructions">Notes: {item.specialInstructions}</p>}</div>
     </li>)}</ul>
-    <dl className="order-totals"><div><dt>Subtotal</dt><dd>{formatMoney(totals.subtotalPaise)}</dd></div><div><dt>Delivery charge</dt><dd>{deliveryConfirmed ? formatMoney(totals.deliveryChargePaise) : "Checked at review"}</dd></div><div className="order-grand-total"><dt>{deliveryConfirmed ? "Grand total" : "Subtotal before delivery"}</dt><dd data-order-total>{formatMoney(totals.grandTotalPaise)}</dd></div></dl>
+    <dl className="order-totals"><div><dt>Subtotal</dt><dd>{formatMoney(totals.subtotalPaise)}</dd></div>{!!totals.discountPaise && <div><dt>Offer discount{totals.offer?.title ? " — " + totals.offer.title : ""}</dt><dd>−{formatMoney(totals.discountPaise)}</dd></div>}<div><dt>Delivery charge</dt><dd>{deliveryConfirmed ? formatMoney(totals.deliveryChargePaise) : "Checked at review"}</dd></div><div className="order-grand-total"><dt>{deliveryConfirmed ? "Grand total" : "Subtotal before delivery"}</dt><dd data-order-total>{formatMoney(totals.grandTotalPaise)}</dd></div></dl>
     <p className="field-help">Cleaning estimates are approximate, not guaranteed delivered weights.</p>
   </section>;
 }

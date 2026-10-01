@@ -41,10 +41,20 @@ let socket;
       for(const role of ['ADMIN','OWNER','EMPLOYEE']){
         await send('Network.setCookie',{name:'trait_staff_access',value:'fixture-'+role,url:'http://127.0.0.1:3217/admin',path:'/admin',httpOnly:true,sameSite:'Strict'});
         const allowed=role==='ADMIN'?['dashboard','orders','catalogue','categories','prices','employees','payments','reports','settings']:role==='OWNER'?['dashboard','orders','prices','employees','payments','reports','settings']:['dashboard','orders'];
+        allowed.push('offers');
         for(const section of allowed){
           await navigate('/admin/'+role.toLowerCase()+'/'+section);
           await until('!!document.querySelector(".admin-live")');
           assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'),'staff '+role+' '+section+' '+width);
+          if(section==='offers'){
+            assert.ok(await evaluate('document.body.textContent.includes("Fresh test offer")'));
+            if(role==='EMPLOYEE')assert.equal(await evaluate('document.querySelectorAll("input[name=title]").length'),0);
+            else {
+              await evaluate('document.querySelectorAll("details").forEach(d=>d.open=true)');
+              assert.equal(await evaluate('document.querySelectorAll("input[name=title]").length'),2);
+              await snapshot('offers-'+role+'-'+width);
+            }
+          }
           if(role==='EMPLOYEE')assert.equal(await evaluate('document.querySelectorAll("nav a[href*=prices],nav a[href*=employees],nav a[href*=reports],nav a[href*=settings]").length'),0);
           if(role==='OWNER')assert.equal(await evaluate('document.querySelectorAll("nav a[href*=catalogue],nav a[href*=categories]").length'),0);
         }

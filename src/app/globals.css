@@ -800,3 +800,9 @@ h3 { letter-spacing:.01em; }
 @media(max-width:767px) {
   .footer-bottom .footer-staff-link { align-self:flex-end; }
 }
+
+.offer-pane { background:var(--brand-red-light); border-bottom:1px solid var(--border); padding:18px 0; }
+.offer-list { list-style:none; margin:0; padding:0; display:grid; gap:12px; }
+.offer-list li { min-width:0; overflow-wrap:anywhere; }
+.offer-list strong { color:var(--brand-red-dark); }
+.offer-list p { margin:5px 0; font-size:14px; }

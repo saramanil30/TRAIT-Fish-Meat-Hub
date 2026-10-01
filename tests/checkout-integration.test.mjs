@@ -31,4 +31,9 @@ test("server quote returns display totals and stable retry envelope; placement r
  assert.deepEqual(placements[0].args,placements[1].args);
  assert.ok(!placements[0].args.includes(envelope.token),"database receives digest only");
 });
+test("server discount and selected offer reach the checkout summary",async()=>{
+ Object.assign(quote,{discountPaise:2500,offer:{title:"Fresh savings"},totalPaise:23500});
+ const result=await server.quoteOrder({items:[]});
+ assert.equal(result.discountPaise,2500);assert.equal(result.offer.title,"Fresh savings");assert.equal(result.grandTotalPaise,23500);
+});
 test("distributed limiter fails closed without configuration",async()=>{await assert.rejects(()=>server.rateLimit("test",1));});

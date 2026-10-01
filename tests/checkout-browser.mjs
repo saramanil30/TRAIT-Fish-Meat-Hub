@@ -52,6 +52,8 @@ let socket;
         assert.equal(await evaluate('document.body.textContent.includes("TFM-000125")'),false);
       }
       await navigate('/');
+      assert.ok(await evaluate('document.querySelector(".offer-pane")?.textContent.includes("Fresh test offer")'));
+      assert.ok(await evaluate('document.querySelector(".hero").previousElementSibling.classList.contains("offer-pane")'));
       assert.equal(await evaluate('document.querySelector(".footer-staff-link")?.getAttribute("href")'),'/admin');
       await click('.footer-staff-link');await until('location.pathname==="/admin" && document.querySelector("h2")?.textContent==="Staff sign in"');
       await navigate('/checkout');await evaluate('sessionStorage.clear()');await navigate('/checkout');

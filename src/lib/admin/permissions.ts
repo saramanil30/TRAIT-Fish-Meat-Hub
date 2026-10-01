@@ -1,11 +1,11 @@
 export const staffRoles = ["ADMIN", "OWNER", "EMPLOYEE"] as const;
 export type StaffRole = typeof staffRoles[number];
-export const staffSections = ["dashboard", "orders", "catalogue", "categories", "prices", "employees", "payments", "reports", "settings"] as const;
+export const staffSections = ["dashboard", "orders", "catalogue", "categories", "prices", "offers", "employees", "payments", "reports", "settings"] as const;
 export type StaffSection = typeof staffSections[number];
 export function canAccessSection(role: StaffRole, section: StaffSection): boolean {
   if (role === "ADMIN") return true;
   if (role === "OWNER") return section !== "catalogue" && section !== "categories";
-  return role === "EMPLOYEE" && (section === "dashboard" || section === "orders");
+  return role === "EMPLOYEE" && (section === "dashboard" || section === "orders" || section === "offers");
 }
 export function canManageDailyProducts(role: StaffRole) { return role === "ADMIN" || role === "OWNER"; }
 export function canManageCatalogue(role: StaffRole) { return role === "ADMIN"; }

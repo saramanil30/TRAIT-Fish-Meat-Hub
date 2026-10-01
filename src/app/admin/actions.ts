@@ -1,9 +1,8 @@
 "use server";
-import { rateLimit } from "@/lib/checkout-server";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { authRequest, requireStaff, resolveStaff, sessionCookie, staffRpc } from "@/lib/admin/server";
+import { authRequest, requireStaff, resolveStaff, sessionCookie, refreshCookie, saveStaffSession, clearStaffSession, staffRpc } from "@/lib/admin/server";
 import { parseDailyPrice } from "@/lib/admin/permissions";
 export type ActionState = { error?: string; success?: string };
 const text = (form: FormData, name: string) => String(form.get(name) ?? "");
@@ -12,23 +11,47 @@ function boolean(form: FormData, name: string) { const value=text(form,name); if
 export async function signIn(_state: ActionState, form: FormData): Promise<ActionState> {
  let destination: string;
  try {
-  await rateLimit("staff-login",10);
+  // Supabase Auth enforces password-grant rate limits independently of checkout.
   const email=text(form,"email").trim(); const password=text(form,"password");
   if (email.length > 254 || !email.includes("@") || !password || password.length>1024) return {error:"Unable to sign in. Check your credentials and active staff access."};
   const response=await authRequest("token?grant_type=password",{method:"POST",body:JSON.stringify({email,password})});
+  if (response.status===429) return {error:"Too many sign-in attempts. Please try again later."};
   if (!response.ok) return {error:"Unable to sign in. Check your credentials and active staff access."};
   const session=await response.json();
   const context=await resolveStaff(session.access_token);
-  const age=Math.max(1,Math.min(Number(session.expires_in)||3600,3600));
-  (await cookies()).set(sessionCookie,session.access_token,{httpOnly:true,secure:process.env.NODE_ENV==="production",sameSite:"strict",path:"/admin",maxAge:age});
+  await saveStaffSession(session);
   destination="/admin/"+context.role.toLowerCase()+"/dashboard";
  } catch { return {error:"Unable to sign in. Check your credentials and active staff access."}; }
  redirect(destination);
 }
+export async function refreshStaffSession(resume=false): Promise<ActionState> {
+ let destination="";
+ try {
+  const refresh=(await cookies()).get(refreshCookie)?.value;
+  if(!refresh)throw new Error("No session.");
+  const response=await authRequest("token?grant_type=refresh_token",{method:"POST",body:JSON.stringify({refresh_token:refresh})});
+  if(!response.ok)throw new Error("Expired session.");
+  const session=await response.json();
+  const context=await resolveStaff(session.access_token);
+  await saveStaffSession(session);
+  destination="/admin/"+context.role.toLowerCase()+"/dashboard";
+ } catch {
+  await clearStaffSession();
+  return {error:"Your session has ended. Please sign in again."};
+ }
+ if(resume)redirect(destination);
+ return {success:"Session renewed."};
+}
 export async function signOut() {
- const jar=await cookies(); const token=jar.get(sessionCookie)?.value;
- if (token) await authRequest("logout",{method:"POST",headers:{Authorization:"Bearer "+token}}).catch(()=>undefined);
- jar.delete({name:sessionCookie,path:"/admin"}); redirect("/admin");
+ const jar=await cookies(); let token=jar.get(sessionCookie)?.value;
+ try {
+  if(!token&&jar.get(refreshCookie)?.value){
+   const response=await authRequest("token?grant_type=refresh_token",{method:"POST",body:JSON.stringify({refresh_token:jar.get(refreshCookie)!.value})});
+   if(response.ok)token=(await response.json()).access_token;
+  }
+  if(token)await authRequest("logout?scope=local",{method:"POST",headers:{Authorization:"Bearer "+token}});
+ } catch { /* Clear this browser's cookies even when Auth is unreachable. */ }
+ await clearStaffSession();redirect("/admin");
 }
 export async function saveDailyProduct(_state: ActionState,form: FormData): Promise<ActionState> {
  try {

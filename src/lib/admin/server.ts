@@ -3,7 +3,8 @@ import { cookies } from "next/headers";
 import { staffRoles, type StaffRole, type StaffSection, canAccessSection } from "./permissions";
 export type StaffContext = { id: string; businessId: string; role: StaffRole; name: string; stores: { id: string; name: string }[] };
 export const sessionCookie = "trait_staff_access";
-export function staffConfigured() { return process.env.TRAIT_STAFF_ENABLED === "true" && !!process.env.SUPABASE_URL && !!process.env.SUPABASE_PUBLISHABLE_KEY; }
+export const refreshCookie = "trait_staff_refresh";
+export function staffConfigured() { return process.env.TRAIT_STAFF_ENABLED !== "false" && !!process.env.SUPABASE_URL && !!process.env.SUPABASE_PUBLISHABLE_KEY; }
 function config() {
  if (!staffConfigured()) throw new Error("Staff sign-in is not configured.");
  const url = new URL(process.env.SUPABASE_URL!);
@@ -38,4 +39,28 @@ export async function requireStaff(section?: StaffSection) {
  const context = await resolveStaff(token);
  if (section && !canAccessSection(context.role,section)) throw new Error("Access denied.");
  return { token, context };
+}
+
+export function recoveryRedirect() {
+ const value=process.env.TRAIT_AUTH_RECOVERY_URL;
+ if(!value) throw new Error("Password recovery is temporarily unavailable. Contact your store manager.");
+ const url=new URL(value);
+ const local=process.env.NODE_ENV!=="production" && ["localhost","127.0.0.1"].includes(url.hostname);
+ if((url.protocol!=="https:" && !(local&&url.protocol==="http:")) || url.username || url.password || url.pathname!=="/admin/recovery" || url.search || url.hash) throw new Error("Invalid recovery destination.");
+ return url.href;
+}
+export async function saveStaffSession(session:{access_token:string;refresh_token?:string;expires_in:number}) {
+ if(typeof session.access_token!=="string"||!session.access_token)throw new Error("Invalid session.");
+ const maxAge=Math.max(1,Math.min(Number(session.expires_in)||3600,3600));
+ const jar=await cookies();
+ const options={httpOnly:true,secure:process.env.NODE_ENV==="production",sameSite:"strict" as const,path:"/admin"};
+ jar.set(sessionCookie,session.access_token,{...options,maxAge});
+ if(session.refresh_token)jar.set(refreshCookie,session.refresh_token,options);
+ else jar.delete({name:refreshCookie,path:"/admin"});
+ return maxAge;
+}
+export async function clearStaffSession() {
+ const jar=await cookies();
+ jar.delete({name:sessionCookie,path:"/admin"});
+ jar.delete({name:refreshCookie,path:"/admin"});
 }

@@ -9,7 +9,7 @@ test("role capability matrix denies OWNER catalogue and all EMPLOYEE product ope
  for(const section of permissions.staffSections) {
  assert.equal(permissions.canAccessSection("ADMIN",section),true);
  assert.equal(permissions.canAccessSection("OWNER",section),!["catalogue","categories"].includes(section));
- assert.equal(permissions.canAccessSection("EMPLOYEE",section),["dashboard","orders"].includes(section));
+ assert.equal(permissions.canAccessSection("EMPLOYEE",section),["dashboard","orders","offers"].includes(section));
  assert.equal(permissions.canAccessSection("forged",section),false);
  }
  assert.equal(permissions.canManageCatalogue("OWNER"),false);
@@ -31,6 +31,7 @@ const cacheUrl=moduleUrl('export function revalidatePath(){}');
 const actions=await import(moduleUrl(readFileSync(new URL("../src/app/admin/actions.ts",import.meta.url),"utf8")
  .replace('"next/headers"',JSON.stringify(cookieUrl)).replace('"next/navigation"',JSON.stringify(navUrl)).replace('"next/cache"',JSON.stringify(cacheUrl))
  .replace('"@/lib/checkout-server"',JSON.stringify(moduleUrl('export async function rateLimit(){}'))).replace('"@/lib/admin/server"',JSON.stringify(serverUrl)).replace('"@/lib/admin/permissions"',JSON.stringify(permissionsUrl))));
+const offerActions=await import(moduleUrl(readFileSync(new URL("../src/app/admin/offer-actions.ts",import.meta.url),"utf8").replace('"next/cache"',JSON.stringify(cacheUrl)).replace('"@/lib/admin/server"',JSON.stringify(serverUrl))));
 const originalFetch=globalThis.fetch;
 const env={...process.env};
 test("server Auth validation, current membership, and forged direct actions",async()=>{
@@ -52,6 +53,10 @@ test("server Auth validation, current membership, and forged direct actions",asy
  const price=new FormData();price.set("id","00000000-0000-4000-8000-000000000001");price.set("version","1");price.set("price","500");price.set("available","true");
  assert.ok((await actions.saveDailyProduct({},price)).error);
  assert.equal(state.calls.some(c=>c.url.endsWith("/update_daily_product")),false);
+ const offerForm=new FormData();for(const [k,v] of Object.entries({store:"00000000-0000-4000-8000-000000000001",title:"Sale",message:"",kind:"PERCENT",amount:"10",start:"2026-09-29T00:00",end:"2026-10-01T00:00",scope:"STORE",active:"true"}))offerForm.set(k,v);
+ state.calls=[];assert.ok((await offerActions.saveOffer({},offerForm)).error);assert.equal(state.calls.some(c=>c.url.endsWith("/save_offer")),false);
+ state.role="OWNER";state.calls=[];assert.ok((await offerActions.saveOffer({},offerForm)).success);
+ assert.equal(JSON.parse(state.calls.find(c=>c.url.endsWith("/save_offer")).options.body).amount,1000);
  state.role="OWNER";state.calls=[];
  assert.ok((await actions.saveDailyProduct({},price)).success);
  const request=state.calls.find(c=>c.url.endsWith("/update_daily_product"));

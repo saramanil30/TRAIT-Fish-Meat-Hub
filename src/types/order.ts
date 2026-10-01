@@ -17,6 +17,8 @@ export interface CheckoutDetails {
 }
 export type CheckoutErrors = Partial<Record<keyof CheckoutDetails, string>>;
 export interface OrderTotals {
+  discountPaise?: number;
+  offer?: { title: string } | null;
   subtotalPaise: number;
   deliveryChargePaise: number;
   grandTotalPaise: number;

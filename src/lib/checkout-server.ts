@@ -40,7 +40,7 @@ export async function rateLimit(scope:string, limit:number) {
  const result=await response.json();
  if(!Number.isInteger(result.result)||result.result>limit) throw new Error("Too many requests. Please wait a minute.");
 }
-export type Quote={quoteDigest:string;subtotalPaise:number;deliveryFeePaise:number;totalPaise:number;items:{lineTotalPaise:number;pricePerKgPaise:number|null;pricePaise?:number}[]};
+export type Quote={discountPaise?:number;offer?:{title:string}|null;quoteDigest:string;subtotalPaise:number;deliveryFeePaise:number;totalPaise:number;items:{lineTotalPaise:number;pricePerKgPaise:number|null;pricePaise?:number}[]};
 export type Envelope={store:string;requestId:string;payload:Record<string,unknown>;digest:string;token:string;trackingExpires:string;reviewExpires:number};
 export async function quoteOrder(payload:Record<string,unknown>) {
  const store=process.env.TRAIT_STORE_ID;
@@ -50,7 +50,7 @@ export async function quoteOrder(payload:Record<string,unknown>) {
  const rows=await sql`select api.checkout_quote(${store}::uuid,${JSON.stringify(payload)}::jsonb) as result`;
  const quote=rows[0].result as Quote;
  const envelope:Envelope={store,requestId:randomUUID(),payload,digest:quote.quoteDigest,token:randomBytes(32).toString("hex"),trackingExpires:new Date(Date.now()+days*86400000).toISOString(),reviewExpires:Date.now()+15*60000};
- return {envelope:seal(envelope),subtotalPaise:quote.subtotalPaise,deliveryChargePaise:quote.deliveryFeePaise,grandTotalPaise:quote.totalPaise,lines:quote.items.map(i=>({lineTotalPaise:i.lineTotalPaise,pricePerKg:(i.pricePerKgPaise??0)/100}))};
+ return {envelope:seal(envelope),discountPaise:quote.discountPaise??0,offer:quote.offer??null,subtotalPaise:quote.subtotalPaise,deliveryChargePaise:quote.deliveryFeePaise,grandTotalPaise:quote.totalPaise,lines:quote.items.map(i=>({lineTotalPaise:i.lineTotalPaise,pricePerKg:(i.pricePerKgPaise??0)/100}))};
 }
 export async function commitOrder(value:string) {
  const e=unseal<Envelope>(value);

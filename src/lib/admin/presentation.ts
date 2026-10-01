@@ -2,7 +2,7 @@
 export type PreviewRole = "admin" | "owner" | "employee";
 export const sections = ["dashboard", "orders", "catalogue", "categories", "prices", "employees", "payments", "reports", "settings"] as const;
 export type Section = typeof sections[number];
-export const sectionLabels: Record<Section, string> = { dashboard: "Dashboard", orders: "Orders", catalogue: "Catalogue", categories: "Categories", prices: "Prices & Availability", employees: "Employees", payments: "Payments", reports: "Reports", settings: "Settings" };
+export const sectionLabels: Record<Section | "offers", string> = { dashboard: "Dashboard", orders: "Orders", catalogue: "Catalogue", categories: "Categories", prices: "Prices & Availability", offers: "Offers", employees: "Employees", payments: "Payments", reports: "Reports", settings: "Settings" };
 export const statuses = ["PLACED", "CONFIRMED", "PREPARING", "READY", "OUT_FOR_DELIVERY", "DELIVERED", "CANCELLED"] as const;
 export type Status = typeof statuses[number];
 export interface PreviewOrder { id: string; store: string; customer: string; method: "Delivery" | "Pickup"; status: Status; payment: "PENDING" | "VERIFYING" | "PAID" | "FAILED" | "REFUNDED"; tender: "Cash" | "Online / UPI"; product: string; preparation: string; grams: number; pricePaise: number; feePaise: number; time: string; history: string[]; dispatchGrams?: number; reference?: string }

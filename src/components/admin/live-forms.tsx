@@ -3,9 +3,9 @@ import { useActionState, type ReactNode } from "react";
 import { signIn, saveDailyProduct, saveMaster, saveEmployeeAccess, saveStoreOperations, type ActionState } from "@/app/admin/actions";
 import {priceUnit} from "@/lib/pricing";
 import { money } from "@/lib/admin/presentation";
-export function StaffLogin({configured}:{configured:boolean}) {
+export function StaffLogin() {
  const [state,action,pending]=useActionState(signIn,{});
- return <form action={action}><fieldset disabled={!configured||pending}><label>Work email<input name="email" type="email" autoComplete="username" required maxLength={254}/></label><label>Password<input name="password" type="password" autoComplete="current-password" required maxLength={1024}/></label><button className="admin-button" type="submit">{pending?"Signing in…":configured?"Sign in":"Sign in unavailable"}</button></fieldset>{state.error&&<p role="alert">{state.error}</p>}</form>;
+ return <form action={action}><fieldset disabled={pending}><label>Work email<input name="email" type="email" autoComplete="username" required maxLength={254}/></label><label>Password<input name="password" type="password" autoComplete="current-password" required maxLength={1024}/></label><button className="admin-button" type="submit">{pending?"Signing in…":"Sign in"}</button></fieldset>{state.error&&<p role="alert">{state.error}</p>}</form>;
 }
 export type DailyProduct={pricingBasis?:"RAW_WEIGHT"|"NET_WEIGHT"|"UNIT"|"TRAY";priceUnitGrams?:number|null;unitsPerPack?:number|null;id:string;name:string;category:string;pricePaise:number|null;available:boolean;version:number;updatedAt:string};
 function DailyRow({product:p}:{product:DailyProduct}) {
