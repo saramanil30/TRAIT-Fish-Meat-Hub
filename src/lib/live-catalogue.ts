@@ -12,7 +12,10 @@ export async function liveCatalogue(): Promise<Product[]> {
   let category=data.categories.find(c=>c.id===p.categoryId); const visited=new Set<string>();
   while(category?.parentId&&!visited.has(category.id)){visited.add(category.id);category=data.categories.find(c=>c.id===category!.parentId)??category;}
   const image=p.images.find(i=>(i.assetPath?.startsWith("/")&&!i.assetPath.startsWith("//"))||(i.bucket==="product-images"&&i.objectPath));
-  const imageUrl=image?.assetPath ?? (image?.bucket&&image.objectPath ? process.env.SUPABASE_URL+"/storage/v1/object/public/product-images/"+image.objectPath.split("/").map(encodeURIComponent).join("/") : "/trait-logo.jpeg");
-  return {pricingBasis:p.pricingBasis,pricePaise:Number(p.pricePaise??p.pricePerKgPaise),priceUnitGrams:p.priceUnitGrams,unitsPerPack:p.unitsPerPack,saleQuantities:p.saleQuantities,orderable:p.orderable,id:p.id,name:p.name,localName:p.localName,category:(category?.name??"Other").toLowerCase(),pricePerKg:Number(p.pricePerKgPaise)/100,available:p.available,image:imageUrl,imageAlt:image?.alt??p.name,cut:p.description??"",selectableWeightsGrams:p.weightsGrams??[],preparationOptions:p.preparations.map(x=>({id:x.id,label:x.name,removesCleaningWaste:x.cleaningLossPercent!==null,cleaningLossPercent:x.cleaningLossPercent===null?undefined:Number(x.cleaningLossPercent)}))};
+  const categoryName=(category?.name??"Other").toLowerCase();
+  // Products without a verified photo get a neutral placeholder, never another product's image.
+  const placeholder=categoryName==="eggs"?"/assets/catalogue/placeholder-eggs.svg":"/assets/catalogue/placeholder-fish.svg";
+  const imageUrl=image?.assetPath ?? (image?.bucket&&image.objectPath ? process.env.SUPABASE_URL+"/storage/v1/object/public/product-images/"+image.objectPath.split("/").map(encodeURIComponent).join("/") : placeholder);
+  return {pricingBasis:p.pricingBasis,pricePaise:Number(p.pricePaise??p.pricePerKgPaise),priceUnitGrams:p.priceUnitGrams,unitsPerPack:p.unitsPerPack,saleQuantities:p.saleQuantities,orderable:p.orderable,id:p.id,name:p.name,localName:p.localName,category:categoryName,pricePerKg:Number(p.pricePerKgPaise)/100,available:p.available,image:imageUrl,imageAlt:image?(image.alt||p.name):"Photo coming soon: "+p.name,cut:p.description??"",selectableWeightsGrams:p.weightsGrams??[],preparationOptions:p.preparations.map(x=>({id:x.id,label:x.name,removesCleaningWaste:x.cleaningLossPercent!==null,cleaningLossPercent:x.cleaningLossPercent===null?undefined:Number(x.cleaningLossPercent)}))};
  });
 }
