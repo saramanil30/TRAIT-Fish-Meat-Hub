@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { CartItem } from "@/types/cart";
 import type { CheckoutDetails, OrderTotals } from "@/types/order";
 import { formatMoney, formatWeight } from "@/lib/format";
+import { SERVICE_CITY, SERVICE_STATE } from "@/lib/order";
 
 export function OrderSummary({ items, totals, editable = false, deliveryConfirmed = true }: { items: readonly CartItem[]; totals: OrderTotals; editable?: boolean; deliveryConfirmed?: boolean }) {
   return <section className="order-panel order-summary" aria-labelledby="order-summary-title">
@@ -21,5 +22,5 @@ export function OrderSummary({ items, totals, editable = false, deliveryConfirme
   </section>;
 }
 export function CustomerDetails({ customer }: { customer: CheckoutDetails }) {
-  return <dl className="customer-details"><div><dt>Customer</dt><dd>{customer.name}<br />{customer.mobile}</dd></div><div><dt>{customer.deliveryMethod === "delivery" ? "Home Delivery" : "Store Pickup"}</dt><dd>{customer.deliveryMethod === "delivery" ? <>{customer.address}<br />{customer.locality} - {customer.pincode}{customer.landmark && <><br />Landmark: {customer.landmark}</>}</> : "Store Pickup"}</dd></div><div><dt>Payment method</dt><dd>{customer.paymentMethod === "cash" ? "Cash" : "UPI"} at {customer.deliveryMethod === "pickup" ? "pickup" : "delivery"}</dd></div></dl>;
+  return <dl className="customer-details"><div><dt>Customer</dt><dd>{customer.name}<br />{customer.mobile}</dd></div><div><dt>{customer.deliveryMethod === "delivery" ? "Home Delivery" : "Store Pickup"}</dt><dd>{customer.deliveryMethod === "delivery" ? <>{customer.address}<br />{customer.locality}, {SERVICE_CITY}, {SERVICE_STATE} {customer.pincode}{customer.landmark && <><br />Landmark: {customer.landmark}</>}</> : "Store Pickup"}</dd></div><div><dt>Payment method</dt><dd>{customer.paymentMethod === "cash" ? "Cash" : "UPI"} at {customer.deliveryMethod === "pickup" ? "pickup" : "delivery"}</dd></div></dl>;
 }

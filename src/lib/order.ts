@@ -13,6 +13,9 @@ export function normalizeMobile(value: string): string {
   const compact = value.replace(/[\s()-]/g, "");
   return compact.replace(/^(?:\+91|91)(?=[6-9]\d{9}$)/, "");
 }
+/** Delivery is Hyderabad-only; city and state are fixed, and the server sets them itself. */
+export const SERVICE_CITY = "Hyderabad";
+export const SERVICE_STATE = "Telangana";
 export function validateCheckout(details: CheckoutDetails): CheckoutErrors {
   const errors: CheckoutErrors = {};
   if (!["delivery", "pickup"].includes(details.deliveryMethod)) errors.deliveryMethod = "Choose a delivery method.";
@@ -22,8 +25,6 @@ export function validateCheckout(details: CheckoutDetails): CheckoutErrors {
   if (details.deliveryMethod === "delivery") {
     if (details.address.trim().length < 5 || details.address.trim().length > 300) errors.address = "Enter your delivery address (5-300 characters).";
     if (details.locality.trim().length < 2 || details.locality.trim().length > 100) errors.locality = "Enter your area / locality (2-100 characters).";
-    if (!(details.city??"").trim() || (details.city??"").trim().length>120) errors.city="Enter your city (1-120 characters).";
-    if (!(details.state??"").trim() || (details.state??"").trim().length>120) errors.state="Enter your state (1-120 characters).";
     if (details.landmark.trim().length > 150) errors.landmark = "Keep the landmark within 150 characters.";
     if (!/^[1-9]\d{5}$/.test(details.pincode.trim())) errors.pincode = "Enter a valid 6-digit Indian pincode.";
   }

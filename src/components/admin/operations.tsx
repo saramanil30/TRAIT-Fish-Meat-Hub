@@ -4,6 +4,7 @@ import { staffRpc,type StaffContext } from "@/lib/admin/server";
 import { OperationalForm } from "./operational-form";
 import { formatMoney, formatWeight } from "@/lib/format";
 import { ActionDialog } from "./action-dialog";
+import { deliveryAddress } from "@/lib/address";
 type Order={discount_paise?:number;offer_snapshot?:{title:string};id:string;order_number:string;status:string;fulfillment_method:string;total_paise:number;version:number;created_at:string;fulfillment_snapshot?:{name?:string;mobileE164?:string;address?:Record<string,string>}};
 type Detail={order:Order;items:{id:string;raw_weight_grams:number|null;sale_quantity?:number;pricing_basis?:string;units_per_pack?:number;line_total_paise:number;instructions:string;product_snapshot:{productName:string;preparationName:string}}[];payments:{id:string;method:string;status:string;amountPaise:number;refundedPaise?:number;version:number}[]};
 const PAGE_SIZE=25;
@@ -48,6 +49,7 @@ export async function Operations({token,context,store,orderId,section,before,cur
    const pickup=order.fulfillment_method==="STORE_PICKUP";
    const payment=d?.payments?.[d.payments.length-1];
    const customer=d?.order.fulfillment_snapshot;
+   const address=deliveryAddress(customer?.address);
    const step=nextStep(order);
    const status=order.status==="DELIVERED"&&pickup?"Picked up":statusText[order.status]??order.status;
    const canCancel=manager&&!["DELIVERED","CANCELLED"].includes(order.status);
@@ -76,7 +78,7 @@ export async function Operations({token,context,store,orderId,section,before,cur
      {!!order.discount_paise&&<p className="ord-note">Offer {order.offer_snapshot?.title}: −{formatMoney(Number(order.discount_paise))}</p>}
      <div className="ord-customer">
       <p><strong>{customer?.name||"Customer"}</strong>{customer?.mobileE164&&<> · <a href={"tel:"+customer.mobileE164}>{customer.mobileE164}</a></>}</p>
-      <p>{pickup?"Store pickup":Object.values(customer?.address??{}).filter(Boolean).join(", ")}</p>
+      {pickup?<p>Store pickup</p>:<><p>{address.line}</p>{address.landmark&&<p className="ord-note">Landmark: {address.landmark}</p>}</>}
       <p className="admin-muted">Placed {new Date(order.created_at).toLocaleString("en-IN",{timeZone:"Asia/Kolkata",dateStyle:"medium",timeStyle:"short"})}</p>
      </div>
      {manager&&d.payments.some(p=>p.status==="PAID"||p.status==="REFUNDED")&&<PaymentHistory token={token} order={order.id}/>}
