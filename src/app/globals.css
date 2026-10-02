@@ -1031,7 +1031,8 @@ html:has(main.headerless) { scroll-padding-top:0; }
 .instructions-toggle { min-height:44px; padding:0; border:0; background:none; color:var(--brand-red-dark); font-size:14px; font-weight:600; cursor:pointer; }
 .instructions-toggle:hover { text-decoration:underline; text-underline-offset:3px; }
 .instructions-field textarea { min-height:64px; }
-.selection-actions .button { flex:1; }
+.selection-actions { flex-wrap:nowrap; }
+.selection-actions .button { flex:1; min-width:0; }
 @media(min-width:768px) {
   .selection-dialog { width:min(880px, calc(100% - 48px)); }
   .selection-form { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); grid-template-rows:1fr auto; overflow-y:auto; }
@@ -1041,7 +1042,6 @@ html:has(main.headerless) { scroll-padding-top:0; }
   .selection-main .selection-product { margin-bottom:8px; }
   .selection-side { padding:20px 24px 0; }
   .selection-footer { grid-column:2; border-top:0; padding:12px 24px 24px; }
-  .selection-actions { flex-direction:column; }
   .choice-list { gap:6px; }
   .choice-list .choice { min-height:40px; padding:8px 14px; }
 }
