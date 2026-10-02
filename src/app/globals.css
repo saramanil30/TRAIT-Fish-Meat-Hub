@@ -1023,6 +1023,11 @@ html:has(main.headerless) { scroll-padding-top:0; }
 /* Options popup: two columns on desktop; single column with pinned actions on mobile. */
 .selection-photo { display:block; width:100%; height:auto; aspect-ratio:4/3; object-fit:cover; border-radius:10px; background:var(--surface); }
 .selection-main .selection-product { margin:0; }
+.selection-main .selection-product>div { flex:1; min-width:0; }
+.selection-name-row { display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:5px; }
+.selection-name-row h3, .selection-name-row p { margin:0; }
+.selection-name-row h3 { min-width:0; }
+.selection-name-row p { flex-shrink:0; white-space:nowrap; }
 .selection-description { font-size:14px; line-height:1.55; color:var(--text-secondary); margin:0 0 14px; }
 .selection-main .weight-select { margin-bottom:12px; }
 .selection-main .weight-select select { justify-self:start; width:auto; min-width:160px; min-height:40px; padding:6px 36px 6px 12px; }
@@ -1052,6 +1057,8 @@ html:has(main.headerless) { scroll-padding-top:0; }
   .selection-main>:not(.selection-photo, .selection-product) { grid-column:1 / -1; }
   .selection-photo { margin-bottom:12px; }
   .selection-main .selection-product { margin-bottom:12px; }
+  .selection-name-row { flex-wrap:wrap; justify-content:flex-start; gap:2px 10px; }
+  .selection-name-row strong { font-size:16px; }
   .selection-main .selection-total-row { margin-bottom:18px; }
 }
 
