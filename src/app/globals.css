@@ -963,3 +963,8 @@ main.storefront .catalog-filters button { background:rgb(255 255 255 / 10%); col
 main.storefront .catalog-filters button:hover { border-color:white; color:white; }
 main.storefront .catalog-filters button[aria-pressed=true] { background:var(--brand-red); border-color:var(--brand-red); color:white; }
 main.storefront .cart-title h1 span { color:#ffb4ab; }
+
+/* Options popup: quantity as a dropdown. */
+.weight-select { display:grid; gap:0; margin:0 0 20px; }
+.weight-select label { font-size:14px; font-weight:700; margin-bottom:10px; }
+.weight-select select { min-height:48px; padding:10px 40px 10px 14px; border:1px solid var(--border); border-radius:8px; font-size:16px; background-color:white; color:var(--text-primary); }
