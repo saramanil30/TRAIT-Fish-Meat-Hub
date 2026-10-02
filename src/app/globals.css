@@ -844,3 +844,13 @@ h3 { letter-spacing:.01em; }
 .selection-product img { width:112px; height:auto; aspect-ratio:4/3; object-fit:cover; flex-shrink:0; }
 .cleaning-estimate { margin:10px 0 0; font-size:13px; line-height:1.5; color:var(--text-secondary); }
 .checkout-fixed { background:var(--surface); color:var(--text-secondary); cursor:default; }
+
+/* Homepage "Popular fresh cuts": dark band matching the hero, white cards. To revert, delete this block and the fresh-band wrapper in src/app/page.tsx. */
+.fresh-band { background:radial-gradient(ellipse at 100% 0,#49252e 0,transparent 35%),radial-gradient(ellipse at 0 100%,#40342c 0,transparent 35%),var(--charcoal); color:white; }
+.fresh-band .eyebrow { color:#ffb4ab; }
+.fresh-band .catalog-heading h2 { color:white; }
+.fresh-band .catalog-filters button { background:rgb(255 255 255 / 10%); color:rgb(255 255 255 / 85%); border-color:rgb(255 255 255 / 18%); }
+.fresh-band .catalog-filters button:hover { border-color:white; color:white; }
+.fresh-band .catalog-filters button[aria-pressed=true] { background:var(--brand-red); border-color:var(--brand-red); color:white; }
+.fresh-band .product-card { background:white; color:var(--text-primary); border-color:transparent; box-shadow:0 8px 24px rgb(0 0 0 / 28%); }
+.fresh-band .empty-results { background:white; color:var(--text-primary); border-radius:12px; }

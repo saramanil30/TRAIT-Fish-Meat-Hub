@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { SiteFrame } from "@/components/layout/site-frame";
+import { liveCatalogue } from "@/lib/live-catalogue";
+import { shopCategories, type ShopCategory } from "@/lib/shop-categories";
 
 
 import "./globals.css";
@@ -27,6 +29,8 @@ export const metadata: Metadata = {
   title: { default: "TRAIT Fish & Meat Hub | Fresh, Your Way", template: "%s | TRAIT Fish & Meat Hub" },
   description: "Explore fish, seafood, chicken and mutton. Choose your raw weight and preparation at TRAIT.",
 };
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return <html lang="en" className={`${bodyFont.variable} ${headingFont.variable}`}><body><a className="skip-link" href="#main-content">Skip to content</a><SiteFrame>{children}</SiteFrame></body></html>;
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  let categories: ShopCategory[] = [];
+  try { categories = shopCategories(await liveCatalogue()); } catch { /* Navigation shows "All" only while the catalogue is unavailable. */ }
+  return <html lang="en" className={`${bodyFont.variable} ${headingFont.variable}`}><body><a className="skip-link" href="#main-content">Skip to content</a><SiteFrame categories={categories.map(({ slug, name }) => ({ slug, name }))}>{children}</SiteFrame></body></html>;
 }

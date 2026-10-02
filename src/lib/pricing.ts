@@ -1,7 +1,7 @@
 import type { Product, SalePricing } from "../types/catalog";
 import { formatMoney, formatWeight } from "./format";
 export function isRaw(p: SalePricing) { return !p.pricingBasis || p.pricingBasis === 'RAW_WEIGHT'; }
-export function quantityLabel(p: SalePricing) { return isRaw(p) ? 'Raw weight' : p.pricingBasis === 'NET_WEIGHT' ? 'NET weight' : p.pricingBasis === 'TRAY' ? 'Trays' : 'Units'; }
+export function quantityLabel(p: SalePricing) { return isRaw(p) ? 'Quantity (before cleaning)' : p.pricingBasis === 'NET_WEIGHT' ? 'NET weight' : p.pricingBasis === 'TRAY' ? 'Trays' : 'Units'; }
 export function priceUnit(p: SalePricing) { return isRaw(p) ? 'kg' : p.pricingBasis === 'NET_WEIGHT' ? formatWeight(p.priceUnitGrams ?? 0)+' NET weight' : p.pricingBasis === 'TRAY' ? 'tray ('+p.unitsPerPack+' eggs)' : 'unit'; }
 export function priceLabel(p: SalePricing & {pricePerKg: number}) { return formatMoney(p.pricePaise ?? Math.round(p.pricePerKg*100))+' / '+priceUnit(p); }
 export function quantityOptions(p: Product) { return isRaw(p) ? p.selectableWeightsGrams : p.saleQuantities ?? []; }

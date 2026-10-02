@@ -8,7 +8,7 @@ export const MAX_INSTRUCTIONS_LENGTH = 300;
 // availability, preparation and raw weight and recalculate using its current price.
 export function calculateLineTotalPaise(pricePerKg: number, rawWeightGrams: number): number {
   if (!Number.isFinite(pricePerKg) || pricePerKg < 0 || !Number.isSafeInteger(rawWeightGrams) || rawWeightGrams <= 0) {
-    throw new Error("Please choose a valid raw weight and product price.");
+    throw new Error("Please choose a valid quantity and product price.");
   }
   const pricePerKgPaise = Math.round(pricePerKg * 100);
   const total = Math.round((pricePerKgPaise * rawWeightGrams) / 1000);
@@ -34,7 +34,7 @@ export function createCartItem(product: Product, selection: ProductSelection, id
   const preparation = product.preparationOptions.find(option => option.id === selection.preparationId);
   if (!preparation) throw new Error("Please choose an available preparation.");
   const quantity=isRaw(product)?selection.rawWeightGrams:selection.quantity;
-  if (quantity===undefined || !quantityOptions(product).includes(quantity)) throw new Error("Please choose an available raw weight.");
+  if (quantity===undefined || !quantityOptions(product).includes(quantity)) throw new Error("Please choose an available quantity.");
   if (selection.specialInstructions.length > MAX_INSTRUCTIONS_LENGTH) throw new Error("Please keep instructions within 300 characters.");
   const cleaningLossPercent = applicableCleaningLoss(product, preparation);
   return {

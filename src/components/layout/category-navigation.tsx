@@ -1,8 +1,9 @@
-﻿"use client";
+"use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-const links = [["/search", "All"], ["/fish", "Fish"], ["/chicken", "Chicken"], ["/mutton", "Mutton"], ["/seafood", "Seafood & Prawns"]] as const;
-export function CategoryNavigation() {
+import type { NavCategory } from "./site-frame";
+export function CategoryNavigation({ categories }: { categories: NavCategory[] }) {
   const pathname = usePathname();
+  const links = [["/search", "All"], ...categories.map(c => ["/" + c.slug, c.name])];
   return <nav className="category-nav container" aria-label="Shop categories">{links.map(([href, label]) => <Link key={href} href={href} aria-current={pathname === href ? "page" : undefined}>{label}</Link>)}<span>Choose your cut. Make it your own.</span></nav>;
 }
