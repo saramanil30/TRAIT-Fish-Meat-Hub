@@ -2,11 +2,12 @@
 import { requireStaff, staffRpc, authRequest } from "@/lib/admin/server";
 import { revalidatePath } from "next/cache";
 import { rateLimit } from "@/lib/checkout-server";
+import { rupeesToPaise } from "@/lib/admin/permissions";
 import type { ActionState } from "./actions";
 const text=(f:FormData,k:string)=>String(f.get(k)??"");
 const id=(f:FormData,k:string)=>{const s=text(f,k);if(!/^[a-f0-9-]{36}$/i.test(s))throw new Error("Invalid identity");return s;};
 const number=(f:FormData,k:string)=>{const n=Number(text(f,k));if(!Number.isSafeInteger(n)||n<0)throw new Error("Invalid number");return n;};
-const rupees=(f:FormData,k:string)=>{const s=text(f,k).trim();if(!/^\d{1,9}(\.\d{1,2})?$/.test(s))throw new Error("Invalid amount");return Math.round(Number(s)*100);};
+const rupees=(f:FormData,k:string)=>rupeesToPaise(text(f,k));
 export async function operationalAction(_:ActionState,f:FormData):Promise<ActionState>{
  try{
   const kind=text(f,"operation");
@@ -22,7 +23,7 @@ export async function operationalAction(_:ActionState,f:FormData):Promise<Action
    const store=id(f,"store"),pincode=text(f,"pincode").trim();
    const existing=text(f,"id")?null:(await staffRpc<{id:string;pincode:string;version:number}[]>(token,"delivery_areas",{target_store:store})).find(a=>a.pincode===pincode);
    const target=text(f,"id")?{id:id(f,"id"),version:number(f,"version")}:existing?{id:existing.id,version:Number(existing.version)}:null;
-   await staffRpc(token,"save_delivery_area",{target_id:target?.id??null,target_store:store,expected_version:target?.version??null,area_pincode:pincode,area_name:text(f,"name"),fee_paise:number(f,"fee"),minimum_paise:number(f,"minimum"),active:text(f,"active")==="true"});
+   await staffRpc(token,"save_delivery_area",{target_id:target?.id??null,target_store:store,expected_version:target?.version??null,area_pincode:pincode,area_name:text(f,"name"),fee_paise:rupees(f,"fee"),minimum_paise:rupees(f,"minimum"),active:text(f,"active")==="true"});
   }
   else if(kind==="staff-profile") await staffRpc(token,"save_staff_profile",{target_staff:id(f,"id"),expected_version:number(f,"version"),staff_name:text(f,"name"),store_ids:f.getAll("stores").map(String),active:text(f,"active")==="true"});
   else if(kind==="recovery"){
@@ -39,7 +40,7 @@ export async function operationalAction(_:ActionState,f:FormData):Promise<Action
    if(!recovery.ok)throw new Error("Recovery unavailable");
    return {success:"Password recovery email requested."};
   }
-  else if(kind==="policy")await staffRpc(token,"save_business_policy",{expected_revision:number(f,"version"),history_days:number(f,"history"),cash_limit:text(f,"cashLimit")?number(f,"cashLimit"):null,payment_required:text(f,"required")==="true",item_limit:number(f,"items"),total_limit:number(f,"total")});
+  else if(kind==="policy")await staffRpc(token,"save_business_policy",{expected_revision:number(f,"version"),history_days:number(f,"history"),cash_limit:text(f,"cashLimit").trim()?rupees(f,"cashLimit"):null,payment_required:text(f,"required")==="true",item_limit:number(f,"items"),total_limit:rupees(f,"total")});
   else if(kind==="provision"){
    await rateLimit("staff-provision",5);
    const email=text(f,"email").trim(),name=text(f,"name").trim(),role=text(f,"role");

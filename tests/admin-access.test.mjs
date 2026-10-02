@@ -74,3 +74,11 @@ test("server Auth validation, current membership, and forged direct actions",asy
  state.role="OWNER";state.cookie=null;await assert.rejects(()=>server.requireStaff());
  } finally {globalThis.fetch=originalFetch;for(const name of ["TRAIT_STAFF_ENABLED","SUPABASE_URL","SUPABASE_PUBLISHABLE_KEY"]){if(env[name]===undefined)delete process.env[name];else process.env[name]=env[name];}delete globalThis.__staffTestCookies;}
 });
+test("admin money inputs are rupees, stored as paise", () => {
+ assert.equal(permissions.rupeesToPaise("50"),5000);
+ assert.equal(permissions.rupeesToPaise("49.5"),4950);
+ assert.equal(permissions.rupeesToPaise(" 0.01 "),1);
+ assert.equal(permissions.rupeesToPaise("0"),0);
+ assert.equal(permissions.rupeesToPaise("50000"),5000000);
+ for(const bad of ["","-5","1.234","₹50","5e3","abc","1234567890"]) assert.throws(()=>permissions.rupeesToPaise(bad));
+});
