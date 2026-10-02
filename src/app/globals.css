@@ -914,3 +914,52 @@ html { scroll-padding-top:190px; }
 .cart-totals .cart-total { background:var(--surface); border-radius:10px; padding:14px; margin-top:4px; align-items:center; }
 .cart-totals .cart-total dt { font-weight:700; }
 .cart-totals .cart-total dd { font-size:26px; font-weight:700; }
+
+/* ── Dark storefront ─────────────────────────────────────────────────────────
+   Every customer page sits on the homepage band's dark background. Text that sits directly on it is light;
+   white surfaces (cards, panels, forms, summaries) switch the colour variables back to dark text.
+   Admin pages render without the storefront class and stay light. */
+main.storefront {
+  --text-primary: #f3f4f6; --text-secondary: #c6cbd3; --border: rgb(255 255 255 / 14%);
+  background: radial-gradient(ellipse at 100% 0, #49252e 0, transparent 35%) fixed, radial-gradient(ellipse at 0 100%, #40342c 0, transparent 35%) fixed, var(--charcoal);
+  color: var(--text-primary); min-height: 70vh;
+}
+main.storefront .eyebrow, main.storefront .text-link { color: #ffb4ab; }
+main.storefront .cart-error { color: #ffc9c2; }
+main.storefront :is(.product-card, .order-panel, .cart-items, .cart-summary, .empty-results, .discovery, .cart-notice, .order-preview-note, .checkout-steps, .clear-confirm, .search-form, .trust-item) {
+  --text-primary: #171c23; --text-secondary: #575d67; --border: #dee2ed;
+  color: var(--text-primary);
+}
+main.storefront :is(.product-card, .order-panel, .cart-items, .cart-summary, .empty-results, .discovery, .clear-confirm, .trust-item) { background: white; }
+main.storefront :is(.product-card, .order-panel, .cart-items, .cart-summary, .empty-results, .discovery, .clear-confirm, .trust-item) :is(.eyebrow, .text-link) { color: var(--brand-red-dark); }
+main.storefront :is(.order-panel, .cart-summary, .cart-items, .empty-results) .cart-error { color: #a12323; }
+main.storefront :is(input, select, textarea) { color: #171c23; background-color: white; }
+/* Sections that drew their own light band now let the dark page show through. */
+main.storefront :is(.trust-section, .fresh-band) { background: transparent; border: 0; }
+main.storefront .trust-item { border-radius: 12px; padding: 20px; }
+main.storefront .cart-items { border-radius: 12px; overflow: hidden; }
+main.storefront .cart-item:nth-of-type(even) { background: white; }
+
+/* Product grids: cards in a row share a height and their buttons line up at the bottom. */
+.product-grid { align-items: stretch; }
+.product-grid .product-card { height: 100%; }
+.product-bottom { margin-top: auto; }
+.card-price { margin: 0 0 14px; }
+
+/* Options popup: weights as plain buttons. */
+.choice-grid.weights { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.choice-grid.weights .choice { position: relative; padding: 10px 6px; border-radius: 999px; font-weight: 600; }
+.choice-grid.weights .choice input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.choice-grid.weights .choice:has(input:checked) { background: var(--charcoal); border-color: var(--charcoal); color: white; }
+.weight-note { font-size: 12px; font-weight: 500; color: var(--text-secondary); margin-left: 6px; text-transform: none; letter-spacing: 0; }
+
+/* "Coming soon" categories. */
+.soon-tag { display: inline-block; margin-left: 6px; padding: 2px 6px; border-radius: 999px; background: #fff3cd; color: #6b4b00; font-size: 9px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; vertical-align: middle; white-space: nowrap; }
+.empty-results.coming-soon { text-align: center; }
+.empty-results.coming-soon h2, .empty-results.coming-soon h3 { margin-top: 0; }
+
+/* Filter chips and red accents on the dark page (all views, not only the homepage band). */
+main.storefront .catalog-filters button { background:rgb(255 255 255 / 10%); color:rgb(255 255 255 / 88%); border-color:rgb(255 255 255 / 18%); }
+main.storefront .catalog-filters button:hover { border-color:white; color:white; }
+main.storefront .catalog-filters button[aria-pressed=true] { background:var(--brand-red); border-color:var(--brand-red); color:white; }
+main.storefront .cart-title h1 span { color:#ffb4ab; }

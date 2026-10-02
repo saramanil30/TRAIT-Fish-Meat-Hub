@@ -21,7 +21,7 @@ const fields = [
   { key: "state", label: "State", autoComplete: "address-level1", max: 120 },
   { key: "pincode", label: "Pincode", autoComplete: "postal-code", max: 6 },
 ] as const;
-export function CheckoutContent({ buyNow = false }: { buyNow?: boolean }) {
+export function CheckoutContent({ buyNow = false, deliveryFeePaise = null, feeVaries = false }: { buyNow?: boolean; deliveryFeePaise?: number | null; feeVaries?: boolean }) {
   const cart = useCart();
   const buyNowItems = useBuyNow();
   // Buy now checks out only its own item; the cart is left as it was.
@@ -107,6 +107,6 @@ export function CheckoutContent({ buyNow = false }: { buyNow?: boolean }) {
         </section><fieldset className="order-panel payment-panel"><legend><span className="section-number">2</span> Payment method</legend><div className="checkout-options">{([ ["cash", draft.deliveryMethod === "pickup" ? "Cash at pickup" : "Cash on Delivery"], ["upi", "UPI at delivery / pickup"] ] as const).map(([value, label]) => <label className="choice" key={value}><input type="radio" name="paymentMethod" value={value} checked={draft.paymentMethod === value} onChange={() => change("paymentMethod", value)} />{label}</label>)}</div><p className="field-help">Pay by cash or UPI when you receive your order at delivery or pickup.</p></fieldset>
       </>}
       <button type="submit" className="button primary checkout-submit" disabled={saving || !items.length}>{saving ? "Please wait..." : review ? "Place order" : "Review order"}</button>
-    </fieldset></form><OrderSummary deliveryConfirmed={!!quote && review} editable={!buyNow} items={quote && review ? items.map((item,i)=>({...item,...quote.lines[i]})) : items} totals={quote ?? orderTotals(items, draft.deliveryMethod, 0)} /></div>
+    </fieldset></form><OrderSummary deliveryConfirmed={!!quote && review} pickup={draft.deliveryMethod === "pickup"} feeVaries={feeVaries} editable={!buyNow} items={quote && review ? items.map((item,i)=>({...item,...quote.lines[i]})) : items} totals={quote && review ? quote : orderTotals(items, draft.deliveryMethod, deliveryFeePaise ?? 0)} /></div>
   </div>;
 }
