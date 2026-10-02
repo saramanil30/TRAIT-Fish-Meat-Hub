@@ -9,18 +9,20 @@ const definitions = [
   { slug: "eggs", name: "Eggs", description: "Farm-fresh trays", image: "", includes: ["eggs"] },
 ] as const;
 
-/** comingSoon: an announced category with no published products yet; it becomes a normal category once products exist. */
-export type ShopCategory = { slug: string; name: string; description: string; image: string; includes: readonly string[]; comingSoon?: boolean };
+/** inStoreOnly: an announced category with no published products yet (sold in store); it shows a normal product grid once products exist. */
+export type ShopCategory = { slug: string; name: string; description: string; image: string; includes: readonly string[]; inStoreOnly?: boolean };
+
+export const IN_STORE_PHONE = "8686146562";
 
 export function inCategory(product: Product, category: ShopCategory) {
   return category.includes.includes(product.category);
 }
 
-/** Categories with published products, plus announced ones shown as "Coming soon"; navigation and filter chips use this list. */
+/** Categories with published products, plus announced ones sold in store for now; navigation and filter chips use this list. */
 export function shopCategories(products: readonly Product[]): ShopCategory[] {
   return definitions.flatMap(definition => {
     const members = products.filter(p => (definition.includes as readonly string[]).includes(p.category));
-    if (!members.length) return "announce" in definition && definition.announce ? [{ ...definition, comingSoon: true }] : [];
+    if (!members.length) return "announce" in definition && definition.announce ? [{ ...definition, inStoreOnly: true }] : [];
     return [{ ...definition, image: definition.image || members.find(p => !p.image.includes("placeholder"))?.image || members[0].image }];
   });
 }

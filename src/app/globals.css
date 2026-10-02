@@ -953,10 +953,10 @@ main.storefront .cart-item:nth-of-type(even) { background: white; }
 .choice-grid.weights .choice:has(input:checked) { background: var(--charcoal); border-color: var(--charcoal); color: white; }
 .weight-note { font-size: 12px; font-weight: 500; color: var(--text-secondary); margin-left: 6px; text-transform: none; letter-spacing: 0; }
 
-/* "Coming soon" categories. */
-.soon-tag { display: inline-block; margin-left: 6px; padding: 2px 6px; border-radius: 999px; background: #fff3cd; color: #6b4b00; font-size: 9px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; vertical-align: middle; white-space: nowrap; }
-.empty-results.coming-soon { text-align: center; }
-.empty-results.coming-soon h2, .empty-results.coming-soon h3 { margin-top: 0; }
+/* Chicken and mutton before products are published online: point customers to the store. */
+.in-store-notice { text-align: center; display: grid; gap: 16px; justify-items: center; }
+.in-store-notice p { margin: 0; font-size: 18px; font-weight: 600; line-height: 1.5; max-width: 560px; }
+.in-store-notice a:not(.button) { color: var(--brand-red-dark); text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
 
 /* Filter chips and red accents on the dark page (all views, not only the homepage band). */
 main.storefront .catalog-filters button { background:rgb(255 255 255 / 10%); color:rgb(255 255 255 / 88%); border-color:rgb(255 255 255 / 18%); }

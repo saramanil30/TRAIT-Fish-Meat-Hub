@@ -32,5 +32,5 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   let categories: ShopCategory[] = [];
   try { categories = shopCategories(await liveCatalogue()); } catch { /* Navigation shows "All" only while the catalogue is unavailable. */ }
-  return <html lang="en" className={`${bodyFont.variable} ${headingFont.variable}`}><body><a className="skip-link" href="#main-content">Skip to content</a><SiteFrame categories={categories.map(({ slug, name, comingSoon }) => ({ slug, name, comingSoon }))}>{children}</SiteFrame></body></html>;
+  return <html lang="en" className={`${bodyFont.variable} ${headingFont.variable}`}><body><a className="skip-link" href="#main-content">Skip to content</a><SiteFrame categories={categories.map(({ slug, name }) => ({ slug, name }))}>{children}</SiteFrame></body></html>;
 }
