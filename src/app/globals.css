@@ -897,7 +897,7 @@ html { scroll-padding-top:190px; }
 }
 
 /* Cart: compact light table header; per-row labels only where there is no header (mobile). */
-.cart-table-heading { background:#f2f3f5; color:#111; padding:3px 20px; font-size:11px; line-height:1.6; border-bottom:1px solid #e4e8f2; }
+.cart-table-heading { background:var(--brand-red); color:#000; padding:3px 20px; font-size:11px; line-height:1.6; border-bottom:0; }
 .cart-item { padding:12px 20px; }
 .cart-item:nth-of-type(even) { background:white; }
 @media(min-width:768px) {
@@ -972,3 +972,16 @@ main.storefront .cart-title h1 span { color:#ffb4ab; }
 /* Pages without the site header (cart): no sticky-header offsets. */
 html:has(main.headerless) { scroll-padding-top:0; }
 @media(min-width:1200px) { main.headerless .cart-summary { top:24px; } }
+
+/* Header category row styled as pills (replaces the old filter chips above the grid). */
+.category-bar { background:var(--charcoal); border-top:0; }
+.category-nav { gap:8px; min-height:64px; padding-block:10px; }
+.category-nav a { min-height:44px; padding:10px 19px; border:1px solid rgb(255 255 255 / 18%); border-radius:999px; background:rgb(255 255 255 / 10%); color:rgb(255 255 255 / 88%); text-transform:uppercase; font-size:11px; font-weight:700; letter-spacing:.02em; }
+.category-nav a:hover { border-color:white; color:white; }
+.category-nav a[aria-current] { background:var(--brand-red); border-color:var(--brand-red); color:white; }
+.category-nav a[aria-current]::after { content:none; }
+.category-nav>span { color:rgb(255 255 255 / 70%); }
+@media(max-width:767px) {
+  .category-nav { gap:6px; min-height:0; padding-block:8px; }
+  .category-nav a { padding:9px 14px; font-size:10px; }
+}
