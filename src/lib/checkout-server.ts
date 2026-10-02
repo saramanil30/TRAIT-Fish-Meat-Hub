@@ -76,7 +76,7 @@ export async function openOrdersByMobile(mobileE164:string):Promise<OpenOrder[]>
  const store=process.env.TRAIT_STORE_ID;
  if(!store) throw new Error("Store is not configured.");
  const sql=await checkoutDatabase();
- const rows=await sql`select api.open_orders_by_mobile(${store}::uuid,${mobileE164}) as result`;
+ const rows=await sql`select api.open_orders_by_mobile(${store}::uuid,${mobileE164}::text) as result`;
  return rows[0].result as OpenOrder[];
 }
 async function checkoutDatabase() {

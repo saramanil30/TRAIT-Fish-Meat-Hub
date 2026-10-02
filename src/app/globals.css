@@ -889,7 +889,7 @@ h3 { letter-spacing:.01em; }
 .site-top .site-header { box-shadow:none; border-bottom:0; }
 .category-bar { background:white; border-top:1px solid var(--border); }
 html { scroll-padding-top:190px; }
-@media(min-width:1200px) { .cart-summary,.checkout-form+.order-summary { top:196px; } }
+@media(min-width:1200px) { .cart-summary,.checkout-form+.order-summary { top:254px; } }
 @media(max-width:767px) {
   .site-top { display:contents; }
   .site-top .site-header { position:sticky; top:0; z-index:40; background:white; box-shadow:0 2px 10px rgb(18 20 23 / 8%); }
@@ -969,9 +969,6 @@ main.storefront .cart-title h1 span { color:#ffb4ab; }
 .weight-select label { font-size:14px; font-weight:700; margin-bottom:10px; }
 .weight-select select { min-height:48px; padding:10px 40px 10px 14px; border:1px solid var(--border); border-radius:8px; font-size:16px; background-color:white; color:var(--text-primary); }
 
-/* Pages without the site header (cart): no sticky-header offsets. */
-html:has(main.headerless) { scroll-padding-top:0; }
-@media(min-width:1200px) { main.headerless .cart-summary { top:24px; } }
 
 /* Header category row styled as pills (replaces the old filter chips above the grid). */
 .category-bar { background:var(--charcoal); border-top:0; }
@@ -1094,4 +1091,12 @@ html:has(main.headerless) { scroll-padding-top:0; }
   .order-lookup-row input { flex:1 1 0; }
   .order-lookup-row .button { flex-basis:100%; }
   .order-lookup-timeline li { flex-direction:column; gap:0; }
+}
+
+/* Header wrapper for the top strip + logo row + offer strip. Mobile: out of layout except on cart/checkout, where it sticks as one block. */
+@media(max-width:767px) {
+  .site-top-main { display:contents; }
+  .site-top.is-pinned .site-top-main { display:block; position:sticky; top:0; z-index:40; background:white; box-shadow:0 2px 10px rgb(18 20 23 / 8%); }
+  .site-top.is-pinned .site-header { position:static; box-shadow:none; }
+  html:has(.site-top.is-pinned) { scroll-padding-top:230px; }
 }
