@@ -1,5 +1,6 @@
 import "server-only";
 import { cookies } from "next/headers";
+import { createHash } from "node:crypto";
 import { staffRoles, type StaffRole, type StaffSection, canAccessSection } from "./permissions";
 export type StaffContext = { id: string; businessId: string; role: StaffRole; name: string; stores: { id: string; name: string }[] };
 export const sessionCookie = "trait_staff_access";
@@ -63,4 +64,22 @@ export async function clearStaffSession() {
  const jar=await cookies();
  jar.delete({name:sessionCookie,path:"/admin"});
  jar.delete({name:refreshCookie,path:"/admin"});
+}
+/** Product photos: WebP only, at most 1 MB, stored at {business}/{product}/{sha256}.webp (matches app.product_images). */
+export const productImageLimitBytes = 1048576;
+export function validProductWebp(bytes: Uint8Array) {
+ const ascii = (from: number, to: number) => String.fromCharCode(...bytes.subarray(from, to));
+ return bytes.length >= 16 && bytes.length <= productImageLimitBytes && ascii(0, 4) === "RIFF" && ascii(8, 12) === "WEBP";
+}
+export async function uploadProductImage(token: string, businessId: string, productId: string, alt: string, bytes: Uint8Array) {
+ if (!validProductWebp(bytes)) throw new Error("Upload a JPEG, PNG or WebP photo under 1 MB after conversion.");
+ const {url,key} = config();
+ const hash = createHash("sha256").update(bytes).digest("hex");
+ const path = businessId + "/" + productId + "/" + hash + ".webp";
+ // The staff session uploads; Storage policies decide who may write to the bucket.
+ const response = await fetch(url + "/storage/v1/object/product-images/" + path, { method: "POST", cache: "no-store", signal: AbortSignal.timeout(30000), headers: { apikey: key, Authorization: "Bearer " + token, "Content-Type": "image/webp", "x-upsert": "false" }, body: Buffer.from(bytes) });
+ // A 409 means identical bytes were already uploaded for this product.
+ const duplicate = response.status === 409 || (!response.ok && String((await response.clone().json().catch(() => ({}))).statusCode) === "409");
+ if (!response.ok && !duplicate) throw new Error("Photo upload is not available. Check the product image storage setup.");
+ await staffRpc(token, "save_product_image", { target_id: null, product: productId, local_asset: null, bucket: "product-images", object_path: path, alternate_text: alt, primary_image: true, active: true, display_order: 0 });
 }

@@ -2,7 +2,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { authRequest, requireStaff, resolveStaff, sessionCookie, refreshCookie, saveStaffSession, clearStaffSession, staffRpc } from "@/lib/admin/server";
+import { authRequest, requireStaff, resolveStaff, sessionCookie, refreshCookie, saveStaffSession, clearStaffSession, staffRpc, uploadProductImage, validProductWebp } from "@/lib/admin/server";
 import { parseDailyPrice } from "@/lib/admin/permissions";
 export type ActionState = { error?: string; success?: string };
 const text = (form: FormData, name: string) => String(form.get(name) ?? "");
@@ -64,17 +64,37 @@ export async function saveDailyProduct(_state: ActionState,form: FormData): Prom
 }
 export async function saveMaster(_state: ActionState,form: FormData): Promise<ActionState> {
  try {
-  const {token}=await requireStaff("catalogue");
+  const {token,context}=await requireStaff("catalogue");
   const kind=text(form,"kind"); const id=text(form,"id");
   if (kind==="category") {
    const parent=text(form,"parent");
    await staffRpc(token,"save_category",{target_id:id?uuid(id):null,category_name:text(form,"name"),parent:parent?uuid(parent):null,sort:Number(text(form,"sort")),active:boolean(form,"active")});
   } else if(kind==="product") {
-   await staffRpc(token,"save_product",{target_id:id?uuid(id):null,category:uuid(text(form,"category")),product_name:text(form,"name"),local_name:text(form,"local"),description:text(form,"description"),image_path:text(form,"image"),weights:JSON.parse(text(form,"weights")),preparation_choices:JSON.parse(text(form,"preparations")),active:boolean(form,"active")});
-  } else if(kind==="pricing") {
+   // One Save: pricing, product details and an optional photo. Server-side checks stay authoritative.
+   const basis=text(form,"basis");
+   if(!["RAW_WEIGHT","NET_WEIGHT","UNIT","TRAY"].includes(basis))throw new Error("Invalid pricing basis");
    const quantities=text(form,"quantities").split(",").map(v=>Number(v.trim()));
    if(!quantities.length||quantities.some(v=>!Number.isSafeInteger(v)||v<1))throw new Error("Invalid quantities");
-   await staffRpc(token,"configure_product_pricing",{product:uuid(id),basis:text(form,"basis"),unit_grams:text(form,"unitGrams")?Number(text(form,"unitGrams")):null,pack_count:text(form,"packCount")?Number(text(form,"packCount")):null,quantities,reference_price:text(form,"referencePrice")?parseDailyPrice(text(form,"referencePrice")):null,published:boolean(form,"published")});
+   const pricing={basis,unit_grams:basis==="RAW_WEIGHT"?1000:basis==="NET_WEIGHT"?Number(text(form,"unitGrams")):null,pack_count:basis==="UNIT"||basis==="TRAY"?Number(text(form,"packCount")):null,quantities,reference_price:text(form,"referencePrice")?parseDailyPrice(text(form,"referencePrice")):null,published:boolean(form,"published")};
+   const details={category:uuid(text(form,"category")),product_name:text(form,"name"),local_name:text(form,"local"),description:text(form,"description"),image_path:text(form,"image"),preparation_choices:JSON.parse(text(form,"preparations")),active:boolean(form,"active")};
+   const photo=form.get("photo");
+   const bytes=photo instanceof File&&photo.size>0?new Uint8Array(await photo.arrayBuffer()):null;
+   if(bytes&&!validProductWebp(bytes))throw new Error("Invalid photo");
+   let product:string;
+   if(id){
+    // Existing products: set the sale unit first so the stored weights match the new basis.
+    product=uuid(id);
+    await staffRpc(token,"configure_product_pricing",{product,...pricing});
+    await staffRpc(token,"save_product",{target_id:product,...details,weights:basis==="RAW_WEIGHT"?quantities:[]});
+   } else {
+    // New products start as raw weight; the chosen basis is applied straight after.
+    product=await staffRpc<string>(token,"save_product",{target_id:null,...details,weights:quantities});
+    await staffRpc(token,"configure_product_pricing",{product,...pricing});
+   }
+   if(bytes){
+    try{await uploadProductImage(token,context.businessId,product,details.product_name.trim(),bytes);}
+    catch{revalidatePath("/admin","layout");return {error:"Product saved, but the photo could not be uploaded. Check the image storage setup and try again."};}
+   }
   } else if(kind==="offering") {
    await staffRpc(token,"create_offering",{product:uuid(text(form,"product")),target_store:uuid(text(form,"store"))});
   } else throw new Error("Invalid operation.");
