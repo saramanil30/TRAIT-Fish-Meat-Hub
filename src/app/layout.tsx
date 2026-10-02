@@ -3,6 +3,8 @@ import localFont from "next/font/local";
 import { SiteFrame } from "@/components/layout/site-frame";
 import { liveCatalogue } from "@/lib/live-catalogue";
 import { shopCategories, type ShopCategory } from "@/lib/shop-categories";
+import { currentOffers } from "@/lib/offers";
+import { formatMoney } from "@/lib/format";
 
 
 import "./globals.css";
@@ -32,5 +34,8 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   let categories: ShopCategory[] = [];
   try { categories = shopCategories(await liveCatalogue()); } catch { /* Navigation shows "All" only while the catalogue is unavailable. */ }
-  return <html lang="en" className={`${bodyFont.variable} ${headingFont.variable}`}><body><a className="skip-link" href="#main-content">Skip to content</a><SiteFrame categories={categories.map(({ slug, name }) => ({ slug, name }))}>{children}</SiteFrame></body></html>;
+  // Current offers for the sticky header strip; text is built here so server and browser render the same dates.
+  let offers: string[] = [];
+  try { offers = (await currentOffers()).map(o => o.title + " · " + (o.kind === "PERCENT" ? o.value / 100 + "% off" : formatMoney(o.value) + " off") + " · ends " + new Date(o.endsAt).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short" })); } catch { /* No strip while offers are unavailable. */ }
+  return <html lang="en" className={`${bodyFont.variable} ${headingFont.variable}`}><body><a className="skip-link" href="#main-content">Skip to content</a><SiteFrame categories={categories.map(({ slug, name }) => ({ slug, name }))} offers={offers}>{children}</SiteFrame></body></html>;
 }
