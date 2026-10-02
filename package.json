@@ -20,7 +20,8 @@
     "test:catalogue-db": "node supabase/validation/check-phase-5b-2.mjs",
     "test:final-db": "node supabase/validation/check-final-integration.mjs",
     "check:environment": "node scripts/check-environment.mjs",
-    "test:offers-db": "node tests/offers-db.mjs"
+    "test:offers-db": "node tests/offers-db.mjs",
+    "test:store-setup-db": "node tests/store-setup-db.mjs"
   },
   "dependencies": {
     "next": "16.3.5",

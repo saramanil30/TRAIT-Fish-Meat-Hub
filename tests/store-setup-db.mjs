@@ -1,0 +1,47 @@
+// Replays every migration (incl. the TRAIT store setup) and exercises checkout as the trait_checkout role.
+process.on('uncaughtException',e=>{console.error('FAIL',e.message,e.code??'');process.exit(1);});
+import assert from 'node:assert/strict'; import {readFileSync,readdirSync} from 'node:fs'; import {randomUUID,createHash} from 'node:crypto';
+const {PGlite}=await import('../node_modules/.staff-validation/node_modules/@electric-sql/pglite/dist/index.js');
+const db=new PGlite(); const shop='111ac620-b8ea-485d-9cd3-07fb10b65fe7'; const admin='00000000-0000-4000-8000-000000000020';
+const value=async(s,a=[])=>(await db.query(s,a)).rows[0]?.value;
+const asCheckout=async(sql,args)=>{await db.exec('SET ROLE trait_checkout');try{return await value(sql,args);}finally{await db.exec('RESET ROLE');}};
+await db.exec("CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role BYPASSRLS; CREATE SCHEMA auth; CREATE TABLE auth.users(id uuid PRIMARY KEY); CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$ SELECT nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;");
+const files=readdirSync('supabase/migrations').filter(f=>f.endsWith('.sql')&&f<'20261002').sort();
+for(const f of files)await db.exec(readFileSync('supabase/migrations/'+f,'utf8'));
+const business=await value("select id as value from app.businesses where slug='trait-fish-meat-hub'");
+await db.query('insert into auth.users values($1)',[admin]);
+await db.query("insert into app.staff_profiles(id,business_id,auth_user_id,display_name,role) values($1,$2,$1,'Owner','OWNER')",[admin,business]);
+await db.query('insert into app.staff_admin_grants(staff_profile_id) values($1)',[admin]);
+await db.exec(readFileSync('supabase/migrations/20261002000000_trait_store_setup.sql','utf8'));
+assert.equal(await value('select count(*)::int as value from app.product_store_settings where store_id=$1 and available',[shop]),23);
+const prod=async name=>({id:await value('select id as value from app.products where name=$1',[name]),prep:await value('select o.preparation_option_id as value from app.product_preparation_options o join app.products p on p.id=o.product_id where p.name=$1 limit 1',[name])});
+const pom=await prod('White Pomfret'),king=await prod('King Fish / Vanjaram'),eggs=await prod('Free Range Brown Eggs');
+const items=[{productId:pom.id,preparationId:pom.prep,rawWeightGrams:1000,instructions:''},{productId:king.id,preparationId:king.prep,quantity:500,instructions:''},{productId:eggs.id,preparationId:eggs.prep,quantity:1,instructions:''}];
+const address=pin=>({line1:'House 1',city:'Hyderabad',state:'Telangana',pincode:pin});
+const pickup={method:'STORE_PICKUP',mobile:'9876543210',paymentMethod:'CASH',items};
+const delivery=pin=>({method:'HOME_DELIVERY',mobile:'9876543210',name:'Test',address:address(pin),paymentMethod:'CASH',items});
+const quote=p=>asCheckout('select api.checkout_quote($1,$2) as value',[shop,JSON.stringify(p)]);
+const qp=await quote(pickup); assert.equal(qp.subtotalPaise,285000); assert.equal(qp.deliveryFeePaise,0); assert.equal(qp.totalPaise,285000);
+console.log('PASS pickup quote: Pomfret 1 kg ₹1,600 + King Fish 500 g NET ₹800 + Eggs 1 tray ₹450 = ₹2,850, no fee');
+const qd=await quote(delivery('500075')); assert.equal(qd.deliveryFeePaise,4000); assert.equal(qd.totalPaise,289000);
+console.log('PASS delivery 500075: ₹40 fee, total ₹2,890');
+for(const pin of ['500032','500008','560001'])await assert.rejects(()=>quote(delivery(pin)));
+console.log('PASS delivery refused for 500032, 500008, 560001');
+const end=new Date(Date.now()+7*86400000).toISOString();
+for(const [label,p,q] of [['pickup',pickup,qp],['delivery 500075',delivery('500075'),qd]]){
+ const token=randomUUID().replaceAll('-','').repeat(2);
+ const placed=await asCheckout('select api.place_order($1,$2,$3,$4,$5,$6) as value',[shop,randomUUID(),JSON.stringify(p),q.quoteDigest,createHash('sha256').update(token).digest('hex'),end]);
+ assert.equal(placed.totalPaise,q.totalPaise);
+ const row=(await db.query('select o.status,o.payment_method,o.fulfillment_method,o.total_paise,p.amount_paise,p.status as pay from app.orders o join app.payments p on p.order_id=o.id where o.id=$1',[placed.id])).rows[0];
+ assert.equal(row.payment_method,'CASH'); assert.equal(row.amount_paise,q.totalPaise);
+ console.log('PASS cash '+label+' order placed: '+placed.orderNumber+' '+row.status+' / payment '+row.pay+' ₹'+row.total_paise/100);
+}
+await db.exec(readFileSync('supabase/migrations/20261002010000_store_contact_details.sql','utf8'));
+const anonInfo=async()=>{await db.exec('SET ROLE anon');try{return await value('select api.storefront_info($1) as value',[shop]);}finally{await db.exec('RESET ROLE');}};
+let info=await anonInfo(); assert.equal(info.whatsapp,null); assert.equal(info.pickupInstructions,null); assert.equal(info.areas[0].feePaise,4000);
+await db.query("update app.stores set whatsapp_e164='+918686146562', pickup_instructions='Collect at the counter.' where id=$1",[shop]);
+info=await anonInfo(); assert.equal(info.whatsapp,'+918686146562'); assert.equal(info.pickupInstructions,'Collect at the counter.');
+for(const bad of ["whatsapp_e164='8686146562'","whatsapp_e164='+91123'","pickup_instructions=' padded '","pickup_instructions=''"])await assert.rejects(()=>db.query('update app.stores set '+bad+' where id=$1',[shop]));
+await db.query("update app.stores set pickup_enabled=false where id=$1",[shop]); assert.equal((await anonInfo()).pickupInstructions,null);
+assert.ok((await asCheckout('select api.checkout_quote($1,$2) as value',[shop,JSON.stringify(delivery('500075'))])).deliveryFeePaise===4000);
+console.log('PASS contact-details migration: new fields published to anon, invalid values refused, instructions hidden when pickup off, checkout unaffected');
