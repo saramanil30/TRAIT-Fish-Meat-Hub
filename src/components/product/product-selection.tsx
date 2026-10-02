@@ -27,6 +27,7 @@ export function ProductSelection({ product, item, onClose, onSaved }: { product:
   const [preparationId, setPreparationId] = useState<PreparationId>(item?.preparationId ?? product.preparationOptions[0].id);
   const [rawWeightGrams, setRawWeightGrams] = useState(item?.rawWeightGrams ?? item?.quantity ?? quantityOptions(product)[0]);
   const [instructions, setInstructions] = useState(item?.specialInstructions ?? "");
+  const [showInstructions, setShowInstructions] = useState(Boolean(item?.specialInstructions));
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const router = useRouter();
@@ -87,18 +88,27 @@ export function ProductSelection({ product, item, onClose, onSaved }: { product:
   }
 
   return createPortal(<dialog onKeyDown={trapFocus} ref={dialog} className="selection-dialog" aria-labelledby={id + "-title"} onCancel={event => { event.preventDefault(); onClose(); }}>
-    <div className="selection-heading"><div><p className="eyebrow">Prepared your way</p><h2 id={id + "-title"}>{item ? "Edit your selection" : "Choose your selection"}</h2></div><button ref={closeButton} type="button" className="close-button" onClick={onClose} aria-label="Close product selection"><span aria-hidden="true">&times;</span></button></div>
+    <div className="selection-heading"><h2 id={id + "-title"}>{item ? "Edit your selection" : "Choose your selection"}</h2><button ref={closeButton} type="button" className="close-button" onClick={onClose} aria-label="Close product selection"><span aria-hidden="true">&times;</span></button></div>
     <form onSubmit={submit} className="selection-form">
       <div className="selection-content">
-        <div className="selection-product"><Image src={product.image} alt={product.imageAlt} width={224} height={168} /><div><h3>{product.name}</h3>{product.localName && <p>{product.localName}</p>}<p><strong>{priceLabel(product)}</strong></p><span>{product.available ? "Available" : "Sold out"}</span></div></div>
-        <fieldset><legend>Preparation</legend><div className="choice-grid">{product.preparationOptions.map(option => <label className="choice" key={option.id}><input type="radio" name={id + "-preparation"} value={option.id} checked={preparationId === option.id} onChange={() => setPreparationId(option.id)} /><span>{option.label}</span></label>)}</div>{estimated !== undefined && <p className="cleaning-estimate" aria-live="polite">After cleaning: about {formatWeight(estimated)} (~{loss}% removed). An estimate, not a guarantee.</p>}</fieldset>
-        <div className="weight-select"><label htmlFor={id + "-weight"}>{product.pricingBasis === "NET_WEIGHT" ? <>Quantity <small className="weight-note">net weight</small></> : quantityLabel(product)}</label><select id={id + "-weight"} value={rawWeightGrams} onChange={event => setRawWeightGrams(Number(event.target.value))}>{quantityOptions(product).map(weight => <option key={weight} value={weight}>{quantityOptionText(product,weight)}</option>)}</select></div>
-        <label className="instructions-label" htmlFor={id + "-instructions"}>Special instructions <span>(optional)</span></label>
-        <textarea id={id + "-instructions"} value={instructions} onChange={event => setInstructions(event.target.value)} maxLength={MAX_INSTRUCTIONS_LENGTH} rows={3} placeholder="For example: please make the pieces small" aria-describedby={id + "-instructions-help"} />
-        <p id={id + "-instructions-help"} className="field-help">{instructions.length}/{MAX_INSTRUCTIONS_LENGTH} characters. Please do not include personal or payment details.</p>
-        {error && <p role="alert" className="cart-error">{error}</p>}
+        <div className="selection-main">
+          <Image className="selection-photo" src={product.image} alt={product.imageAlt} width={448} height={336} />
+          <div className="selection-product"><div><h3>{product.name}</h3>{product.localName && <p>{product.localName}</p>}<p><strong>{priceLabel(product)}</strong></p><span>{product.available ? "Available" : "Sold out"}</span></div></div>
+          {product.cut && <p className="selection-description">{product.cut}</p>}
+          <div className="weight-select"><label htmlFor={id + "-weight"}>{product.pricingBasis === "NET_WEIGHT" ? <>Quantity <small className="weight-note">net weight</small></> : quantityLabel(product)}</label><select id={id + "-weight"} value={rawWeightGrams} onChange={event => setRawWeightGrams(Number(event.target.value))}>{quantityOptions(product).map(weight => <option key={weight} value={weight}>{quantityOptionText(product,weight)}</option>)}</select></div>
+          <div className="selection-total-row"><div><span>Item price</span><strong aria-live="polite" data-item-price>{formatMoney(price)}</strong><small aria-live="polite">For {quantityOptionText(product,rawWeightGrams)}</small></div></div>
+        </div>
+        <div className="selection-side">
+          <fieldset><legend>Preparation</legend><div className="choice-list">{product.preparationOptions.map(option => <label className="choice" key={option.id}><input type="radio" name={id + "-preparation"} value={option.id} checked={preparationId === option.id} onChange={() => setPreparationId(option.id)} /><span>{option.label}</span></label>)}</div>{estimated !== undefined && <p className="cleaning-estimate" aria-live="polite">After cleaning: about {formatWeight(estimated)} (~{loss}% removed). An estimate, not a guarantee.</p>}</fieldset>
+          {showInstructions ? <div className="instructions-field">
+            <label className="instructions-label" htmlFor={id + "-instructions"}>Cooking instructions <span>(optional)</span></label>
+            <textarea autoFocus={!item?.specialInstructions} id={id + "-instructions"} value={instructions} onChange={event => setInstructions(event.target.value)} maxLength={MAX_INSTRUCTIONS_LENGTH} rows={2} placeholder="For example: please make the pieces small" aria-describedby={id + "-instructions-help"} />
+            <p id={id + "-instructions-help"} className="field-help">{instructions.length}/{MAX_INSTRUCTIONS_LENGTH} characters. Please do not include personal or payment details.</p>
+          </div> : <button type="button" className="instructions-toggle" aria-expanded="false" onClick={() => setShowInstructions(true)}>+ Add cooking instructions</button>}
+          {error && <p role="alert" className="cart-error">{error}</p>}
+        </div>
       </div>
-      <div className="selection-footer"><div className="selection-total-row"><div><span>Item price</span><strong aria-live="polite" data-item-price>{formatMoney(price)}</strong><small aria-live="polite">For {quantityOptionText(product,rawWeightGrams)}</small></div><div className="selection-actions"><button type="submit" className="button primary" disabled={saving || !product.available}>{saving ? "Saving..." : item ? "Save changes" : "Add to Cart"}</button>{!item && <button type="submit" data-buy-now className="button secondary" disabled={saving || !product.available}>Buy now</button>}</div></div></div>
+      <div className="selection-footer"><div className="selection-actions"><button type="submit" className="button primary" disabled={saving || !product.available}>{saving ? "Saving..." : item ? "Save changes" : "Add to Cart"}</button>{!item && <button type="submit" data-buy-now className="button secondary" disabled={saving || !product.available}>Buy now</button>}</div></div>
     </form>
   </dialog>, document.body);
 }
