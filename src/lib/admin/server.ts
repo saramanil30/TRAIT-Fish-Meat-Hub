@@ -21,6 +21,8 @@ export async function staffRpc<T>(token: string, name: string, args: Record<stri
  const response = await fetch(url + "/rest/v1/rpc/" + name, { method: "POST", cache: "no-store", signal: AbortSignal.timeout(15000), headers: { apikey: key, Authorization: "Bearer " + token, "Content-Type": "application/json", "Content-Profile": "api", "Accept-Profile": "api" }, body: JSON.stringify(args) });
  if (!response.ok) {
   const failure = await response.json().catch(() => ({}));
+  // Server-side only: the database's reason, without tokens, request bodies or row details.
+  console.error("[staffRpc]", name, response.status, failure.code ?? "", failure.message ?? "", failure.hint ?? "");
   if (failure.code === "40001") throw new Error("This product changed. Reload the page before saving again.");
   throw new Error("Operation unavailable or not permitted.");
  }

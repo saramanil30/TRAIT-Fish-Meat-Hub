@@ -23,7 +23,8 @@
     "test:offers-db": "node tests/offers-db.mjs",
     "test:store-setup-db": "node tests/store-setup-db.mjs",
     "test:product-save-db": "node tests/product-save-db.mjs",
-    "test:publish-offering-db": "node tests/publish-offering-db.mjs"
+    "test:publish-offering-db": "node tests/publish-offering-db.mjs",
+    "test:delivery-areas-db": "node tests/delivery-areas-db.mjs"
   },
   "dependencies": {
     "next": "16.3.5",

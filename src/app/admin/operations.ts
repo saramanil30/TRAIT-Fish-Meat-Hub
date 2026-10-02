@@ -17,7 +17,13 @@ export async function operationalAction(_:ActionState,f:FormData):Promise<Action
   else if(kind==="weight")await staffRpc(token,"record_fulfilled_weight",{target_order:id(f,"id"),target_item:id(f,"item"),expected_version:number(f,"version"),actual_grams:number(f,"grams")});
   else if(kind==="refund")await staffRpc(token,"request_refund",{target_payment:id(f,"id"),expected_version:number(f,"version"),request_key:id(f,"request"),reason:text(f,"reason"),allocations:[{itemId:text(f,"item")||null,amountPaise:text(f,"amountRupees")?rupees(f,"amountRupees"):number(f,"amount")}]});
   else if(kind==="cash-refund")await staffRpc(token,"complete_cash_refund",{target_refund:id(f,"id"),expected_version:number(f,"version")});
-  else if(kind==="delivery") await staffRpc(token,"save_delivery_area",{target_id:text(f,"id")?id(f,"id"):null,target_store:id(f,"store"),expected_version:text(f,"id")?number(f,"version"):null,area_pincode:text(f,"pincode"),area_name:text(f,"name"),fee_paise:number(f,"fee"),minimum_paise:number(f,"minimum"),active:text(f,"active")==="true"});
+  else if(kind==="delivery"){
+   // "Add" with a pincode that already has a rule updates that rule; pincodes are unique per store.
+   const store=id(f,"store"),pincode=text(f,"pincode").trim();
+   const existing=text(f,"id")?null:(await staffRpc<{id:string;pincode:string;version:number}[]>(token,"delivery_areas",{target_store:store})).find(a=>a.pincode===pincode);
+   const target=text(f,"id")?{id:id(f,"id"),version:number(f,"version")}:existing?{id:existing.id,version:Number(existing.version)}:null;
+   await staffRpc(token,"save_delivery_area",{target_id:target?.id??null,target_store:store,expected_version:target?.version??null,area_pincode:pincode,area_name:text(f,"name"),fee_paise:number(f,"fee"),minimum_paise:number(f,"minimum"),active:text(f,"active")==="true"});
+  }
   else if(kind==="staff-profile") await staffRpc(token,"save_staff_profile",{target_staff:id(f,"id"),expected_version:number(f,"version"),staff_name:text(f,"name"),store_ids:f.getAll("stores").map(String),active:text(f,"active")==="true"});
   else if(kind==="recovery"){
    await rateLimit("staff-recovery",5);
@@ -51,5 +57,8 @@ export async function operationalAction(_:ActionState,f:FormData):Promise<Action
    return {success:"Staff invitation sent and membership created. The recipient can set their own password using the invitation link."};
   } else throw new Error("Invalid operation");
   revalidatePath("/admin","layout");return {success:"Saved."};
- }catch{return {error:"Unable to save. Check your access, configured policy and fields, then reload if another person updated this record."};}
+ }catch(error){
+  console.error("[admin] operation failed:",text(f,"operation"),error instanceof Error?error.message:error);
+  return {error:"Unable to save. Check your access, configured policy and fields, then reload if another person updated this record."};
+ }
 }
