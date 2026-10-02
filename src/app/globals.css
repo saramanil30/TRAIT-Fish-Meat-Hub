@@ -1066,3 +1066,32 @@ html:has(main.headerless) { scroll-padding-top:0; }
 .selection-heading .close-button { width:44px; height:44px; padding:0; flex-shrink:0; background:var(--brand-red); border-color:var(--brand-red); color:#000; }
 .selection-heading .close-button:hover { background:var(--brand-red-dark); border-color:var(--brand-red-dark); }
 .selection-heading .close-button svg { display:block; }
+
+/* Track Order: open orders by mobile number. */
+.order-lookup { max-width:640px; margin:0 0 18px; }
+.order-lookup-form label { display:block; font-size:14px; font-weight:600; margin-bottom:8px; }
+.order-lookup-row { display:flex; gap:8px; }
+.order-lookup-prefix { display:grid; place-items:center; padding:0 12px; border:1px solid var(--border); border-radius:7px; background:var(--surface); font-weight:600; }
+.order-lookup-row input { flex:1; min-width:0; min-height:48px; border:1px solid var(--border); border-radius:7px; padding:10px 12px; font:inherit; font-size:16px; color:var(--text-primary); background:var(--background); }
+.order-lookup-row .button { flex-shrink:0; }
+.order-lookup-message { margin:16px 0 0; padding:12px 14px; border-radius:8px; background:var(--surface); font-size:14px; line-height:1.6; }
+.order-lookup-list { list-style:none; margin:16px 0 0; padding:0; display:grid; gap:10px; }
+.order-lookup-list details { border:1px solid var(--border); border-radius:10px; }
+.order-lookup-list summary { display:grid; grid-template-columns:1fr auto; gap:4px 12px; padding:14px 16px; cursor:pointer; list-style:none; }
+.order-lookup-list summary::-webkit-details-marker { display:none; }
+.order-lookup-list details[open] summary { border-bottom:1px solid var(--border); }
+.order-lookup-number { font-weight:700; }
+.order-lookup-status { justify-self:end; padding:2px 10px; border-radius:999px; background:var(--brand-red-light); color:var(--brand-red-dark); font-size:12px; font-weight:700; }
+.order-lookup-list summary time { font-size:13px; color:var(--text-secondary); }
+.order-lookup-list summary strong { justify-self:end; }
+.order-lookup-timeline { margin:0; padding:14px 16px 14px 34px; display:grid; gap:8px; font-size:14px; }
+.order-lookup-timeline li { display:flex; justify-content:space-between; gap:12px; }
+.order-lookup-timeline time { color:var(--text-secondary); font-size:13px; }
+.order-lookup-note { font-size:14px; color:var(--text-secondary); }
+@media(max-width:480px) {
+  .order-lookup { padding:18px; }
+  .order-lookup-row { flex-wrap:wrap; }
+  .order-lookup-row input { flex:1 1 0; }
+  .order-lookup-row .button { flex-basis:100%; }
+  .order-lookup-timeline li { flex-direction:column; gap:0; }
+}

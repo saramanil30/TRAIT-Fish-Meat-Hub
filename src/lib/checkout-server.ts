@@ -33,7 +33,8 @@ export function logCheckoutFailure(stage:string, cause:unknown) {
  console.error("[checkout] "+stage+" failed",{name:error.name,...(code?{code}:{}),message});
 }
 /** Atomic distributed limiter. Production fails closed if it is unconfigured. */
-export async function rateLimit(scope:string, limit:number) {
+/** Limits per client IP, or per `subject` (e.g. a mobile number; only its hash is stored). */
+export async function rateLimit(scope:string, limit:number, subject?:string) {
  const url=process.env.TRAIT_RATE_LIMIT_REST_URL, token=process.env.TRAIT_RATE_LIMIT_REST_TOKEN;
  if(!url||!token) throw new Error("Request protection is not configured.");
  if(new URL(url).protocol!=="https:") throw new Error("Invalid limiter configuration.");
@@ -41,7 +42,7 @@ export async function rateLimit(scope:string, limit:number) {
  // Set this header at a trusted ingress; do not accept arbitrary forwarded headers.
  const header=process.env.TRAIT_TRUSTED_IP_HEADER;
  const ip=header?h.get(header):null;
- const identity=createHash("sha256").update(ip??"shared").digest("hex");
+ const identity=createHash("sha256").update(subject!==undefined?"subject:"+subject:ip??"shared").digest("hex");
  const script="local n=redis.call('INCR',KEYS[1]); if n==1 then redis.call('EXPIRE',KEYS[1],60) end; return n";
  const response=await fetch(url,{method:"POST",cache:"no-store",signal:AbortSignal.timeout(5000),headers:{Authorization:"Bearer "+token,"Content-Type":"application/json"},body:JSON.stringify(["EVAL",script,"1","trait:"+scope+":"+identity])});
  if(!response.ok) throw new Error("Request protection unavailable.");
@@ -69,6 +70,15 @@ export async function commitOrder(value:string) {
  return {trackingToken:e.token};
 }
 
+export type OpenOrder={orderNumber:string;placedAt:string;status:string;totalPaise:number;history:{status:string;at:string}[]|null};
+/** Open orders for a normalized +91 mobile at this store. Status data only; call after rate limiting. */
+export async function openOrdersByMobile(mobileE164:string):Promise<OpenOrder[]> {
+ const store=process.env.TRAIT_STORE_ID;
+ if(!store) throw new Error("Store is not configured.");
+ const sql=await checkoutDatabase();
+ const rows=await sql`select api.open_orders_by_mobile(${store}::uuid,${mobileE164}) as result`;
+ return rows[0].result as OpenOrder[];
+}
 async function checkoutDatabase() {
  const sql=db();
  const rows=await sql`select (not r.rolsuper and not r.rolbypassrls and not r.rolcreaterole
