@@ -1052,3 +1052,8 @@ html:has(main.headerless) { scroll-padding-top:0; }
   .selection-main .selection-product { margin-bottom:12px; }
   .selection-main .selection-total-row { margin-bottom:18px; }
 }
+
+/* Options popup close button: red circle, black cross centred. */
+.selection-heading .close-button { width:44px; height:44px; padding:0; flex-shrink:0; background:var(--brand-red); border-color:var(--brand-red); color:#000; }
+.selection-heading .close-button:hover { background:var(--brand-red-dark); border-color:var(--brand-red-dark); }
+.selection-heading .close-button svg { display:block; }

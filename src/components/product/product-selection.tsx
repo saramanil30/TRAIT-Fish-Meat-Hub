@@ -88,7 +88,7 @@ export function ProductSelection({ product, item, onClose, onSaved }: { product:
   }
 
   return createPortal(<dialog onKeyDown={trapFocus} ref={dialog} className="selection-dialog" aria-labelledby={id + "-title"} onCancel={event => { event.preventDefault(); onClose(); }}>
-    <div className="selection-heading"><h2 id={id + "-title"}>{item ? "Edit your selection" : "Choose your selection"}</h2><button ref={closeButton} type="button" className="close-button" onClick={onClose} aria-label="Close product selection"><span aria-hidden="true">&times;</span></button></div>
+    <div className="selection-heading"><h2 id={id + "-title"}>{item ? "Edit your selection" : "Choose your selection"}</h2><button ref={closeButton} type="button" className="close-button" onClick={onClose} aria-label="Close product selection"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" /></svg></button></div>
     <form onSubmit={submit} className="selection-form">
       <div className="selection-content">
         <div className="selection-main">
