@@ -21,5 +21,5 @@ export function OrderSummary({ items, totals, editable = false, deliveryConfirme
   </section>;
 }
 export function CustomerDetails({ customer }: { customer: CheckoutDetails }) {
-  return <dl className="customer-details"><div><dt>Customer</dt><dd>{customer.name}<br />{customer.mobile}</dd></div><div><dt>{customer.deliveryMethod === "delivery" ? "Home Delivery" : "Store Pickup"}</dt><dd>{customer.deliveryMethod === "delivery" ? <>{customer.address}<br />{customer.locality} - {customer.pincode}{customer.landmark && <><br />Landmark: {customer.landmark}</>}</> : "Store Pickup"}</dd></div><div><dt>Payment method</dt><dd>{customer.paymentMethod === "cash" ? "Cash" : "UPI"} - no payment collected</dd></div></dl>;
+  return <dl className="customer-details"><div><dt>Customer</dt><dd>{customer.name}<br />{customer.mobile}</dd></div><div><dt>{customer.deliveryMethod === "delivery" ? "Home Delivery" : "Store Pickup"}</dt><dd>{customer.deliveryMethod === "delivery" ? <>{customer.address}<br />{customer.locality} - {customer.pincode}{customer.landmark && <><br />Landmark: {customer.landmark}</>}</> : "Store Pickup"}</dd></div><div><dt>Payment method</dt><dd>{customer.paymentMethod === "cash" ? "Cash" : "UPI"} at {customer.deliveryMethod === "pickup" ? "pickup" : "delivery"}</dd></div></dl>;
 }

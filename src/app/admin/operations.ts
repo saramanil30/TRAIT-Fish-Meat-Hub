@@ -6,6 +6,7 @@ import type { ActionState } from "./actions";
 const text=(f:FormData,k:string)=>String(f.get(k)??"");
 const id=(f:FormData,k:string)=>{const s=text(f,k);if(!/^[a-f0-9-]{36}$/i.test(s))throw new Error("Invalid identity");return s;};
 const number=(f:FormData,k:string)=>{const n=Number(text(f,k));if(!Number.isSafeInteger(n)||n<0)throw new Error("Invalid number");return n;};
+const rupees=(f:FormData,k:string)=>{const s=text(f,k).trim();if(!/^\d{1,9}(\.\d{1,2})?$/.test(s))throw new Error("Invalid amount");return Math.round(Number(s)*100);};
 export async function operationalAction(_:ActionState,f:FormData):Promise<ActionState>{
  try{
   const kind=text(f,"operation");
@@ -14,7 +15,7 @@ export async function operationalAction(_:ActionState,f:FormData):Promise<Action
   else if(kind==="cash")await staffRpc(token,"receive_cash",{target_payment:id(f,"id"),expected_version:number(f,"version")});
   else if(kind==="reference")await staffRpc(token,"submit_payment_reference",{target_payment:id(f,"id"),expected_version:number(f,"version"),reference:text(f,"reference")});
   else if(kind==="weight")await staffRpc(token,"record_fulfilled_weight",{target_order:id(f,"id"),target_item:id(f,"item"),expected_version:number(f,"version"),actual_grams:number(f,"grams")});
-  else if(kind==="refund")await staffRpc(token,"request_refund",{target_payment:id(f,"id"),expected_version:number(f,"version"),request_key:id(f,"request"),reason:text(f,"reason"),allocations:[{itemId:text(f,"item")||null,amountPaise:number(f,"amount")}]});
+  else if(kind==="refund")await staffRpc(token,"request_refund",{target_payment:id(f,"id"),expected_version:number(f,"version"),request_key:id(f,"request"),reason:text(f,"reason"),allocations:[{itemId:text(f,"item")||null,amountPaise:text(f,"amountRupees")?rupees(f,"amountRupees"):number(f,"amount")}]});
   else if(kind==="cash-refund")await staffRpc(token,"complete_cash_refund",{target_refund:id(f,"id"),expected_version:number(f,"version")});
   else if(kind==="delivery") await staffRpc(token,"save_delivery_area",{target_id:text(f,"id")?id(f,"id"):null,target_store:id(f,"store"),expected_version:text(f,"id")?number(f,"version"):null,area_pincode:text(f,"pincode"),area_name:text(f,"name"),fee_paise:number(f,"fee"),minimum_paise:number(f,"minimum"),active:text(f,"active")==="true"});
   else if(kind==="staff-profile") await staffRpc(token,"save_staff_profile",{target_staff:id(f,"id"),expected_version:number(f,"version"),staff_name:text(f,"name"),store_ids:f.getAll("stores").map(String),active:text(f,"active")==="true"});

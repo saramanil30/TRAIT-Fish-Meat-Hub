@@ -22,3 +22,43 @@
 .admin-live [role=alert] { color:#a12323; }
 
 .admin-login-links{display:flex;flex-wrap:wrap;gap:4px 24px}
+
+/* Orders: one compact row per order, expanded on tap. Phone first. */
+.ord-list{display:grid;gap:8px;max-width:900px}
+.ord-intro{margin:0 0 4px;color:#4f5b55;font-size:13px}
+.admin-live details.ord-row{padding:0;margin:0;border-radius:10px;overflow:hidden}
+.admin-live .ord-row>summary{display:grid;gap:4px;padding:12px 14px;list-style:none;font-weight:400;min-height:56px}
+.ord-row>summary::-webkit-details-marker{display:none}
+.ord-row[open]>summary{background:#f3f6f4;border-bottom:1px solid #d8dfd9}
+.ord-line{display:flex;align-items:center;gap:8px;min-width:0}
+.ord-number{font-size:15px}
+.ord-total{margin-left:auto;font-size:16px;white-space:nowrap}
+.ord-meta{flex-wrap:wrap;gap:4px 10px;color:#4f5b55;font-size:13px}
+.ord-meta>span:first-child{font-weight:600;color:#173c32;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:45%}
+.ord-body{display:grid;gap:14px;padding:14px}
+.ord-body p{margin:0}
+.ord-actions{display:flex;flex-wrap:wrap;gap:8px}
+.ord-actions>.ord-form{flex:1 1 180px}
+.ord-form fieldset{display:flex;align-items:end;gap:8px;border:0;padding:0;margin:0;min-width:0}
+.ord-form label{display:grid;gap:4px;font-size:13px}
+.ord-form [role=alert],.ord-form [role=status]{margin:4px 0 0;font-size:12px}
+.trait-admin .ord-primary{width:100%;margin:0}
+.trait-admin .ord-secondary{flex:0 1 auto;margin:0;min-height:48px}
+.ord-payment{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;font-size:14px}
+.ord-small{min-height:36px;padding:6px 12px;border:1px solid #173c32;border-radius:6px;background:white;color:#173c32;font-weight:700;font-size:13px;cursor:pointer}
+.ord-small:hover{background:#eef3f0}
+.trait-admin .ord-link{min-height:36px;padding:6px 4px;text-decoration:underline;font-size:13px!important;cursor:pointer}
+.ord-items{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.ord-items>li{display:grid;gap:6px;padding-bottom:10px;border-bottom:1px solid #edf0ed}
+.ord-item-line{display:flex;justify-content:space-between;gap:12px;font-size:14px}
+.ord-item-line>span:last-child{white-space:nowrap;font-weight:600}
+.ord-note{font-size:13px;color:#4f5b55}
+.ord-weight input{width:120px}
+.ord-customer{display:grid;gap:2px;font-size:14px}
+.ord-customer a{color:#173c32;font-weight:700;text-decoration:underline;display:inline-block;padding:6px 0}
+.ord-pages{display:flex;gap:12px;margin:8px 0}
+.ord-dialog .admin-live-form fieldset{padding:8px 0 0}
+.ord-dialog .admin-live-form label{display:grid;gap:6px}
+.ord-dialog input,.ord-dialog select{border:1px solid #bbc9c0;border-radius:6px;padding:10px;background:white}
+@media(min-width:720px){.ord-actions>.ord-form{flex:0 1 240px}}
+.ord-body h2{font-size:15px;margin:4px 0}.ord-body h3{font-size:14px;margin:4px 0}.ord-body ul:not(.ord-items){margin:0;padding-left:18px;font-size:13px}

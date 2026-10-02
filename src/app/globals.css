@@ -835,3 +835,7 @@ h3 { letter-spacing:.01em; }
   .selection-total-row { flex-direction:column; align-items:stretch; }
   .selection-actions .button { flex:1; }
 }
+
+/* Tracking: keep each total beside its label instead of across a full-width panel. */
+.tracking-panel { max-width:560px; }
+.tracking-panel .order-totals { padding-top:14px; border-top:1px solid var(--border); }

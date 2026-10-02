@@ -2,16 +2,89 @@ import Link from "next/link";
 import { randomUUID } from "node:crypto";
 import { staffRpc,type StaffContext } from "@/lib/admin/server";
 import { OperationalForm } from "./operational-form";
-import { formatMoney } from "@/lib/format";
+import { formatMoney, formatWeight } from "@/lib/format";
+import { ActionDialog } from "./action-dialog";
 type Order={discount_paise?:number;offer_snapshot?:{title:string};id:string;order_number:string;status:string;fulfillment_method:string;total_paise:number;version:number;created_at:string;fulfillment_snapshot?:{name?:string;mobileE164?:string;address?:Record<string,string>}};
-type Detail={order:Order;items:{id:string;raw_weight_grams:number|null;sale_quantity?:number;pricing_basis?:string;units_per_pack?:number;line_total_paise:number;instructions:string;product_snapshot:{productName:string;preparationName:string}}[];payments:{id:string;method:string;status:string;amountPaise:number;version:number}[]};
+type Detail={order:Order;items:{id:string;raw_weight_grams:number|null;sale_quantity?:number;pricing_basis?:string;units_per_pack?:number;line_total_paise:number;instructions:string;product_snapshot:{productName:string;preparationName:string}}[];payments:{id:string;method:string;status:string;amountPaise:number;refundedPaise?:number;version:number}[]};
+const PAGE_SIZE=25;
+const statusText:Record<string,string>={PLACED:"New",CONFIRMED:"Confirmed",PREPARING:"Preparing",READY:"Ready",OUT_FOR_DELIVERY:"Out for delivery",DELIVERED:"Delivered",CANCELLED:"Cancelled"};
+const paymentText:Record<string,string>={PENDING:"Unpaid",VERIFYING:"Checking",PAID:"Paid",FAILED:"Failed",REFUNDED:"Refunded"};
+const methodText:Record<string,string>={CASH:"Cash",UPI:"UPI",ONLINE:"Online"};
+/** The one forward step staff take next; the database still validates every transition. */
+function nextStep(o:Order):{status:string;label:string}|null {
+ const pickup=o.fulfillment_method==="STORE_PICKUP";
+ switch(o.status){
+  case "PLACED":return {status:"CONFIRMED",label:"Confirm"};
+  case "CONFIRMED":return {status:"PREPARING",label:"Start preparing"};
+  case "PREPARING":return {status:"READY",label:"Mark ready"};
+  case "READY":return pickup?{status:"DELIVERED",label:"Picked up"}:{status:"OUT_FOR_DELIVERY",label:"Out for delivery"};
+  case "OUT_FOR_DELIVERY":return {status:"DELIVERED",label:"Delivered"};
+  default:return null;
+ }
+}
+const badge=(kind:string)=>"admin-badge badge-"+kind.toLowerCase().replaceAll("_","-");
+type Item=Detail["items"][number];
+const isWeighed=(i:Item)=>!i.pricing_basis||i.pricing_basis==="RAW_WEIGHT"||i.pricing_basis==="NET_WEIGHT";
+function amountText(i:Item){
+ if(i.pricing_basis==="TRAY")return i.sale_quantity+" tray"+(i.sale_quantity===1?"":"s")+" ("+(i.sale_quantity??0)*(i.units_per_pack??0)+" eggs)";
+ if(i.pricing_basis==="UNIT")return i.sale_quantity+" unit"+(i.sale_quantity===1?"":"s");
+ return formatWeight(Number(i.raw_weight_grams??i.sale_quantity??0))+(i.pricing_basis==="NET_WEIGHT"?" NET":" raw");
+}
 export async function Operations({token,context,store,orderId,section,before,cursor}:{token:string;context:StaffContext;store?:string;orderId?:string;section:string;before?:string;cursor?:string}){
  if(!store)return <p>No accessible stores.</p>;
  const validCursor=!!before&&Number.isFinite(Date.parse(before))&&/^[a-f0-9-]{36}$/i.test(cursor??"");
- const orders=await staffRpc<Order[]>(token,"order_queue_page",{target_store:store,row_limit:100,before_time:validCursor?before:null,before_id:validCursor?cursor:null});
+ const orders=await staffRpc<Order[]>(token,"order_queue_page",{target_store:store,row_limit:PAGE_SIZE,before_time:validCursor?before:null,before_id:validCursor?cursor:null});
+ // The queue has no customer, items or payment, so each row reads its detail through the same permission-checked RPC.
+ const details=await Promise.all(orders.map(o=>staffRpc<Detail>(token,"order_detail",{target_order:o.id}).catch(()=>null)));
  const base="/admin/"+context.role.toLowerCase()+"/"+section+"?store="+store;
- const detail=orderId?await staffRpc<Detail>(token,"order_detail",{target_order:orderId}):null;
- return <><p>Up to 100 orders per page for this store. Select an order to view customer details and permitted operations.</p><div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Order</th><th>Status</th><th>Total</th><th>Placed</th></tr></thead><tbody>{orders.map(o=><tr key={o.id}><td><Link href={base+"&order="+o.id}>{o.order_number}</Link></td><td>{o.status}</td><td>{formatMoney(Number(o.total_paise))}</td><td>{new Date(o.created_at).toLocaleString("en-IN",{timeZone:"Asia/Kolkata"})}</td></tr>)}</tbody></table>{!orders.length&&<p>No orders.</p>}</div><nav aria-label="Order pages"><Link href={base}>Latest orders</Link>{orders.length===100&&<Link href={base+"&before="+encodeURIComponent(orders[orders.length-1].created_at)+"&cursor="+orders[orders.length-1].id}>Older orders</Link>}</nav>{detail&&<section><h2>{detail.order.order_number}</h2>{!!detail.order.discount_paise&&<p>Offer: {detail.order.offer_snapshot?.title} · Discount: {formatMoney(Number(detail.order.discount_paise))} · Final payable: {formatMoney(Number(detail.order.total_paise))}</p>}<p>{detail.order.fulfillment_snapshot?.name} · {detail.order.fulfillment_snapshot?.mobileE164}</p><p>{Object.values(detail.order.fulfillment_snapshot?.address??{}).join(", ")}</p><ul>{detail.items.map(i=><li key={i.id}>{i.product_snapshot.productName} · {i.product_snapshot.preparationName} · {i.pricing_basis==="TRAY"?i.sale_quantity+" trays ("+(i.sale_quantity??0)*(i.units_per_pack??0)+" eggs)":i.pricing_basis==="UNIT"?i.sale_quantity+" units":(i.raw_weight_grams??i.sale_quantity)+" g "+(i.pricing_basis==="NET_WEIGHT"?"NET":"raw")} · {formatMoney(Number(i.line_total_paise))}<p>{i.instructions}</p><OperationalForm operation="weight" id={detail.order.id} version={Number(detail.order.version)} label="Record dispatch weight"><input type="hidden" name="item" value={i.id}/><label>Actual weight (grams)<input name="grams" type="number" min="1" required/></label></OperationalForm></li>)}</ul><OperationalForm operation="status" id={detail.order.id} version={Number(detail.order.version)} label="Update status"><label>Next status<select name="status">{["CONFIRMED","PREPARING","READY",...(detail.order.fulfillment_method==="HOME_DELIVERY"?["OUT_FOR_DELIVERY"]:[]),"DELIVERED",...(context.role==="EMPLOYEE"?[]:["CANCELLED"])].map(s=><option key={s}>{s}</option>)}</select></label><label>Cancellation reason<input name="reason" maxLength={500}/></label></OperationalForm>{detail.payments.map(p=><section key={p.id}><h3>{p.method}: {p.status} · {formatMoney(Number(p.amountPaise))}</h3>{p.method==="CASH"?<OperationalForm operation="cash" id={p.id} version={Number(p.version)} label="Confirm full cash received"/>:<OperationalForm operation="reference" id={p.id} version={Number(p.version)} label="Submit evidence"><label>Payment reference<input name="reference" maxLength={160} required/></label><p>A reference never marks payment as paid.</p></OperationalForm>}{context.role!=="EMPLOYEE"&&<OperationalForm operation="refund" id={p.id} version={Number(p.version)} label="Request refund"><input name="request" type="hidden" value={randomUUID()}/><label>Refund component<select name="item"><option value="">Delivery fee</option>{detail.items.map(i=><option key={i.id} value={i.id}>{i.product_snapshot.productName}</option>)}</select></label><label>Amount (paise)<input name="amount" type="number" min="1" required/></label><label>Reason<input name="reason" required maxLength={500}/></label><p>This records a refund request; it does not send money.</p></OperationalForm>}</section>)}{context.role!=="EMPLOYEE"&&<PaymentHistory token={token} order={detail.order.id}/>}</section>}</>;
+ // Same page for every role; only the actions a role may take are shown. The database enforces them regardless.
+ const manager=context.role!=="EMPLOYEE";
+ const last=orders[orders.length-1];
+ return <div className="ord-list">
+  <p className="ord-intro">{orders.length?"Tap an order to see items, address and actions.":"No orders yet."}</p>
+  {orders.map((o,index)=>{
+   const d=details[index];
+   const order=d?.order??o;
+   const pickup=order.fulfillment_method==="STORE_PICKUP";
+   const payment=d?.payments?.[d.payments.length-1];
+   const customer=d?.order.fulfillment_snapshot;
+   const step=nextStep(order);
+   const status=order.status==="DELIVERED"&&pickup?"Picked up":statusText[order.status]??order.status;
+   const canCancel=manager&&!["DELIVERED","CANCELLED"].includes(order.status);
+   const weighing=["PREPARING","READY","OUT_FOR_DELIVERY"].includes(order.status);
+   return <details key={o.id} className="ord-row" open={o.id===orderId}>
+    <summary>
+     <span className="ord-line"><strong className="ord-number">{order.order_number}</strong><span className={badge(order.status)}>{status}</span><strong className="ord-total">{formatMoney(Number(order.total_paise))}</strong></span>
+     <span className="ord-line ord-meta"><span>{customer?.name||"Customer"}</span><span>{d?d.items.length+" item"+(d.items.length===1?"":"s"):"…"}</span><span>{pickup?"Pickup":"Delivery"}</span>{payment&&<span className={badge(payment.status)}>{methodText[payment.method]??payment.method} · {paymentText[payment.status]??payment.status}</span>}</span>
+    </summary>
+    {!d?<p role="alert">Details unavailable. Reload the page.</p>:<div className="ord-body">
+     {(step||canCancel)&&<div className="ord-actions">
+      {step&&<OperationalForm operation="status" id={order.id} version={Number(order.version)} label={step.label} className="ord-form" buttonClassName="admin-button ord-primary"><input type="hidden" name="status" value={step.status}/></OperationalForm>}
+      {canCancel&&<ActionDialog label="Cancel order" title={"Cancel "+order.order_number} triggerClassName="admin-button secondary ord-secondary"><OperationalForm operation="status" id={order.id} version={Number(order.version)} label="Cancel order"><input type="hidden" name="status" value="CANCELLED"/><label>Reason for cancelling<input name="reason" required maxLength={300}/></label></OperationalForm></ActionDialog>}
+     </div>}
+     {d.payments.map(p=><div key={p.id} className="ord-payment">
+      <span className={badge(p.status)}>{methodText[p.method]??p.method} · {paymentText[p.status]??p.status}</span><span>{formatMoney(Number(p.amountPaise))}</span>
+      {p.method==="CASH"&&p.status==="PENDING"&&order.status!=="CANCELLED"&&<OperationalForm operation="cash" id={p.id} version={Number(p.version)} label="Cash received" className="ord-form" buttonClassName="ord-small"/>}
+      {p.method!=="CASH"&&["PENDING","VERIFYING","FAILED"].includes(p.status)&&order.status!=="CANCELLED"&&<ActionDialog label="Add UPI reference" title="UPI reference" triggerClassName="admin-text-button ord-link"><OperationalForm operation="reference" id={p.id} version={Number(p.version)} label="Submit reference"><label>Payment reference<input name="reference" maxLength={160} required/></label><p className="admin-muted">A reference never marks the payment as paid by itself.</p></OperationalForm></ActionDialog>}
+      {manager&&p.status==="PAID"&&<ActionDialog label="Refund" title={"Refund for "+order.order_number} triggerClassName="admin-text-button ord-link"><OperationalForm operation="refund" id={p.id} version={Number(p.version)} label="Request refund"><input name="request" type="hidden" value={randomUUID()}/><label>What is refunded<select name="item"><option value="">Delivery fee</option>{d.items.map(i=><option key={i.id} value={i.id}>{i.product_snapshot.productName}</option>)}</select></label><label>Amount (₹)<input name="amountRupees" type="number" min="0.01" step="0.01" inputMode="decimal" required/></label><label>Reason<input name="reason" required maxLength={300}/></label><p className="admin-muted">This records a refund request; it does not send money.</p></OperationalForm></ActionDialog>}
+     </div>)}
+     <ul className="ord-items">{d.items.map(i=><li key={i.id}>
+      <div className="ord-item-line"><span><strong>{i.product_snapshot.productName}</strong> · {i.product_snapshot.preparationName} · {amountText(i)}</span><span>{formatMoney(Number(i.line_total_paise))}</span></div>
+      {i.instructions&&<p className="ord-note">Note: {i.instructions}</p>}
+      {weighing&&isWeighed(i)&&<OperationalForm operation="weight" id={order.id} version={Number(order.version)} label="Save" className="ord-form ord-weight" buttonClassName="ord-small"><input type="hidden" name="item" value={i.id}/><label>Actual weight (g)<input name="grams" type="number" min="1" inputMode="numeric" required/></label></OperationalForm>}
+     </li>)}</ul>
+     {!!order.discount_paise&&<p className="ord-note">Offer {order.offer_snapshot?.title}: −{formatMoney(Number(order.discount_paise))}</p>}
+     <div className="ord-customer">
+      <p><strong>{customer?.name||"Customer"}</strong>{customer?.mobileE164&&<> · <a href={"tel:"+customer.mobileE164}>{customer.mobileE164}</a></>}</p>
+      <p>{pickup?"Store pickup":Object.values(customer?.address??{}).filter(Boolean).join(", ")}</p>
+      <p className="admin-muted">Placed {new Date(order.created_at).toLocaleString("en-IN",{timeZone:"Asia/Kolkata",dateStyle:"medium",timeStyle:"short"})}</p>
+     </div>
+     {manager&&d.payments.some(p=>p.status==="PAID"||p.status==="REFUNDED")&&<PaymentHistory token={token} order={order.id}/>}
+    </div>}
+   </details>;
+  })}
+  <nav aria-label="Order pages" className="ord-pages">{validCursor&&<Link href={base}>Latest orders</Link>}{orders.length===PAGE_SIZE&&last&&<Link href={base+"&before="+encodeURIComponent(last.created_at)+"&cursor="+last.id}>Older orders</Link>}</nav>
+ </div>;
 }
 export async function BusinessPolicy({token}:{token:string}){
  const p=await staffRpc<{revision:number;employee_operational_history_days:number;employee_cash_collection_limit_paise:number|null;require_payment_before_completion:boolean;max_order_items:number;max_order_total_paise:number}|null>(token,"business_policy");
