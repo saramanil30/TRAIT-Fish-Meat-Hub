@@ -806,3 +806,16 @@ h3 { letter-spacing:.01em; }
 .offer-list li { min-width:0; overflow-wrap:anywhere; }
 .offer-list strong { color:var(--brand-red-dark); }
 .offer-list p { margin:5px 0; font-size:14px; }
+
+/* Product card footer: sized by the card, not the viewport, so price and button never clip. */
+.product-body { container-type:inline-size; }
+.product-bottom { flex-wrap:wrap; }
+.product-bottom p { min-width:0; max-width:100%; }
+.product-add { max-width:100%; }
+.add-button { max-width:100%; overflow-wrap:anywhere; }
+@container (max-width:300px) {
+  .product-bottom { flex-direction:column; align-items:stretch; gap:10px; }
+  .product-bottom p { white-space:normal; }
+  .product-add { align-items:stretch; }
+  .add-button { width:100%; min-width:0; padding-inline:10px; }
+}
