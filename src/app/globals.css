@@ -990,7 +990,7 @@ html:has(main.headerless) { scroll-padding-top:0; }
 .utility-bar { background:white; color:var(--text-primary); border-bottom:1px solid #e9ecf2; }
 .utility-content svg { color:var(--brand-red); }
 .category-bar { background:white; border-top:1px solid #e9ecf2; }
-.category-nav a { background:#f2f3f5; border-color:#e1e4ea; color:#171c23; }
-.category-nav a:hover { border-color:var(--brand-red); color:#171c23; }
+.category-nav a { background:#3a3f47; border-color:#3a3f47; color:white; }
+.category-nav a:hover { background:#2c3138; border-color:var(--brand-red); color:white; }
 .category-nav a[aria-current] { background:var(--brand-red); border-color:var(--brand-red); color:white; }
 .category-nav>span { color:var(--text-secondary); }
