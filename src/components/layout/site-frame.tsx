@@ -7,5 +7,7 @@ export type NavCategory = { slug: string; name: string };
 export function SiteFrame({ children, categories }: { children: React.ReactNode; categories: NavCategory[] }) {
   const pathname = usePathname();
   const admin = pathname === "/admin" || pathname.startsWith("/admin/");
-  return <>{!admin && <Header categories={categories} />}<main id="main-content" tabIndex={-1} className={admin ? undefined : "storefront"}>{children}</main>{!admin && <><Footer categories={categories} /><MobileNav /></>}</>;
+  // The cart page shows no site header (top strip, logo/search/cart row, category nav).
+  const header = !admin && pathname !== "/cart";
+  return <>{header && <Header categories={categories} />}<main id="main-content" tabIndex={-1} className={admin ? undefined : header ? "storefront" : "storefront headerless"}>{children}</main>{!admin && <><Footer categories={categories} /><MobileNav /></>}</>;
 }

@@ -968,3 +968,7 @@ main.storefront .cart-title h1 span { color:#ffb4ab; }
 .weight-select { display:grid; gap:0; margin:0 0 20px; }
 .weight-select label { font-size:14px; font-weight:700; margin-bottom:10px; }
 .weight-select select { min-height:48px; padding:10px 40px 10px 14px; border:1px solid var(--border); border-radius:8px; font-size:16px; background-color:white; color:var(--text-primary); }
+
+/* Pages without the site header (cart): no sticky-header offsets. */
+html:has(main.headerless) { scroll-padding-top:0; }
+@media(min-width:1200px) { main.headerless .cart-summary { top:24px; } }
