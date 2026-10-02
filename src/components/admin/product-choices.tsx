@@ -1,5 +1,5 @@
 "use client";
-import {useActionState,useState} from "react";
+import {startTransition, useActionState,useState} from "react";
 import {saveMaster,type ActionState} from "@/app/admin/actions";
 type Preparation={name:string;cleaning_loss_percent?:number};
 type Basis="RAW_WEIGHT"|"NET_WEIGHT"|"UNIT"|"TRAY";
@@ -33,7 +33,7 @@ export function ProductForm({product:p,categories}:{product:EditableProduct|null
   if(photo instanceof File&&photo.size>0){
    try{form.set("photo",await toWebp(photo));}catch(error){setPhotoError(error instanceof Error?error.message:"This photo could not be read.");return;}
   }
-  dispatch(form);
+  startTransition(() => dispatch(form));
  }
  return <form action={submit} className="admin-live-form"><fieldset disabled={pending}>
   <input type="hidden" name="kind" value="product"/><input type="hidden" name="id" value={p?.id??""}/>
