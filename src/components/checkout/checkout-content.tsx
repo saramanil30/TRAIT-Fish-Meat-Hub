@@ -4,7 +4,7 @@ import Link from "next/link";
 import { reviewCheckout, placeCheckout } from "@/app/checkout/actions";
 import { useRouter } from "next/navigation";
 import { useRef, useState, type FormEvent } from "react";
-import { useCart, clearCart } from "@/lib/cart-store";
+import { useCart, clearCart, useBuyNow, clearBuyNow } from "@/lib/cart-store";
 import { serializeCart } from "@/lib/cart";
 import { orderTotals, validateCheckout } from "@/lib/order";
 import { saveCheckoutDraft, savePendingCheckout, useOrderState } from "@/lib/order-store";
@@ -21,8 +21,12 @@ const fields = [
   { key: "state", label: "State", autoComplete: "address-level1", max: 120 },
   { key: "pincode", label: "Pincode", autoComplete: "postal-code", max: 6 },
 ] as const;
-export function CheckoutContent() {
-  const items = useCart();
+export function CheckoutContent({ buyNow = false }: { buyNow?: boolean }) {
+  const cart = useCart();
+  const buyNowItems = useBuyNow();
+  // Buy now checks out only its own item; the cart is left as it was.
+  const items = buyNow ? buyNowItems : cart;
+  const clearItems = buyNow ? clearBuyNow : clearCart;
   const { ready, draft, pending } = useOrderState();
   const router = useRouter();
   const [quote, setQuote] = useState<Awaited<ReturnType<typeof reviewCheckout>>["quote"]>();
@@ -55,7 +59,7 @@ export function CheckoutContent() {
       finally {submitting.current=false;setSaving(false);}
       return;
     }
-    if (reviewedCart !== serializeCart(items)) { setReview(false); setError("Your cart changed. Please review the updated summary before placing your order."); focusTitle(); return; }
+    if (reviewedCart !== serializeCart(items)) { setReview(false); setError((buyNow ? "Your item" : "Your cart") + " changed. Please review the updated summary before placing your order."); focusTitle(); return; }
     submitting.current = true; setSaving(true);
     try {
       if (!quote) throw new Error("Review your order first.");
@@ -63,7 +67,7 @@ export function CheckoutContent() {
       const order = await placeCheckout(quote.envelope);
       if ("error" in order) {if(order.reviewRequired){savePendingCheckout(null);setReview(false);}throw new Error(order.error);}
       savePendingCheckout(null);
-      clearCart();
+      clearItems();
       router.replace("/order-confirmation/" + order.trackingToken);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not place your order. Please try again.");
@@ -73,15 +77,15 @@ export function CheckoutContent() {
   async function retryPending() {
     if(!pending||submitting.current)return;
     submitting.current=true;setSaving(true);
-    try {const result=await placeCheckout(pending);if("trackingToken" in result){savePendingCheckout(null);clearCart();router.replace("/order-confirmation/"+result.trackingToken);}else{if(result.reviewRequired){savePendingCheckout(null);setReview(false);}setError(result.error);}}
+    try {const result=await placeCheckout(pending);if("trackingToken" in result){savePendingCheckout(null);clearItems();router.replace("/order-confirmation/"+result.trackingToken);}else{if(result.reviewRequired){savePendingCheckout(null);setReview(false);}setError(result.error);}}
     catch {setError("Connection interrupted. Retry this same pending order to check confirmation.");}
     finally {submitting.current=false;setSaving(false);}
   }
   if (ready && pending) return <div className="container page-section"><h1>Confirm your pending order</h1><p>A previous submission needs confirmation. Retry the same order to avoid placing it twice.</p>{error&&<p role="alert">{error}</p>}<button className="button primary" disabled={saving} onClick={retryPending}>{saving?"Checking…":"Check order confirmation"}</button></div>;
   if (!ready) return <div className="container page-section"><p role="status">Loading your checkout...</p></div>;
-  if (!items.length && !saving) return <div className="container page-section"><p className="eyebrow">Checkout</p><h1>Your cart is empty</h1><p>Add a selection before starting checkout.</p><Link className="button secondary" href="/search">Continue shopping</Link></div>;
+  if (!items.length && !saving) return <div className="container page-section"><p className="eyebrow">Checkout</p><h1>{buyNow ? "Nothing to buy yet" : "Your cart is empty"}</h1><p>{buyNow ? "Choose a product and press Buy now to check it out on its own." : "Add a selection before starting checkout."}</p><Link className="button secondary" href="/search">Continue shopping</Link></div>;
   return <div className="container page-section checkout-page">
-    <Link className="back-link" href="/cart">&larr; Back to cart</Link><p className="eyebrow">Prepared your way</p>
+    {buyNow ? <Link className="back-link" href="/search">&larr; Continue shopping</Link> : <Link className="back-link" href="/cart">&larr; Back to cart</Link>}<p className="eyebrow">Prepared your way</p>
     <div className="checkout-title"><h1 ref={title} tabIndex={-1}>{review ? "Review your order" : "Checkout"}</h1><span className="checkout-title-note">Your selection. Every detail considered.</span></div>
     <p className="order-preview-note">Final prices, delivery eligibility and charges are checked before you place your order.</p>
     <ol className="checkout-steps" aria-label="Checkout progress"><li aria-current={!review ? "step" : undefined}>1. Your details</li><li aria-current={review ? "step" : undefined}>2. Review & place</li></ol>
@@ -100,6 +104,6 @@ export function CheckoutContent() {
         </section><fieldset className="order-panel payment-panel"><legend><span className="section-number">2</span> Payment method</legend><div className="checkout-options">{([ ["cash", draft.deliveryMethod === "pickup" ? "Cash at pickup" : "Cash on Delivery"], ["upi", "UPI preference"] ] as const).map(([value, label]) => <label className="choice" key={value}><input type="radio" name="paymentMethod" value={value} checked={draft.paymentMethod === value} onChange={() => change("paymentMethod", value)} />{label}</label>)}</div><p className="field-help">Cash is collected at delivery or pickup. UPI records a preference only; online payment is not available here yet. Do not send money based on this page.</p></fieldset>
       </>}
       <button type="submit" className="button primary checkout-submit" disabled={saving || !items.length}>{saving ? "Please wait..." : review ? "Place order" : "Review order"}</button>
-    </fieldset></form><OrderSummary deliveryConfirmed={!!quote && review} editable items={quote && review ? items.map((item,i)=>({...item,...quote.lines[i]})) : items} totals={quote ?? orderTotals(items, draft.deliveryMethod, 0)} /></div>
+    </fieldset></form><OrderSummary deliveryConfirmed={!!quote && review} editable={!buyNow} items={quote && review ? items.map((item,i)=>({...item,...quote.lines[i]})) : items} totals={quote ?? orderTotals(items, draft.deliveryMethod, 0)} /></div>
   </div>;
 }

@@ -819,3 +819,19 @@ h3 { letter-spacing:.01em; }
   .product-add { align-items:stretch; }
   .add-button { width:100%; min-width:0; padding-inline:10px; }
 }
+
+/* Add to cart + Buy now: side by side under the price, stacked when the card is narrow. */
+.product-bottom:has(.buy-now-button) { flex-direction:column; align-items:stretch; gap:10px; }
+.product-actions { display:flex; gap:8px; }
+.product-actions .add-button { flex:1 1 0; min-width:0; padding-inline:10px; }
+.add-button.buy-now-button { background:var(--background); color:var(--brand-red); }
+.add-button.buy-now-button:enabled:hover { background:var(--brand-red-light); color:var(--brand-red-dark); }
+.selection-actions { display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-end; }
+@container (max-width:240px) {
+  .product-actions { flex-direction:column; }
+  .product-actions .add-button { width:100%; }
+}
+@media(max-width:420px) {
+  .selection-total-row { flex-direction:column; align-items:stretch; }
+  .selection-actions .button { flex:1; }
+}

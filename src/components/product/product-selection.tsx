@@ -4,13 +4,21 @@ import {isRaw, priceLabel, quantityLabel, quantityOptions, quantityText, saleTot
 
 import Image from "next/image";
 import { createPortal } from "react-dom";
+import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import type { Product, PreparationId } from "@/types/catalog";
 import type { CartItem } from "@/types/cart";
 import { applicableCleaningLoss, estimateCleanedWeightGrams, MAX_INSTRUCTIONS_LENGTH } from "@/lib/cart";
-import { addCartItem, updateCartItem } from "@/lib/cart-store";
+import { addCartItem, setBuyNowItem, updateCartItem } from "@/lib/cart-store";
 import { formatMoney } from "@/lib/format";
 import { WeightSummary } from "@/components/product/weight-summary";
+
+export const BUY_NOW_CHECKOUT = "/checkout?buy=now";
+
+/** Whether the shopper has to pick a preparation or quantity before buying. */
+export function needsOptions(product: Product) {
+  return product.preparationOptions.length > 1 || quantityOptions(product).length > 1;
+}
 
 export function ProductSelection({ product, item, onClose, onSaved }: { product: Product; item?: CartItem; onClose: () => void; onSaved: () => void }) {
   const id = useId();
@@ -22,6 +30,7 @@ export function ProductSelection({ product, item, onClose, onSaved }: { product:
   const [instructions, setInstructions] = useState(item?.specialInstructions ?? "");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const router = useRouter();
   const preparation = product.preparationOptions.find(option => option.id === preparationId)!;
   const loss = applicableCleaningLoss(product, preparation);
   const estimated = estimateCleanedWeightGrams(rawWeightGrams, loss);
@@ -62,6 +71,11 @@ export function ProductSelection({ product, item, onClose, onSaved }: { product:
     setSaving(true);
     try {
       const selection = { preparationId, ...(isRaw(product)?{rawWeightGrams}:{quantity:rawWeightGrams}), specialInstructions: instructions };
+      if (!item && (event.nativeEvent as SubmitEvent).submitter?.hasAttribute("data-buy-now")) {
+        setBuyNowItem(product.id, selection, crypto.randomUUID());
+        router.push(BUY_NOW_CHECKOUT);
+        return;
+      }
       if (item) updateCartItem(item.id, selection);
       else addCartItem(product.id, selection, crypto.randomUUID());
       onSaved();
@@ -86,7 +100,7 @@ export function ProductSelection({ product, item, onClose, onSaved }: { product:
         <p id={id + "-instructions-help"} className="field-help">{instructions.length}/{MAX_INSTRUCTIONS_LENGTH} characters. Please do not include personal or payment details.</p>
         {error && <p role="alert" className="cart-error">{error}</p>}
       </div>
-      <div className="selection-footer"><div aria-live="polite" aria-atomic="true">{isRaw(product)?<WeightSummary rawWeightGrams={rawWeightGrams} estimatedCleanedWeightGrams={estimated} cleaningLossPercent={loss} />:<strong>{quantityText(product,rawWeightGrams)}</strong>}</div><div className="selection-total-row"><div><span>Item price</span><strong aria-live="polite" data-item-price>{formatMoney(price)}</strong><small>Based on {quantityText(product,rawWeightGrams)}</small></div><button type="submit" className="button primary" disabled={saving || !product.available}>{saving ? "Saving..." : item ? "Save changes" : "Add to Cart"}</button></div></div>
+      <div className="selection-footer"><div aria-live="polite" aria-atomic="true">{isRaw(product)?<WeightSummary rawWeightGrams={rawWeightGrams} estimatedCleanedWeightGrams={estimated} cleaningLossPercent={loss} />:<strong>{quantityText(product,rawWeightGrams)}</strong>}</div><div className="selection-total-row"><div><span>Item price</span><strong aria-live="polite" data-item-price>{formatMoney(price)}</strong><small>Based on {quantityText(product,rawWeightGrams)}</small></div><div className="selection-actions"><button type="submit" className="button primary" disabled={saving || !product.available}>{saving ? "Saving..." : item ? "Save changes" : "Add to Cart"}</button>{!item && <button type="submit" data-buy-now className="button secondary" disabled={saving || !product.available}>Buy now</button>}</div></div></div>
     </form>
   </dialog>, document.body);
 }
