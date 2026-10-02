@@ -41,15 +41,15 @@
     "description": "Scomberomorus commerson",
     "species": "Scomberomorus commerson",
     "width": 800,
-    "height": 800,
-    "bytes": 17982,
+    "height": 600,
+    "bytes": 30520,
     "verifiedDate": "2026-09-28",
     "storageStatus": "Mapped to local asset; Storage upload blocked by management credential HTTP 401",
     "productId": "e7a1abdc-ea59-467e-909f-ca666fe7903c",
     "visualReviewDate": "2026-09-29",
     "attributionRequired": false,
     "licenseTemplate": "PD-USGov-FDA",
-    "edits": "2026-10-02: specimen label and embedded photographer caption removed (public-domain US Government work; Commons AttributionRequired=false). Original caption: Jeffrey Williams, National Museum of Natural History, Smithsonian Institution."
+    "edits": "2026-10-02: specimen label and embedded photographer caption removed (public-domain US Government work; Commons AttributionRequired=false). Original caption: Jeffrey Williams, National Museum of Natural History, Smithsonian Institution. 2026-10-02: rebuilt from the full-resolution original; specimen label and caption painted out with the surrounding backdrop; cropped to a 4:3 head-and-body window (no added fill)."
   },
   "bombay-duck": {
     "assetPath": "/assets/catalogue/bombay-duck.webp",
