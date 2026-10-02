@@ -995,24 +995,27 @@ html:has(main.headerless) { scroll-padding-top:0; }
 .category-nav a[aria-current] { background:var(--brand-red); border-color:var(--brand-red); color:white; }
 .category-nav>span { color:var(--text-secondary); }
 
-/* Offer bar: one line, about 40px, pinned directly under the header while scrolling or switching categories.
-   Desktop: the header's rows are reordered so the bar sits below the category row.
-   Mobile: only the logo/search row is pinned, and the bar sits right under it. Shown only when an offer is active. */
-.offer-strip { background:var(--brand-red); color:white; }
-.offer-strip .container { display:flex; align-items:center; gap:10px; min-height:40px; font-size:13px; font-weight:600; }
-.offer-strip strong { flex-shrink:0; padding:2px 8px; border-radius:999px; background:rgb(255 255 255 / 18%); font-size:10px; letter-spacing:.06em; text-transform:uppercase; }
-.offer-strip span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+/* The TRAIT collection strip: one line, about 40px, pinned under the header on every page (not cart/checkout) and
+   while switching categories. Shows the active offer, otherwise the default line.
+   Desktop: the header's rows are reordered so the strip sits below the category row.
+   Mobile: only the logo/search row is pinned, and the strip sits right under it. */
+.site-top .collection-strip { background:var(--brand-red-dark); color:white; padding:0; font-size:inherit; }
+.site-top .collection-strip .container { display:flex; flex-direction:row; align-items:center; gap:10px; min-height:40px; font-size:13px; font-weight:600; }
+.site-top .collection-strip strong { flex-shrink:0; padding:2px 8px; border-radius:999px; background:rgb(255 255 255 / 18%); font-size:10px; letter-spacing:.06em; text-transform:uppercase; }
+.site-top .collection-strip span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 @media(min-width:768px) {
   .site-top { display:flex; flex-direction:column; }
   .site-top > .site-header { display:contents; }
   .site-top .utility-bar { order:1; }
   .site-top .header-main { order:2; }
   .site-top .category-bar { order:3; }
-  .site-top .offer-strip { order:4; }
-  html:has(.offer-strip) { scroll-padding-top:232px; }
+  .site-top .collection-strip { order:4; }
+  html:has(.site-top .collection-strip) { scroll-padding-top:232px; }
 }
-@media(min-width:1200px) { body:has(.offer-strip) .checkout-form+.order-summary { top:238px; } }
 @media(max-width:767px) {
-  .offer-strip .container { font-size:12px; }
-  html:has(.offer-strip) { scroll-padding-top:192px; }
+  .site-top .collection-strip .container { font-size:12px; }
+  html:has(.site-top .collection-strip) { scroll-padding-top:192px; }
 }
+
+/* Selected category pill, including "All" on the homepage. */
+.category-nav a.is-selected { background:var(--brand-red); border-color:var(--brand-red); color:white; }

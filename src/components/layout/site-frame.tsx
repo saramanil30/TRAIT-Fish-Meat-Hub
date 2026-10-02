@@ -9,5 +9,5 @@ export function SiteFrame({ children, categories, offers }: { children: React.Re
   const admin = pathname === "/admin" || pathname.startsWith("/admin/");
   // The cart page shows no site header (top strip, logo/search/cart row, category nav).
   const header = !admin && pathname !== "/cart";
-  return <>{header && <Header categories={categories} offers={offers} />}<main id="main-content" tabIndex={-1} className={admin ? undefined : header ? "storefront" : "storefront headerless"}>{children}</main>{!admin && <><Footer categories={categories} /><MobileNav /></>}</>;
+  return <>{header && <Header categories={categories} offers={offers} showStrip={!pathname.startsWith("/checkout")} />}<main id="main-content" tabIndex={-1} className={admin ? undefined : header ? "storefront" : "storefront headerless"}>{children}</main>{!admin && <><Footer categories={categories} /><MobileNav /></>}</>;
 }

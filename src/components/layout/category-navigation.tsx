@@ -5,5 +5,5 @@ import type { NavCategory } from "./site-frame";
 export function CategoryNavigation({ categories }: { categories: NavCategory[] }) {
   const pathname = usePathname();
   const links = [{ href: "/search", label: "All" }, ...categories.map(c => ({ href: "/" + c.slug, label: c.name }))];
-  return <nav className="category-nav container" aria-label="Shop categories">{links.map(({ href, label }) => <Link key={href} href={href} aria-current={pathname === href ? "page" : undefined}>{label}</Link>)}<span>Choose your cut. Make it your own.</span></nav>;
+  return <nav className="category-nav container" aria-label="Shop categories">{links.map(({ href, label }) => <Link key={href} href={href} aria-current={pathname === href ? "page" : undefined} className={pathname === href || (href === "/search" && pathname === "/") ? "is-selected" : undefined}>{label}</Link>)}<span>Choose your cut. Make it your own.</span></nav>;
 }
