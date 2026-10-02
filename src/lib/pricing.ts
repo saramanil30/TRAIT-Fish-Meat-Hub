@@ -14,6 +14,8 @@ export function cardQuantityLine(p: Product) {
  if (p.pricingBasis === 'TRAY') return q.join(' · ') + ' ' + plural('tray', 'trays') + ' (' + p.unitsPerPack + ' eggs each)';
  return q.join(' · ') + ' ' + plural('unit', 'units');
 }
+/** Plain option text for the cart's quantity menu: "500 g", "1 kg", "1.5 kg", "2 trays (60 eggs)". */
+export function quantityOptionText(p: SalePricing, q: number) { return isRaw(p) || p.pricingBasis === 'NET_WEIGHT' ? formatWeight(q) : quantityText(p, q); }
 export function quantityText(p: SalePricing, q: number) { return isRaw(p) ? formatWeight(q)+' raw' : p.pricingBasis === 'NET_WEIGHT' ? formatWeight(q)+' NET' : q+' '+(p.pricingBasis === 'TRAY' ? (q===1?'tray':'trays')+' ('+q*(p.unitsPerPack??0)+' eggs)' : (q===1?'unit':'units')); }
 export function saleTotal(p: SalePricing & {pricePerKg:number}, q: number) {
  const price=p.pricePaise ?? Math.round(p.pricePerKg*100);

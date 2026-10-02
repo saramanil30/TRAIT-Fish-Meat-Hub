@@ -1,5 +1,5 @@
 "use client";
-import {isRaw,priceLabel,quantityLabel,quantityOptions,quantityText} from "@/lib/pricing";
+import {isRaw,priceLabel,quantityOptionText,quantityOptions} from "@/lib/pricing";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -11,7 +11,8 @@ import { formatMoney, formatWeight } from "@/lib/format";
 import { ProductSelection } from "@/components/product/product-selection";
 
 
-export function CartContent() {
+/** deliveryFeePaise comes from the store's delivery areas (lowest fee when they differ); null when delivery is off. */
+export function CartContent({ deliveryFeePaise, feeVaries = false }: { deliveryFeePaise: number | null; feeVaries?: boolean }) {
   const items = useCart();
   const products = useCatalogue();
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -29,7 +30,7 @@ export function CartContent() {
           <p className="cart-notice">Prices are based on quantity before cleaning. Cleaning estimates are approximate, not guaranteed delivered weights. Cart choices are kept in this browser tab when storage is available.</p>
           <p role="status" className="cart-status">{message}</p>
           {error && <p role="alert" className="cart-error">{error}</p>}
-          {items.length === 0 ? <div className="empty-results"><h2>Your cart is empty</h2><p>Find your favourite fish or meat, then choose your quantity and preparation.</p><Link href="/search" className="button primary">Explore the collection</Link></div> : <div className="cart-layout"><div className="cart-items"><div className="cart-table-heading" aria-hidden="true"><span>Product</span><span>Preparation</span><span>Quantity (before cleaning)</span><span>Total</span></div>
+          {items.length === 0 ? <div className="empty-results"><h2>Your cart is empty</h2><p>Find your favourite fish or meat, then choose your quantity and preparation.</p><Link href="/search" className="button primary">Explore the collection</Link></div> : <div className="cart-layout"><div className="cart-items"><div className="cart-table-heading" aria-hidden="true"><span>Product</span><span>Preparation</span><span>Quantity</span><span>Total</span></div>
             {items.map(item => {
               const product = products.find(product => product.id === item.productId)!;
         return (
@@ -69,7 +70,7 @@ export function CartContent() {
                 className="cart-column-label"
                 htmlFor={"weight-" + item.id}
               >
-                {quantityLabel(item)}
+                Quantity
               </label>
 
         <select
@@ -96,7 +97,7 @@ export function CartContent() {
         >
         {quantityOptions(product).map(weight => (
           <option key={weight} value={weight}>
-            {quantityText(product,weight)}
+            {quantityOptionText(product,weight)}
           </option>
         ))}
       </select>
@@ -151,7 +152,7 @@ export function CartContent() {
 );
       })}
       {confirmClear ? <div className="clear-confirm" role="group" aria-label="Confirm clearing cart"><p>Remove all items from your cart?</p><button type="button" className="button secondary" onClick={() => setConfirmClear(false)}>Keep items</button><button type="button" className="button primary" onClick={() => { clearCart(); setConfirmClear(false); setMessage("Cart cleared."); heading.current?.focus(); }}>Clear all items</button></div> : <button type="button" className="plain-button clear-cart" onClick={() => setConfirmClear(true)}>Clear cart</button>}
-    </div><aside className="cart-summary" aria-labelledby="summary-title"><h2 id="summary-title">Order summary <span className="item-badge">{items.length} {items.length === 1 ? "item" : "items"}</span></h2><p>{items.length} {items.length === 1 ? "item" : "items"} <span aria-hidden="true">&middot;</span> {formatWeight(items.reduce((sum, item) => sum + (item.rawWeightGrams??0), 0))} before cleaning</p><div className="subtotal"><span>Subtotal</span><strong aria-live="polite" data-subtotal>{formatMoney(cartSubtotalPaise(items))}</strong></div><p className="summary-note">Each item uses its displayed raw-weight, NET-weight or unit price. Delivery charges are shown at checkout after choosing delivery or pickup.</p><Link href="/checkout" className="button primary cart-checkout">Proceed to Checkout</Link><p className="checkout-note">Final prices and delivery eligibility are checked at checkout.</p></aside></div>}
+    </div><aside className="cart-summary" aria-labelledby="summary-title"><h2 id="summary-title">Order summary <span className="item-badge">{items.length} {items.length === 1 ? "item" : "items"}</span></h2><p>{items.length} {items.length === 1 ? "item" : "items"} <span aria-hidden="true">&middot;</span> {formatWeight(items.reduce((sum, item) => sum + (item.rawWeightGrams??0), 0))} before cleaning</p><dl className="cart-totals"><div><dt>Subtotal</dt><dd data-subtotal>{formatMoney(cartSubtotalPaise(items))}</dd></div>{deliveryFeePaise !== null && <div><dt>Delivery</dt><dd data-delivery-fee>{feeVaries ? "from " : ""}{formatMoney(deliveryFeePaise)}</dd></div>}<div className="cart-total"><dt>Total{deliveryFeePaise !== null ? " with delivery" : ""}</dt><dd aria-live="polite" data-cart-total>{formatMoney(cartSubtotalPaise(items) + (deliveryFeePaise ?? 0))}</dd></div></dl><p className="summary-note">{deliveryFeePaise !== null ? "Free for store pickup. " : ""}Offers and the final delivery charge for your pincode are applied at checkout.</p><Link href="/checkout" className="button primary cart-checkout">Proceed to Checkout</Link><p className="checkout-note">Final prices and delivery eligibility are checked at checkout.</p></aside></div>}
     {editing && editingProduct && <ProductSelection key={editing.id} product={editingProduct} item={editing} onClose={() => setEditingId(null)} onSaved={() => { setError(""); setMessage(editing.productName + " selection updated."); }} />}
   </div>;
 }

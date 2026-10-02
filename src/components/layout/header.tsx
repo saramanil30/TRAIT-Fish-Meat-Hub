@@ -7,13 +7,14 @@ import { CategoryNavigation } from "./category-navigation";
 import type { NavCategory } from "./site-frame";
 
 export function Header({ categories }: { categories: NavCategory[] }) {
-  return <header className="site-header">
+  // Desktop: the whole block sticks. Mobile: the wrapper drops out of layout, so only the <header> row sticks.
+  return <div className="site-top">
     <div className="utility-bar"><div className="container utility-content"><span><Icon name="truck" width={16} height={16} /> Home delivery & store pickup</span><Link href="/delivery-areas">View delivery information <Icon name="arrow" width={15} height={15} /></Link></div></div>
-    <div className="container header-main">
+    <header className="site-header"><div className="container header-main">
       <Link href="/" className="brand" aria-label="TRAIT Fish and Meat Hub home"><Image className="brand-logo" src="/trait-logo.jpeg" alt="TRAIT Fish & Meat Hub official logo" width={1254} height={1254} unoptimized preload /><span className="brand-copy"><strong>TRAIT HUB</strong><small>FISH & MEAT</small></span></Link>
       <div className="header-search"><SearchForm id="header-search" /></div>
       <nav aria-label="Customer navigation" className="header-actions"><Link href="/track-order" className="track-link" aria-label="Track Order"><Icon name="orders" /><span>Track Order</span></Link><CartLink /></nav>
-    </div>
-    <CategoryNavigation categories={categories} />
-  </header>;
+    </div></header>
+    <div className="category-bar"><CategoryNavigation categories={categories} /></div>
+  </div>;
 }

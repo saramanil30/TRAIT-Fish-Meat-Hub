@@ -883,3 +883,34 @@ h3 { letter-spacing:.01em; }
 .product-grid { align-items:start; }
 .product-grid .product-card { height:auto; }
 .product-bottom { margin-top:0; }
+
+/* Sticky header. Desktop: the whole block (strip, logo/search/cart, categories). Mobile: only the logo/search/cart row. */
+.site-top { position:sticky; top:0; z-index:40; background:white; box-shadow:var(--shadow-soft); }
+.site-top .site-header { box-shadow:none; border-bottom:0; }
+.category-bar { background:white; border-top:1px solid var(--border); }
+html { scroll-padding-top:190px; }
+@media(min-width:1200px) { .cart-summary,.checkout-form+.order-summary { top:196px; } }
+@media(max-width:767px) {
+  .site-top { display:contents; }
+  .site-top .site-header { position:sticky; top:0; z-index:40; background:white; box-shadow:0 2px 10px rgb(18 20 23 / 8%); }
+  html { scroll-padding-top:150px; }
+}
+
+/* Cart: compact light table header; per-row labels only where there is no header (mobile). */
+.cart-table-heading { background:#f2f3f5; color:#111; padding:3px 20px; font-size:11px; line-height:1.6; border-bottom:1px solid #e4e8f2; }
+.cart-item { padding:12px 20px; }
+.cart-item:nth-of-type(even) { background:white; }
+@media(min-width:768px) {
+  .cart-item .cart-column-label { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+  .cart-cleaned-column .cart-column-label { position:static; width:auto; height:auto; clip:auto; overflow:visible; }
+}
+@media(max-width:767px) {
+  .cart-item { margin-bottom:0; border-radius:0; border-width:0 0 1px; padding:12px 4px; background:transparent; }
+  .cart-item:first-of-type { border-top:1px solid #e4e8f2; }
+}
+.cart-totals { margin:0 0 12px; display:grid; gap:8px; }
+.cart-totals > div { display:flex; justify-content:space-between; gap:12px; font-size:14px; }
+.cart-totals dd { margin:0; font-weight:600; }
+.cart-totals .cart-total { background:var(--surface); border-radius:10px; padding:14px; margin-top:4px; align-items:center; }
+.cart-totals .cart-total dt { font-weight:700; }
+.cart-totals .cart-total dd { font-size:26px; font-weight:700; }
