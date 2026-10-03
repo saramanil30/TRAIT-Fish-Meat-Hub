@@ -1247,3 +1247,8 @@ main.storefront .order-preview-note { margin:12px 0 16px; padding:4px 0 4px 12px
   .skeleton-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
   .skeleton-card .skeleton-image { height:120px; }
 }
+
+/* Keyboard focus that shows on the dark page and inside white cards; 44px search field. */
+main.storefront :focus-visible { outline-color:#ffb4ab; }
+main.storefront :is(.product-card, .order-panel, .cart-items, .cart-summary, .empty-results, .clear-confirm, .trust-item, .coupon-box) :focus-visible { outline-color:var(--brand-red-dark); }
+.search-form input { min-height:44px; }
