@@ -10,3 +10,7 @@ export function formatDateTimeIST(iso: string): string {
   const parts = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Kolkata", day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: true }).formatToParts(new Date(iso)).map(part => [part.type, part.value]));
   return `${parts.day} ${parts.month} ${parts.year}, ${parts.hour}:${parts.minute} ${parts.dayPeriod.toUpperCase()}`;
 }
+/** "918686146562" → "+91 86861 46562" (Indian mobile); other numbers get a leading "+". */
+export function formatPhone(digits: string): string {
+  return /^91[6-9]\d{9}$/.test(digits) ? "+91 " + digits.slice(2, 7) + " " + digits.slice(7) : "+" + digits;
+}

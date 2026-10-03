@@ -30,8 +30,11 @@ const headingFont = localFont({
 });
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
+  // Absolute URLs for shared links (Open Graph image); set NEXT_PUBLIC_SITE_URL to the live site address.
+  metadataBase: process.env.NEXT_PUBLIC_SITE_URL ? new URL(process.env.NEXT_PUBLIC_SITE_URL) : undefined,
   title: { default: "TRAIT Fish & Meat Hub | Fresh, Your Way", template: "%s | TRAIT Fish & Meat Hub" },
-  description: "Explore fish, seafood, chicken and mutton. Choose your raw weight and preparation at TRAIT.",
+  description: "Fresh fish, seafood, chicken, mutton and eggs from TRAIT Fish & Meat Hub, Kokapet, Hyderabad. Choose your weight and cut; home delivery or store pickup.",
+  openGraph: { type: "website", siteName: "TRAIT Fish & Meat Hub", locale: "en_IN", title: "TRAIT Fish & Meat Hub | Fresh, Your Way", description: "Fresh fish, seafood, chicken, mutton and eggs, cleaned and cut your way. Home delivery or store pickup in Hyderabad." },
 };
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   let categories: ShopCategory[] = [];
