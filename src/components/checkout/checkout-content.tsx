@@ -7,6 +7,7 @@ import { useRef, useState, type FormEvent } from "react";
 import { useCart, clearCart, useBuyNow, clearBuyNow } from "@/lib/cart-store";
 import { serializeCart } from "@/lib/cart";
 import { orderTotals, validateCheckout, SERVICE_CITY, SERVICE_STATE } from "@/lib/order";
+import { formatMoney } from "@/lib/format";
 import { saveCheckoutDraft, savePendingCheckout, useOrderState } from "@/lib/order-store";
 import type { CheckoutDetails, CheckoutErrors, OrderTotals } from "@/types/order";
 import { CustomerDetails, OrderSummary } from "./order-summary";
@@ -40,6 +41,7 @@ export function CheckoutContent({ buyNow = false, deliveryFeePaise = null, feeVa
   const [errors, setErrors] = useState<CheckoutErrors>({});
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [summaryOpen, setSummaryOpen] = useState(false);
   const submitting = useRef(false);
   const title = useRef<HTMLHeadingElement>(null);
   // Before review, the applied coupon is estimated in the browser; the review step shows the server's recalculated quote.
@@ -93,17 +95,20 @@ export function CheckoutContent({ buyNow = false, deliveryFeePaise = null, feeVa
   if (ready && pending) return <div className="container page-section"><h1>Confirm your pending order</h1><p>A previous submission needs confirmation. Retry the same order to avoid placing it twice.</p>{error&&<p role="alert">{error}</p>}<button className="button primary" disabled={saving} onClick={retryPending}>{saving?"Checking…":"Check order confirmation"}</button></div>;
   if (!ready) return <div className="container page-section"><p role="status">Loading your checkout...</p></div>;
   if (!items.length && !saving) return <div className="container page-section"><p className="eyebrow">Checkout</p><h1>{buyNow ? "Nothing to buy yet" : "Your cart is empty"}</h1><p>{buyNow ? "Choose a product and press Buy now to check it out on its own." : "Add a selection before starting checkout."}</p><Link className="button secondary" href="/search">Continue shopping</Link></div>;
+  const totals = quote && review ? quote : withCoupon(orderTotals(items, draft.deliveryMethod, deliveryFeePaise ?? 0));
+  const actionLabel = saving ? "Please wait..." : review ? "Place order" : "Continue";
   return <div className="container page-section checkout-page">
-    {buyNow ? <Link className="back-link" href="/search">&larr; Continue shopping</Link> : <Link className="back-link" href="/cart">&larr; Back to cart</Link>}<p className="eyebrow">Prepared your way</p>
-    <div className="checkout-title"><h1 ref={title} tabIndex={-1}>{review ? "Review your order" : "Checkout"}</h1><span className="checkout-title-note">Your selection. Every detail considered.</span></div>
+    {buyNow ? <Link className="back-link" href="/search">&larr; Continue shopping</Link> : <Link className="back-link" href="/cart">&larr; Back to cart</Link>}
+    <div className="checkout-top"><div className="checkout-title"><h1 ref={title} tabIndex={-1}>{review ? "Review your order" : "Checkout"}</h1><p className="checkout-title-note">Your selection. Every detail considered.</p></div>
+    <ol className="checkout-steps" aria-label="Checkout progress"><li aria-current={!review ? "step" : undefined}>1. Your details</li><li aria-current={review ? "step" : undefined}>2. Review & place</li></ol></div>
     <p className="order-preview-note">Final prices, delivery eligibility and charges are checked before you place your order.</p>
-    <ol className="checkout-steps" aria-label="Checkout progress"><li aria-current={!review ? "step" : undefined}>1. Your details</li><li aria-current={review ? "step" : undefined}>2. Review & place</li></ol>
-    <div className={review ? "checkout-layout checkout-review" : "checkout-layout"}><form noValidate onSubmit={submit} className="checkout-form"><fieldset disabled={saving} style={{border:0,padding:0,minWidth:0}}>
+    <button type="button" className="checkout-summary-toggle" aria-expanded={summaryOpen} aria-controls="checkout-summary" onClick={() => setSummaryOpen(!summaryOpen)}><span>{summaryOpen ? "Hide" : "Show"} order summary <span aria-hidden="true">{summaryOpen ? "▴" : "▾"}</span></span><strong>{formatMoney(totals.grandTotalPaise)}</strong></button>
+    <div className={(review ? "checkout-layout checkout-review" : "checkout-layout") + (summaryOpen ? " summary-open" : "")}><form id="checkout-form" noValidate onSubmit={submit} className="checkout-form"><fieldset disabled={saving} style={{border:0,padding:0,minWidth:0}}>
       {error && <p role="alert" className="cart-error">{error}</p>}
       {Object.keys(errors).length > 0 && <p role="alert" className="cart-error">Please correct the highlighted fields.</p>}
       {review ? <section className="order-panel"><h2>Ready for a final look?</h2><CustomerDetails customer={draft} /><p className="field-help">Please review the current prices and delivery charge.</p><button className="plain-button" type="button" onClick={() => { setReview(false); focusTitle(); }}>Edit details</button></section> : <><section className="order-panel checkout-details-panel">
         <fieldset><legend><span className="section-number">1</span> Delivery method</legend><div className="checkout-options">{([ ["delivery", "Home Delivery"], ["pickup", "Store Pickup"] ] as const).map(([value, label]) => <label className="choice" key={value}><input type="radio" name="deliveryMethod" value={value} checked={draft.deliveryMethod === value} onChange={() => change("deliveryMethod", value)} />{label}</label>)}</div></fieldset>
-        <h2>Your details</h2><p className="field-help">Fields marked * are required.</p>
+        <h2><span className="section-number">2</span> Your details</h2><p className="field-help">Fields marked * are required.</p>
         <div className="checkout-fields">{fields.filter(field => draft.deliveryMethod === "delivery" || ["name", "mobile"].includes(field.key)).map(field => field.key === "city" || field.key === "state" ? <div key={field.key}>
           <label htmlFor={"checkout-" + field.key}>{field.label}</label>
           <input id={"checkout-" + field.key} name={field.key} type="text" value={field.key === "city" ? SERVICE_CITY : SERVICE_STATE} readOnly aria-readonly="true" className="checkout-fixed" />
@@ -113,9 +118,10 @@ export function CheckoutContent({ buyNow = false, deliveryFeePaise = null, feeVa
           {errors[field.key] && <p className="cart-error" id={"error-" + field.key}>{errors[field.key]}</p>}
         </div>)}</div>
         {draft.deliveryMethod === "pickup" && <p className="field-help">No delivery address is needed. See our delivery and pickup page for the store location and opening hours.</p>}
-        </section><fieldset className="order-panel payment-panel"><legend><span className="section-number">2</span> Payment method</legend><div className="checkout-options">{([ ["cash", draft.deliveryMethod === "pickup" ? "Cash at pickup" : "Cash on Delivery"], ["upi", "UPI at delivery / pickup"] ] as const).map(([value, label]) => <label className="choice" key={value}><input type="radio" name="paymentMethod" value={value} checked={draft.paymentMethod === value} onChange={() => change("paymentMethod", value)} />{label}</label>)}</div><p className="field-help">Pay by cash or UPI when you receive your order at delivery or pickup.</p></fieldset>
+        </section><fieldset className="order-panel payment-panel"><legend><span className="section-number">3</span> Payment method</legend><div className="checkout-options">{([ ["cash", draft.deliveryMethod === "pickup" ? "Cash at pickup" : "Cash on Delivery"], ["upi", "UPI at delivery / pickup"] ] as const).map(([value, label]) => <label className="choice" key={value}><input type="radio" name="paymentMethod" value={value} checked={draft.paymentMethod === value} onChange={() => change("paymentMethod", value)} />{label}</label>)}</div><p className="field-help">Pay by cash or UPI when you receive your order at delivery or pickup.</p></fieldset>
       </>}
-      <button type="submit" className="button primary checkout-submit" disabled={saving || !items.length}>{saving ? "Please wait..." : review ? "Place order" : "Review order"}</button>
-    </fieldset></form><OrderSummary deliveryConfirmed={!!quote && review} pickup={draft.deliveryMethod === "pickup"} feeVaries={feeVaries} editable={!buyNow} items={quote && review ? items.map((item,i)=>({...item,...quote.lines[i]})) : items} totals={quote && review ? quote : withCoupon(orderTotals(items, draft.deliveryMethod, deliveryFeePaise ?? 0))} coupon={<CouponPicker offers={offers} items={items} applied={applied} onChange={() => { setError(""); setQuote(undefined); setReview(false); }} />} /></div>
+    </fieldset></form><OrderSummary id="checkout-summary" deliveryConfirmed={!!quote && review} pickup={draft.deliveryMethod === "pickup"} feeVaries={feeVaries} editable={!buyNow} items={quote && review ? items.map((item,i)=>({...item,...quote.lines[i]})) : items} totals={totals} coupon={<CouponPicker offers={offers} items={items} applied={applied} onChange={() => { setError(""); setQuote(undefined); setReview(false); }} />}
+      action={<><button type="submit" form="checkout-form" className="button primary checkout-submit" disabled={saving || !items.length}>{actionLabel}</button>{error && <p className="cart-error checkout-action-error">{error}</p>}</>} /></div>
+    <div className="checkout-bottom-bar"><div><small>Total</small><strong>{formatMoney(totals.grandTotalPaise)}</strong></div><button type="submit" form="checkout-form" className="button primary" disabled={saving || !items.length}>{actionLabel}</button></div>
   </div>;
 }
