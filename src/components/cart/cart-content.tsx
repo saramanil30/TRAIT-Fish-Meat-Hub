@@ -24,10 +24,7 @@ export function CartContent({ deliveryFeePaise, feeVaries = false }: { deliveryF
   const editingProduct = products.find(product => product.id === editing?.productId);
 
   return <div className="container page-section cart-page">
-          <Link href="/search" className="back-link">Home / Shop / Your cart</Link><p className="eyebrow">Your choices, your way</p>
-          <div className="cart-title"><h1 ref={heading} tabIndex={-1}>Your cart <span>({items.length})</span></h1><Link href="/search" className="button secondary">Continue shopping</Link></div>
-          <p className="page-intro">Review your selection before checkout.</p>
-          <p className="cart-notice">Prices are based on quantity before cleaning. Cleaning estimates are approximate, not guaranteed delivered weights. Cart choices are kept in this browser tab when storage is available.</p>
+          <div className="cart-title"><h1 ref={heading} tabIndex={-1}>Your Cart <span>({items.length})</span></h1><p className="page-intro">Review your selection before checkout</p><Link href="/search" className="button secondary">Continue shopping</Link></div>
           <p role="status" className="cart-status">{message}</p>
           {error && <p role="alert" className="cart-error">{error}</p>}
           {items.length === 0 ? <div className="empty-results"><h2>Your cart is empty</h2><p>Find your favourite fish or meat, then choose your quantity and preparation.</p><Link href="/search" className="button primary">Explore the collection</Link></div> : <div className="cart-layout"><div className="cart-items"><div className="cart-table-heading" aria-hidden="true"><span>Product</span><span>Preparation</span><span>Quantity</span><span>Total</span></div>
@@ -116,7 +113,6 @@ export function CartContent({ deliveryFeePaise, feeVaries = false }: { deliveryF
       <strong className="cart-line-total">
         {formatMoney(item.lineTotalPaise)}
       </strong>
-    </div>
 
     <div className="cart-row-actions">
       <button
@@ -140,6 +136,7 @@ export function CartContent({ deliveryFeePaise, feeVaries = false }: { deliveryF
       >
         Remove
       </button>
+    </div>
     </div>
 
     {item.specialInstructions && (
