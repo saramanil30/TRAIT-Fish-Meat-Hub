@@ -92,7 +92,6 @@ export function CartContent({ deliveryFeePaise, feeVaries = false, offers = [] }
               });
 
               setError("");
-              setMessage(item.productName + " quantity updated.");
             } catch (cause) {
               setError(
                 cause instanceof Error
