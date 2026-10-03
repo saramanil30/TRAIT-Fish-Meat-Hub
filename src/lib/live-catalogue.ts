@@ -19,3 +19,14 @@ export async function liveCatalogue(): Promise<Product[]> {
   return {pricingBasis:p.pricingBasis,pricePaise:Number(p.pricePaise??p.pricePerKgPaise),priceUnitGrams:p.priceUnitGrams,unitsPerPack:p.unitsPerPack,saleQuantities:p.saleQuantities,orderable:p.orderable,id:p.id,name:p.name,localName:p.localName,category:categoryName,pricePerKg:Number(p.pricePerKgPaise)/100,available:p.available,image:imageUrl,imageAlt:image?(image.alt||p.name):"Photo coming soon: "+p.name,cut:p.description??"",selectableWeightsGrams:p.weightsGrams??[],preparationOptions:p.preparations.map(x=>({id:x.id,label:x.name,removesCleaningWaste:x.cleaningLossPercent!==null,cleaningLossPercent:x.cleaningLossPercent===null?undefined:Number(x.cleaningLossPercent)}))};
  });
 }
+/** Each product's category and its ancestors, as checkout's offer rule walks them. */
+export async function productCategoryChains(): Promise<Record<string,string[]>> {
+ const store=process.env.TRAIT_STORE_ID;
+ if (!store) return {};
+ const data=await publicRpc<{categories:Category[];products:Row[]}>("catalogue",{target_store:store});
+ return Object.fromEntries((data?.products??[]).map(p=>{
+  const chain:string[]=[]; let id:string|null=p.categoryId;
+  while(id&&!chain.includes(id)){chain.push(id);id=data.categories.find(c=>c.id===id)?.parentId??null;}
+  return [p.id,chain];
+ }));
+}

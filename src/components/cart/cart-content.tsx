@@ -9,10 +9,11 @@ import { useCart, removeCartItem, clearCart, updateCartItem } from "@/lib/cart-s
 import { cartSubtotalPaise } from "@/lib/cart";
 import { formatMoney, formatWeight } from "@/lib/format";
 import { ProductSelection } from "@/components/product/product-selection";
+import { bestCartOffer, offerTag, type CartOffer } from "@/lib/cart-offer";
 
 
 /** deliveryFeePaise comes from the store's delivery areas (lowest fee when they differ); null when delivery is off. */
-export function CartContent({ deliveryFeePaise, feeVaries = false }: { deliveryFeePaise: number | null; feeVaries?: boolean }) {
+export function CartContent({ deliveryFeePaise, feeVaries = false, offers = [] }: { deliveryFeePaise: number | null; feeVaries?: boolean; offers?: readonly CartOffer[] }) {
   const items = useCart();
   const products = useCatalogue();
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -22,6 +23,8 @@ export function CartContent({ deliveryFeePaise, feeVaries = false }: { deliveryF
   const heading = useRef<HTMLHeadingElement>(null);
   const editing = items.find(item => item.id === editingId);
   const editingProduct = products.find(product => product.id === editing?.productId);
+  const applied = bestCartOffer(offers, items);
+  const discountPaise = applied?.discountPaise ?? 0;
 
   return <div className="container page-section cart-page">
           <div className="cart-title"><h1 ref={heading} tabIndex={-1}>Your Cart <span>({items.length})</span></h1><p className="page-intro">Review your selection before checkout</p><Link href="/search" className="button secondary">Continue shopping</Link></div>
@@ -54,6 +57,10 @@ export function CartContent({ deliveryFeePaise, feeVaries = false }: { deliveryF
                   <p className="cart-unit-price">
                     {priceLabel(item)}
                   </p>
+
+                  {applied?.itemIds.includes(item.id) && (
+                    <span className="cart-offer-tag">{offerTag(applied.offer)}</span>
+                  )}
                 </div>
               </div>
 
@@ -149,7 +156,7 @@ export function CartContent({ deliveryFeePaise, feeVaries = false }: { deliveryF
 );
       })}
       {confirmClear ? <div className="clear-confirm" role="group" aria-label="Confirm clearing cart"><p>Remove all items from your cart?</p><button type="button" className="button secondary" onClick={() => setConfirmClear(false)}>Keep items</button><button type="button" className="button primary" onClick={() => { clearCart(); setConfirmClear(false); setMessage("Cart cleared."); heading.current?.focus(); }}>Clear all items</button></div> : <button type="button" className="plain-button clear-cart" onClick={() => setConfirmClear(true)}>Clear cart</button>}
-    </div><aside className="cart-summary" aria-labelledby="summary-title"><h2 id="summary-title">Order summary <span className="item-badge">{items.length} {items.length === 1 ? "item" : "items"}</span></h2><p>{items.length} {items.length === 1 ? "item" : "items"} <span aria-hidden="true">&middot;</span> {formatWeight(items.reduce((sum, item) => sum + (item.rawWeightGrams??0), 0))} before cleaning</p><dl className="cart-totals"><div><dt>Subtotal</dt><dd data-subtotal>{formatMoney(cartSubtotalPaise(items))}</dd></div>{deliveryFeePaise !== null && <div><dt>Delivery</dt><dd data-delivery-fee>{feeVaries ? "from " : ""}{formatMoney(deliveryFeePaise)}</dd></div>}<div className="cart-total"><dt>Total{deliveryFeePaise !== null ? " with delivery" : ""}</dt><dd aria-live="polite" data-cart-total>{formatMoney(cartSubtotalPaise(items) + (deliveryFeePaise ?? 0))}</dd></div></dl><p className="summary-note">{deliveryFeePaise !== null ? "Free for store pickup. " : ""}Offers and the final delivery charge for your pincode are applied at checkout.</p><Link href="/checkout" className="button primary cart-checkout">Proceed to Checkout</Link><p className="checkout-note">Final prices and delivery eligibility are checked at checkout.</p></aside></div>}
+    </div><aside className="cart-summary" aria-labelledby="summary-title"><h2 id="summary-title">Order summary <span className="item-badge">{items.length} {items.length === 1 ? "item" : "items"}</span></h2><p>{items.length} {items.length === 1 ? "item" : "items"} <span aria-hidden="true">&middot;</span> {formatWeight(items.reduce((sum, item) => sum + (item.rawWeightGrams??0), 0))} before cleaning</p><dl className="cart-totals"><div><dt>Subtotal</dt><dd data-subtotal>{formatMoney(cartSubtotalPaise(items))}</dd></div>{applied && <div className="cart-discount"><dt>Offer discount — {applied.offer.title}</dt><dd data-discount>−{formatMoney(discountPaise)}</dd></div>}{deliveryFeePaise !== null && <div><dt>Delivery</dt><dd data-delivery-fee>{feeVaries ? "from " : ""}{formatMoney(deliveryFeePaise)}</dd></div>}<div className="cart-total"><dt>Total{deliveryFeePaise !== null ? " with delivery" : ""}</dt><dd aria-live="polite" data-cart-total>{formatMoney(cartSubtotalPaise(items) - discountPaise + (deliveryFeePaise ?? 0))}</dd></div></dl><p className="summary-note">{deliveryFeePaise !== null ? "Free for store pickup. " : ""}{applied ? "Offer and the final delivery charge for your pincode are confirmed at checkout." : "Offers and the final delivery charge for your pincode are applied at checkout."}</p><Link href="/checkout" className="button primary cart-checkout">Proceed to Checkout</Link><p className="checkout-note">Final prices and delivery eligibility are checked at checkout.</p></aside></div>}
     {editing && editingProduct && <ProductSelection key={editing.id} product={editingProduct} item={editing} onClose={() => setEditingId(null)} onSaved={() => { setError(""); setMessage(editing.productName + " selection updated."); }} />}
   </div>;
 }

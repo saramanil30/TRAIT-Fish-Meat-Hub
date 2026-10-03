@@ -588,6 +588,8 @@ h3 { letter-spacing:.01em; }
 .cart-product img { width:70px; height:74px; object-fit:cover; }
 .cart-product-info h2 { text-transform:none; font-family:var(--font-body); font-size:13px; line-height:1.5; letter-spacing:0; }
 .cart-local-name,.cart-unit-price { font-size:11px; }
+.cart-offer-tag { display:inline-block; margin-top:4px; padding:2px 7px; border-radius:999px; background:var(--brand-red-dark); color:white; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.02em; }
+.cart-totals .cart-discount dd { color:var(--brand-red-dark); white-space:nowrap; }
 .cart-item>.cart-column:not(.cart-weight-column):not(.cart-cleaned-column) { grid-column:2; grid-row:1; }
 .cart-weight-column { grid-column:3; grid-row:1; }
 .cart-item .cart-column-label { font-size:10px; }
