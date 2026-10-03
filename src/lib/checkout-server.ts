@@ -49,7 +49,7 @@ export async function rateLimit(scope:string, limit:number, subject?:string) {
  const result=await response.json();
  if(!Number.isInteger(result.result)||result.result>limit) throw new Error("Too many requests. Please wait a minute.");
 }
-export type Quote={discountPaise?:number;offer?:{title:string}|null;quoteDigest:string;subtotalPaise:number;deliveryFeePaise:number;totalPaise:number;items:{lineTotalPaise:number;pricePerKgPaise:number|null;pricePaise?:number}[]};
+export type Quote={discountPaise?:number;offer?:{title:string;code?:string}|null;quoteDigest:string;subtotalPaise:number;deliveryFeePaise:number;totalPaise:number;items:{lineTotalPaise:number;pricePerKgPaise:number|null;pricePaise?:number}[]};
 export type Envelope={store:string;requestId:string;payload:Record<string,unknown>;digest:string;token:string;trackingExpires:string;reviewExpires:number};
 export async function quoteOrder(payload:Record<string,unknown>) {
  const store=process.env.TRAIT_STORE_ID;

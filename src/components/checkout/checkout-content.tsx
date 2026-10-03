@@ -8,8 +8,11 @@ import { useCart, clearCart, useBuyNow, clearBuyNow } from "@/lib/cart-store";
 import { serializeCart } from "@/lib/cart";
 import { orderTotals, validateCheckout, SERVICE_CITY, SERVICE_STATE } from "@/lib/order";
 import { saveCheckoutDraft, savePendingCheckout, useOrderState } from "@/lib/order-store";
-import type { CheckoutDetails, CheckoutErrors } from "@/types/order";
+import type { CheckoutDetails, CheckoutErrors, OrderTotals } from "@/types/order";
 import { CustomerDetails, OrderSummary } from "./order-summary";
+import { CouponPicker } from "@/components/cart/coupon-picker";
+import { appliedCoupon, type CartOffer } from "@/lib/cart-offer";
+import { useCoupon } from "@/lib/coupon-store";
 
 const fields = [
   { key: "name", label: "Customer Name", autoComplete: "name", max: 80 },
@@ -21,12 +24,14 @@ const fields = [
   { key: "state", label: "State", autoComplete: "address-level1", max: 120 },
   { key: "pincode", label: "Pincode", autoComplete: "postal-code", max: 6 },
 ] as const;
-export function CheckoutContent({ buyNow = false, deliveryFeePaise = null, feeVaries = false }: { buyNow?: boolean; deliveryFeePaise?: number | null; feeVaries?: boolean }) {
+export function CheckoutContent({ buyNow = false, deliveryFeePaise = null, feeVaries = false, offers = [] }: { buyNow?: boolean; deliveryFeePaise?: number | null; feeVaries?: boolean; offers?: readonly CartOffer[] }) {
   const cart = useCart();
   const buyNowItems = useBuyNow();
   // Buy now checks out only its own item; the cart is left as it was.
   const items = buyNow ? buyNowItems : cart;
   const clearItems = buyNow ? clearBuyNow : clearCart;
+  const coupon = useCoupon();
+  const applied = appliedCoupon(offers, coupon, items);
   const { ready, draft, pending } = useOrderState();
   const router = useRouter();
   const [quote, setQuote] = useState<Awaited<ReturnType<typeof reviewCheckout>>["quote"]>();
@@ -37,6 +42,10 @@ export function CheckoutContent({ buyNow = false, deliveryFeePaise = null, feeVa
   const [saving, setSaving] = useState(false);
   const submitting = useRef(false);
   const title = useRef<HTMLHeadingElement>(null);
+  // Before review, the applied coupon is estimated in the browser; the review step shows the server's recalculated quote.
+  function withCoupon(totals: OrderTotals): OrderTotals {
+    return applied ? { ...totals, discountPaise: applied.discountPaise, offer: { title: applied.offer.title, code: applied.offer.code }, grandTotalPaise: totals.grandTotalPaise - applied.discountPaise } : totals;
+  }
   function focusTitle() { requestAnimationFrame(() => title.current?.focus()); }
   function change(key: keyof CheckoutDetails, value: string) {
     saveCheckoutDraft({ ...draft, [key]: value });
@@ -54,7 +63,7 @@ export function CheckoutContent({ buyNow = false, deliveryFeePaise = null, feeVa
     }
     if (!review) {
       submitting.current=true; setSaving(true);
-      try {const result=await reviewCheckout(items,draft);if(!result.quote){setError(result.error??"Quote unavailable.");return;}setQuote(result.quote);setReviewedCart(serializeCart(items));setReview(true);focusTitle();}
+      try {const result=await reviewCheckout(items,draft,applied?applied.offer.code:null);if(!result.quote){setError(result.error??"Quote unavailable.");return;}setQuote(result.quote);setReviewedCart(serializeCart(items));setReview(true);focusTitle();}
       catch {setError("Connection interrupted. Please try reviewing your order again.");}
       finally {submitting.current=false;setSaving(false);}
       return;
@@ -107,6 +116,6 @@ export function CheckoutContent({ buyNow = false, deliveryFeePaise = null, feeVa
         </section><fieldset className="order-panel payment-panel"><legend><span className="section-number">2</span> Payment method</legend><div className="checkout-options">{([ ["cash", draft.deliveryMethod === "pickup" ? "Cash at pickup" : "Cash on Delivery"], ["upi", "UPI at delivery / pickup"] ] as const).map(([value, label]) => <label className="choice" key={value}><input type="radio" name="paymentMethod" value={value} checked={draft.paymentMethod === value} onChange={() => change("paymentMethod", value)} />{label}</label>)}</div><p className="field-help">Pay by cash or UPI when you receive your order at delivery or pickup.</p></fieldset>
       </>}
       <button type="submit" className="button primary checkout-submit" disabled={saving || !items.length}>{saving ? "Please wait..." : review ? "Place order" : "Review order"}</button>
-    </fieldset></form><OrderSummary deliveryConfirmed={!!quote && review} pickup={draft.deliveryMethod === "pickup"} feeVaries={feeVaries} editable={!buyNow} items={quote && review ? items.map((item,i)=>({...item,...quote.lines[i]})) : items} totals={quote && review ? quote : orderTotals(items, draft.deliveryMethod, deliveryFeePaise ?? 0)} /></div>
+    </fieldset></form><OrderSummary deliveryConfirmed={!!quote && review} pickup={draft.deliveryMethod === "pickup"} feeVaries={feeVaries} editable={!buyNow} items={quote && review ? items.map((item,i)=>({...item,...quote.lines[i]})) : items} totals={quote && review ? quote : withCoupon(orderTotals(items, draft.deliveryMethod, deliveryFeePaise ?? 0))} coupon={<CouponPicker offers={offers} items={items} applied={applied} onChange={() => { setError(""); setQuote(undefined); setReview(false); }} />} /></div>
   </div>;
 }

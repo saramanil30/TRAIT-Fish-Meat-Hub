@@ -24,6 +24,7 @@ export async function staffRpc<T>(token: string, name: string, args: Record<stri
   // Server-side only: the database's reason, without tokens, request bodies or row details.
   console.error("[staffRpc]", name, response.status, failure.code ?? "", failure.message ?? "", failure.hint ?? "");
   if (failure.code === "40001") throw new Error("This product changed. Reload the page before saving again.");
+  if (failure.code === "23505" && name === "save_offer") throw new Error("That code is already used by another offer. Choose a different code.");
   throw new Error("Operation unavailable or not permitted.");
  }
  const text = await response.text();
