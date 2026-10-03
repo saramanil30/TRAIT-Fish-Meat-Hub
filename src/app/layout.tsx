@@ -5,6 +5,8 @@ import { liveCatalogue } from "@/lib/live-catalogue";
 import { shopCategories, type ShopCategory } from "@/lib/shop-categories";
 import { currentOffers } from "@/lib/offers";
 import { formatMoney } from "@/lib/format";
+import { storefrontInfo, storeAddress, hoursLines, phoneDigits } from "@/lib/storefront-info";
+import type { FooterStore } from "@/components/layout/footer";
 
 
 import "./globals.css";
@@ -37,5 +39,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // Current offers for the sticky header strip; text is built here so server and browser render the same dates.
   let offers: string[] = [];
   try { offers = (await currentOffers()).map(o => o.title + " · " + (o.code ? "Use code " + o.code : (o.kind === "PERCENT" ? o.value / 100 + "% off" : formatMoney(o.value) + " off")) + " · ends " + new Date(o.endsAt).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short" })); } catch { /* No strip while offers are unavailable. */ }
-  return <html lang="en" className={`${bodyFont.variable} ${headingFont.variable}`}><body><a className="skip-link" href="#main-content">Skip to content</a><SiteFrame categories={categories.map(({ slug, name }) => ({ slug, name }))} offers={offers}>{children}</SiteFrame></body></html>;
+  // Footer contact details; hours are formatted here so server and browser render the same text.
+  let store: FooterStore | null = null;
+  try { const info = await storefrontInfo(); if (info) store = { name: info.name, address: storeAddress(info.address), phone: info.phone ? phoneDigits(info.phone) : null, whatsapp: info.whatsapp ? phoneDigits(info.whatsapp) : info.phone ? phoneDigits(info.phone) : null, hours: hoursLines(info.hours ?? {}), areas: info.delivery ? (info.areas ?? []).map(a => a.name ? a.name + " " + a.pincode : a.pincode) : [] }; } catch { /* Footer shows the brand line only. */ }
+  return <html lang="en" className={`${bodyFont.variable} ${headingFont.variable}`}><body><a className="skip-link" href="#main-content">Skip to content</a><SiteFrame categories={categories.map(({ slug, name }) => ({ slug, name }))} offers={offers} store={store}>{children}</SiteFrame></body></html>;
 }

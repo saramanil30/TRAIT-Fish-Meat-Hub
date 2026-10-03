@@ -759,7 +759,7 @@ h3 { letter-spacing:.01em; }
   .trust-item h3 { font-size:18px; }
   .trust-item p { font-size:11px; }
   .footer-main { grid-template-columns:1fr 1fr; gap:24px 20px; }
-  .footer-main .footer-about,.footer-main .footer-preview { grid-column:1 / -1; }
+  .footer-main .footer-about,.footer-main .footer-hours { grid-column:1 / -1; }
   .footer-main h2 { font-size:20px; }
   .footer-main nav { align-items:stretch; }
   .footer-bottom { align-items:flex-start; }
@@ -1169,3 +1169,24 @@ main.storefront .order-preview-note { margin:12px 0 16px; padding:4px 0 4px 12px
   .checkout-help { font-size:12px; }
   .checkout-top .checkout-steps { width:100%; }
 }
+
+/* Footer store details. */
+.footer-contact { font-style:normal; }
+.footer-contact a, .footer-hours a { display:inline-flex; align-items:center; min-height:44px; color:#ecf1fb; text-decoration:underline; text-underline-offset:3px; }
+.footer-contact p { margin:0; }
+.footer-hours h3 { margin:16px 0 4px; font-family:var(--font-body); font-size:13px; letter-spacing:0; text-transform:none; color:#ecf1fb; }
+.footer-hours p { margin:0; }
+
+/* Floating WhatsApp button (customer pages except checkout); sits above the mobile nav on phones. */
+.whatsapp-float { position:fixed; right:20px; bottom:24px; z-index:34; display:flex; align-items:center; justify-content:center; width:56px; height:56px; border-radius:50%; background:#1f8f4e; color:white; box-shadow:0 6px 18px rgb(0 0 0 / 28%); }
+.whatsapp-float:hover { background:#18763f; }
+.whatsapp-float:focus-visible { outline:3px solid white; outline-offset:3px; }
+@media(max-width:767px) { .whatsapp-float { right:14px; bottom:calc(78px + env(safe-area-inset-bottom)); width:52px; height:52px; } }
+
+/* Offer messages are typed by staff; start them with a capital. */
+.offer-message::first-letter { text-transform:uppercase; }
+.offer-code-line { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:8px; }
+.offer-code { display:inline-block; padding:4px 12px; border:2px dashed currentColor; border-radius:6px; font-family:var(--font-heading); font-size:20px; font-weight:600; letter-spacing:.08em; line-height:1.3; }
+.offer-pane .offer-code { color:white; background:rgb(255 255 255 / 12%); }
+.footer-areas { text-transform:capitalize; }
+@media(min-width:768px) { .footer-bottom { padding-right:72px; } }

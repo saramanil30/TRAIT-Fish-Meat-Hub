@@ -14,3 +14,15 @@ export async function storeDeliveryFee():Promise<{feePaise:number|null;varies:bo
 // The RPC returns a JSON object, whose key order is not the postal order.
 export function storeAddress(a:Record<string,string>){return ["line1","line2","locality","city","state","pincode"].map(k=>a[k]).filter(Boolean).join(", ");}
 export const WEEK_DAYS=["mon","tue","wed","thu","fri","sat","sun"];
+const DAY_NAMES:Record<string,string>={mon:"Mon",tue:"Tue",wed:"Wed",thu:"Thu",fri:"Fri",sat:"Sat",sun:"Sun"};
+/** "07:00" → "7:00 AM". */
+export function clockTime(value:string){const [h,m]=value.split(":").map(Number);if(!Number.isFinite(h)||!Number.isFinite(m))return value;return (h%12||12)+":"+String(m).padStart(2,"0")+" "+(h<12?"AM":"PM");}
+/** Opening hours as short lines: "Open daily, 7:00 AM – 8:30 PM" when every day matches, otherwise one line per day. */
+export function hoursLines(hours:StorefrontInfo["hours"]):string[]{
+ const slot=(d:string)=>(hours[d]??[]).map(s=>clockTime(s.opens)+" – "+clockTime(s.closes)).join(", ")||"Closed";
+ const all=WEEK_DAYS.map(slot);
+ if(all.every(s=>s===all[0]))return [all[0]==="Closed"?"Closed":"Open daily, "+all[0]];
+ return WEEK_DAYS.map((d,i)=>DAY_NAMES[d]+": "+all[i]);
+}
+/** Digits only, with the India country code, for wa.me and tel: links. */
+export function phoneDigits(value:string){const digits=value.replace(/\D/g,"");return digits.length===10?"91"+digits:digits;}

@@ -2,7 +2,7 @@ import { Icon, type IconName } from "@/components/ui/icon";
 const values: { icon: IconName; title: string; description: string }[] = [
   { icon: "fish", title: "Find your favourite", description: "Browse fish, seafood, chicken and mutton in one place." },
   { icon: "cut", title: "Prepared your way", description: "Choose from the preparations available for each product." },
-  { icon: "bag", title: "Clear raw-weight pricing", description: "See what you pay for your selected raw weight, before cleaning." },
+  { icon: "bag", title: "Clear per-kg pricing", description: "See the price for your chosen weight before you add it to your cart." },
   { icon: "truck", title: "Delivery or pickup", description: "Choose an available option at checkout." },
 ];
 export function TrustSection() {

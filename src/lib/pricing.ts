@@ -14,7 +14,7 @@ export function cardPriceLabel(p: SalePricing & {pricePerKg: number}) {
 }
 /** Plain option text: "500 g", "1 kg", "1.5 kg" for raw and net weights; trays and units keep their counts. */
 export function quantityOptionText(p: SalePricing, q: number) { return isRaw(p) || p.pricingBasis === 'NET_WEIGHT' ? formatWeight(q) : quantityText(p, q); }
-export function quantityText(p: SalePricing, q: number) { return isRaw(p) ? formatWeight(q)+' raw' : p.pricingBasis === 'NET_WEIGHT' ? formatWeight(q)+' NET' : q+' '+(p.pricingBasis === 'TRAY' ? (q===1?'tray':'trays')+' ('+q*(p.unitsPerPack??0)+' eggs)' : (q===1?'unit':'units')); }
+export function quantityText(p: SalePricing, q: number) { return isRaw(p) ? formatWeight(q) : p.pricingBasis === 'NET_WEIGHT' ? formatWeight(q)+' NET' : q+' '+(p.pricingBasis === 'TRAY' ? (q===1?'tray':'trays')+' ('+q*(p.unitsPerPack??0)+' eggs)' : (q===1?'unit':'units')); }
 export function saleTotal(p: SalePricing & {pricePerKg:number}, q: number) {
  const price=p.pricePaise ?? Math.round(p.pricePerKg*100);
  if(!Number.isSafeInteger(q)||q<1||!Number.isSafeInteger(price)||price<1)throw new Error('Invalid quantity or price.');
