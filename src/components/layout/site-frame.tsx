@@ -15,5 +15,5 @@ export function SiteFrame({ children, categories, offers, store }: { children: R
   // Checkout: distraction-free, with a minimal header (logo, secure checkout, help) and no mobile nav.
   const cart = pathname === "/cart";
   const checkout = pathname === "/checkout" || pathname.startsWith("/checkout/");
-  return <>{!admin && (checkout ? <CheckoutHeader /> : <Header categories={categories} offers={offers} scrolls={cart} showCategories={!cart} />)}<main id="main-content" tabIndex={-1} className={admin ? undefined : "storefront"}>{children}</main>{!admin && <><Footer categories={categories} store={store} />{!checkout && <><WhatsAppButton number={store?.whatsapp} /><MobileNav /></>}</>}</>;
+  return <>{!admin && (checkout ? <CheckoutHeader /> : <Header categories={categories} offers={offers} scrolls={cart} showCategories={!cart} />)}<main id="main-content" tabIndex={-1} className={admin ? undefined : "storefront"}>{children}</main>{!admin && <><Footer categories={categories} store={store} />{!checkout && <><WhatsAppButton /><MobileNav /></>}</>}</>;
 }

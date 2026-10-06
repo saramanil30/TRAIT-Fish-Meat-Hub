@@ -4,6 +4,7 @@ import { publicRpc } from "@/lib/supabase";
 import { rateLimit } from "@/lib/checkout-server";
 import { storefrontInfo, phoneDigits } from "@/lib/storefront-info";
 import { IN_STORE_PHONE } from "@/lib/shop-categories";
+import { SendOrderWhatsApp } from "./send-order-whatsapp";
 type Tracking={subtotalPaise?:number;discountPaise?:number;deliveryFeePaise?:number;totalPaise?:number;offerTitle?:string;orderNumber:string;status:string;method:string;paymentStatus:string;history:{status:string;at:string}[]};
 const statusText=(status:string)=>status.replaceAll("_"," ").toLowerCase().replace(/^\w/,c=>c.toUpperCase());
 /** Order status for the confirmation page (`confirmation`) and the private tracking link. */
@@ -17,7 +18,7 @@ export async function LiveTracking({token,confirmation=false}:{token:string;conf
  const help=<div className="order-help"><h2>Need help with this order?</h2><div className="order-help-actions"><a className="button secondary" href={"tel:+"+phone}>Call the store</a><a className="button secondary" href={"https://wa.me/"+whatsapp} target="_blank" rel="noopener noreferrer">WhatsApp us</a></div></div>;
  if(!order) return <div className="container page-section order-status-page"><h1>Order unavailable</h1><section className="order-panel"><p>This tracking link is invalid, expired, or temporarily unavailable. You can look up open orders with the mobile number you used.</p><div className="order-help-actions"><Link className="button primary" href="/track-order">Find my order</Link><Link className="button secondary" href="/">Continue shopping</Link></div>{help}</section></div>;
  return <div className="container page-section order-status-page">
-  {confirmation ? <div className="order-confirmed"><span className="order-confirmed-check" aria-hidden="true">✓</span><div><p className="eyebrow">Order placed</p><h1>Thank you! Your order is in.</h1><p>Order number <strong>{order.orderNumber}</strong>{order.totalPaise!==undefined&&<> · Total <strong>{formatMoney(order.totalPaise)}</strong></>}</p></div></div>
+  {confirmation ? <div className="order-confirmed"><span className="order-confirmed-check" aria-hidden="true">✓</span><div><p className="eyebrow">Order placed</p><h1>Thank you! Your order is in.</h1><p>Order number <strong>{order.orderNumber}</strong>{order.totalPaise!==undefined&&<> · Total <strong>{formatMoney(order.totalPaise)}</strong></>}</p><SendOrderWhatsApp token={token} number={order.orderNumber} totalPaise={order.totalPaise} pickup={pickup}/></div></div>
    : <><p className="eyebrow">Track your order</p><h1>{order.orderNumber}</h1></>}
   <div className="order-status-layout">
    <section className="order-panel tracking-panel" aria-labelledby="order-status-title">

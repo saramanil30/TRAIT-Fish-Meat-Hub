@@ -14,6 +14,8 @@ import { CustomerDetails, OrderSummary } from "./order-summary";
 import { CouponPicker } from "@/components/cart/coupon-picker";
 import { appliedCoupon, type CartOffer } from "@/lib/cart-offer";
 import { useCoupon } from "@/lib/coupon-store";
+import { quantityOptionText } from "@/lib/pricing";
+import { shopOrderKey, type ShopOrderDetails } from "@/lib/whatsapp";
 
 const fields = [
   { key: "name", label: "Customer Name", autoComplete: "name", max: 80 },
@@ -48,6 +50,12 @@ export function CheckoutContent({ buyNow = false, deliveryFeePaise = null, feeVa
   function withCoupon(totals: OrderTotals): OrderTotals {
     return applied ? { ...totals, discountPaise: applied.discountPaise, offer: { title: applied.offer.title, code: applied.offer.code }, grandTotalPaise: totals.grandTotalPaise - applied.discountPaise } : totals;
   }
+  // The confirmation page's "Send order to shop on WhatsApp" message lists these; only this browser session has them.
+  function rememberForShop(trackingToken: string) {
+    const details: ShopOrderDetails = { items: items.map(i => i.productName + " · " + i.preparation.label + " · " + quantityOptionText(i, i.rawWeightGrams ?? i.quantity ?? 0) + (i.specialInstructions ? " (Note: " + i.specialInstructions + ")" : "")),
+      address: draft.deliveryMethod === "pickup" ? undefined : [draft.address, draft.locality, draft.landmark && "Landmark: " + draft.landmark, draft.city || SERVICE_CITY, draft.pincode].filter(Boolean).join(", ") };
+    try { sessionStorage.setItem(shopOrderKey(trackingToken), JSON.stringify(details)); } catch { /* The message then has no items or address. */ }
+  }
   function focusTitle() { requestAnimationFrame(() => title.current?.focus()); }
   function change(key: keyof CheckoutDetails, value: string) {
     saveCheckoutDraft({ ...draft, [key]: value });
@@ -78,6 +86,7 @@ export function CheckoutContent({ buyNow = false, deliveryFeePaise = null, feeVa
       const order = await placeCheckout(quote.envelope);
       if ("error" in order) {if(order.reviewRequired){savePendingCheckout(null);setReview(false);}throw new Error(order.error);}
       savePendingCheckout(null);
+      rememberForShop(order.trackingToken);
       clearItems();
       router.replace("/order-confirmation/" + order.trackingToken);
     } catch (cause) {
@@ -88,7 +97,7 @@ export function CheckoutContent({ buyNow = false, deliveryFeePaise = null, feeVa
   async function retryPending() {
     if(!pending||submitting.current)return;
     submitting.current=true;setSaving(true);
-    try {const result=await placeCheckout(pending);if("trackingToken" in result){savePendingCheckout(null);clearItems();router.replace("/order-confirmation/"+result.trackingToken);}else{if(result.reviewRequired){savePendingCheckout(null);setReview(false);}setError(result.error);}}
+    try {const result=await placeCheckout(pending);if("trackingToken" in result){savePendingCheckout(null);rememberForShop(result.trackingToken);clearItems();router.replace("/order-confirmation/"+result.trackingToken);}else{if(result.reviewRequired){savePendingCheckout(null);setReview(false);}setError(result.error);}}
     catch {setError("Connection interrupted. Retry this same pending order to check confirmation.");}
     finally {submitting.current=false;setSaving(false);}
   }

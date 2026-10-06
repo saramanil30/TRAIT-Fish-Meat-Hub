@@ -5,6 +5,8 @@ import { OperationalForm } from "./operational-form";
 import { formatMoney, formatWeight } from "@/lib/format";
 import { ActionDialog } from "./action-dialog";
 import { deliveryAddress } from "@/lib/address";
+import { headers } from "next/headers";
+import { whatsappLink, customerStatusMessage, WHATSAPP_WINDOW } from "@/lib/whatsapp";
 type Order={discount_paise?:number;offer_snapshot?:{title:string};id:string;order_number:string;status:string;fulfillment_method:string;total_paise:number;version:number;created_at:string;fulfillment_snapshot?:{name?:string;mobileE164?:string;address?:Record<string,string>}};
 type Detail={order:Order;items:{id:string;raw_weight_grams:number|null;sale_quantity?:number;pricing_basis?:string;units_per_pack?:number;line_total_paise:number;instructions:string;product_snapshot:{productName:string;preparationName:string}}[];payments:{id:string;method:string;status:string;amountPaise:number;refundedPaise?:number;version:number}[]};
 const PAGE_SIZE=25;
@@ -40,6 +42,9 @@ export async function Operations({token,context,store,orderId,section,before,cur
  const base="/admin/"+context.role.toLowerCase()+"/"+section+"?store="+store;
  // Same page for every role; only the actions a role may take are shown. The database enforces them regardless.
  const manager=context.role!=="EMPLOYEE";
+ // Customer site address for the tracking link in WhatsApp messages; the request's own host when NEXT_PUBLIC_SITE_URL is unset.
+ const host=(await headers()).get("host");
+ const site=process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/,"")||(host?(/^(localhost|127\.)/.test(host)?"http://":"https://")+host:"");
  const last=orders[orders.length-1];
  return <div className="ord-list">
   <p className="ord-intro">{orders.length?"Tap an order to see items, address and actions.":"No orders yet."}</p>
@@ -78,6 +83,7 @@ export async function Operations({token,context,store,orderId,section,before,cur
      {!!order.discount_paise&&<p className="ord-note">Offer {order.offer_snapshot?.title}: −{formatMoney(Number(order.discount_paise))}</p>}
      <div className="ord-customer">
       <p><strong>{customer?.name||"Customer"}</strong>{customer?.mobileE164&&<> · <a href={"tel:"+customer.mobileE164}>{customer.mobileE164}</a></>}</p>
+      {customer?.mobileE164&&<a className="admin-button secondary ord-whatsapp" href={whatsappLink(customer.mobileE164,customerStatusMessage({name:customer.name,number:order.order_number,totalPaise:Number(order.total_paise),status:order.status,pickup,site}))} target={WHATSAPP_WINDOW}>WhatsApp customer</a>}
       {pickup?<p>Store pickup</p>:<><p>{address.line}</p>{address.landmark&&<p className="ord-note">Landmark: {address.landmark}</p>}</>}
       <p className="admin-muted">Placed {new Date(order.created_at).toLocaleString("en-IN",{timeZone:"Asia/Kolkata",dateStyle:"medium",timeStyle:"short"})}</p>
      </div>

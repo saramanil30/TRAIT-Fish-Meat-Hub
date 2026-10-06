@@ -64,3 +64,6 @@
 .ord-body h2{font-size:15px;margin:4px 0}.ord-body h3{font-size:14px;margin:4px 0}.ord-body ul:not(.ord-items){margin:0;padding-left:18px;font-size:13px}
 /* Phone polish: readable minimum text, 44px tap targets, 16px form fields (no iOS zoom). */
 @media(max-width:767px){.admin-sidebar nav a{min-height:44px;font-size:13px;display:flex;align-items:center}.admin-topbar>span:not(.admin-avatar),.admin-preview-banner span,.admin-stat>span,.admin-stat small,.admin-flow>div,.admin-product-body .admin-kicker,.admin-table th{font-size:11px}.admin-table{font-size:13px}.admin-store select{font-size:14px!important;min-height:44px}.trait-admin :is(input,select,textarea){font-size:16px}.trait-admin :is(button,.admin-button){min-height:44px}}
+
+/* WhatsApp customer: a button, not the underlined contact link style; WhatsApp green border so it reads at a glance. */
+.ord-customer a.ord-whatsapp{justify-self:start;width:auto;margin:6px 0 2px;padding:10px 18px;text-decoration:none;color:#0b6b3a!important;border-color:#25d366}
