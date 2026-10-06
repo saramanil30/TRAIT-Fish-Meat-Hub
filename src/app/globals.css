@@ -826,7 +826,7 @@ h3 { letter-spacing:.01em; }
 
 .offer-pane { background:var(--brand-red-light); border-bottom:1px solid var(--border); padding:18px 0; }
 .offer-list { list-style:none; margin:0; padding:0; display:grid; gap:12px; }
-.offer-list li { min-width:0; overflow-wrap:anywhere; }
+.offer-list .offer-item { min-width:0; overflow-wrap:anywhere; }
 .offer-list strong { color:var(--brand-red-dark); }
 .offer-list p { margin:5px 0; font-size:14px; }
 
@@ -1016,7 +1016,7 @@ main.storefront .cart-title h1 span { color:#ffb4ab; }
 .category-nav>span { color:var(--text-secondary); }
 
 /* The TRAIT collection strip: one line, about 40px, pinned under the header on every page (not cart/checkout) and
-   while switching categories. Shows the active offer, otherwise the default line.
+   while switching categories. Shows the active offers (rotating when there are several); hidden when there are none.
    Desktop: the header's rows are reordered so the strip sits below the category row.
    Mobile: only the logo/search row is pinned, and the strip sits right under it. */
 .site-top .collection-strip { background:var(--brand-red-dark); color:white; padding:0; font-size:inherit; }
@@ -1252,3 +1252,35 @@ main.storefront .order-preview-note { margin:12px 0 16px; padding:4px 0 4px 12px
 main.storefront :focus-visible { outline-color:#ffb4ab; }
 main.storefront :is(.product-card, .order-panel, .cart-items, .cart-summary, .empty-results, .clear-confirm, .trust-item, .coupon-box) :focus-visible { outline-color:var(--brand-red-dark); }
 .search-form input { min-height:44px; }
+
+/* Offer rotation (header strip and homepage band): slides share one grid cell so the height never jumps.
+   A new offer slides in from the right every 5 seconds; with reduced motion it fades instead. */
+.offer-rotator { display:flex; align-items:center; gap:8px; min-width:0; }
+.offer-rotator-viewport { display:grid; flex:1; min-width:0; overflow:hidden; }
+.offer-rotator-slide { grid-area:1/1; min-width:0; visibility:hidden; }
+.offer-rotator-slide.is-active, .offer-rotator-slide.is-leaving { visibility:visible; }
+.offer-rotator-slide.is-moving.is-active { animation:offer-in .5s ease both; }
+.offer-rotator-slide.is-leaving { animation:offer-out .5s ease both; }
+@keyframes offer-in { from { transform:translateX(100%); } to { transform:none; } }
+@keyframes offer-out { from { transform:none; } to { transform:translateX(-100%); visibility:hidden; } }
+@keyframes offer-fade-in { from { opacity:0; } to { opacity:1; } }
+@keyframes offer-fade-out { from { opacity:1; } to { opacity:0; visibility:hidden; } }
+@media (prefers-reduced-motion: reduce) {
+  .offer-rotator-slide.is-moving.is-active { animation-name:offer-fade-in; }
+  .offer-rotator-slide.is-leaving { animation-name:offer-fade-out; }
+}
+.offer-rotator-dots { display:flex; flex-shrink:0; }
+.offer-rotator-dots button { display:grid; place-items:center; width:24px; height:24px; padding:0; border:0; background:none; color:inherit; cursor:pointer; }
+.offer-rotator-dots span { width:7px; height:7px; border-radius:50%; background:currentColor; opacity:.45; }
+.offer-rotator-dots [aria-current] span { opacity:1; transform:scale(1.25); }
+.site-top .collection-strip .strip-offers { flex:1; min-width:0; }
+.strip-offer { display:flex; align-items:center; gap:8px; min-width:0; }
+.site-top .collection-strip .strip-offer-text { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.strip-code { flex-shrink:0; padding:1px 7px; border:1px dashed rgb(255 255 255 / 70%); border-radius:4px; font-size:11px; font-weight:600; white-space:nowrap; }
+.strip-code b { letter-spacing:.06em; }
+.offer-pane .offer-list.offer-rotator { flex-direction:column; width:100%; }
+.offer-pane .offer-rotator-viewport { width:100%; }
+.offer-pane .offer-rotator-dots button { width:32px; height:32px; }
+.offer-pane .offer-rotator-dots span { width:9px; height:9px; }
+/* Phones: the offer text and code need the strip's full width, so the collection label steps aside while offers show. */
+@media(max-width:767px) { .site-top .collection-strip strong, .strip-offer-ends { display:none; } }

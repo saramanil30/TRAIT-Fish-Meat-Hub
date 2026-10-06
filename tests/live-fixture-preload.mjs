@@ -8,7 +8,8 @@ const testOffer={id:'00000000-0000-4000-8000-000000000010',title:'Fresh test off
 const original=globalThis.fetch;
 globalThis.fetch=async(input,options)=>{
  const url=String(input);
- if(url==="https://trait-test.invalid/rest/v1/rpc/store_offers")return Response.json([testOffer]);
+ // TRAIT_TEST_OFFER_COUNT (default 1) adds coded offers to exercise the offer rotation.
+ if(url==="https://trait-test.invalid/rest/v1/rpc/store_offers")return Response.json([testOffer,{...testOffer,id:'00000000-0000-4000-8000-000000000011',title:'Weekend seafood saver',message:'Prawns and fish only',kind:'FIXED',value:15000,code:'SEA150',scope:'CATEGORIES',targetNames:['Seafood']},{...testOffer,id:'00000000-0000-4000-8000-000000000012',title:'First order 20% off',message:'New customers',value:2000,code:'WELCOME20'}].slice(0,Number(process.env.TRAIT_TEST_OFFER_COUNT??1)));
  if(url==="https://trait-test.invalid/rest/v1/rpc/catalogue")return Response.json(catalogue);
  if(url==="https://trait-test.invalid/rest/v1/rpc/storefront_info")return Response.json({name:"Isolated test store",address:{line1:"Test Street",city:"Test City",state:"Test State",pincode:"560001"},phone:null,timezone:"Asia/Kolkata",hours:{mon:[{opens:"09:00",closes:"18:00"}]},pickup:true,delivery:true,areas:[{pincode:"560001",name:"Test Area",feePaise:3000,minimumPaise:10000}]});
  if(url==="https://trait-test.invalid/rest/v1/rpc/track_order")return Response.json(JSON.parse(options.body).tracking_token==="a".repeat(64)?{orderNumber:"TFM-999001",status:"PLACED",method:"STORE_PICKUP",paymentStatus:"PENDING",history:[{status:"PLACED",at:"2026-09-27T12:00:00Z"}]}:null);

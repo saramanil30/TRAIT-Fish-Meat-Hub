@@ -5,7 +5,7 @@ export type StaffSection = typeof staffSections[number];
 export function canAccessSection(role: StaffRole, section: StaffSection): boolean {
   if (role === "ADMIN") return true;
   if (role === "OWNER") return section !== "catalogue" && section !== "categories";
-  return role === "EMPLOYEE" && (section === "dashboard" || section === "orders" || section === "offers");
+  return role === "EMPLOYEE" && (section === "dashboard" || section === "orders");
 }
 export function canManageDailyProducts(role: StaffRole) { return role === "ADMIN" || role === "OWNER"; }
 export function canManageCatalogue(role: StaffRole) { return role === "ADMIN"; }

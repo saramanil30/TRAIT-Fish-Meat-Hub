@@ -9,7 +9,7 @@ test("role capability matrix denies OWNER catalogue and all EMPLOYEE product ope
  for(const section of permissions.staffSections) {
  assert.equal(permissions.canAccessSection("ADMIN",section),true);
  assert.equal(permissions.canAccessSection("OWNER",section),!["catalogue","categories"].includes(section));
- assert.equal(permissions.canAccessSection("EMPLOYEE",section),["dashboard","orders","offers"].includes(section));
+ assert.equal(permissions.canAccessSection("EMPLOYEE",section),["dashboard","orders"].includes(section));
  assert.equal(permissions.canAccessSection("forged",section),false);
  }
  assert.equal(permissions.canManageCatalogue("OWNER"),false);

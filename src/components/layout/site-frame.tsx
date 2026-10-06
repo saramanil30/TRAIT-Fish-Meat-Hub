@@ -6,7 +6,9 @@ import { WhatsAppButton } from "./whatsapp-button";
 import { MobileNav } from "./mobile-nav";
 import { CheckoutHeader } from "./checkout-header";
 export type NavCategory = { slug: string; name: string };
-export function SiteFrame({ children, categories, offers, store }: { children: React.ReactNode; categories: NavCategory[]; offers: string[]; store: FooterStore | null }) {
+/** One active offer for the header strip: its text, end date and, when it has one, its coupon code. */
+export type StripOffer = { id: string; text: string; ends: string; code?: string };
+export function SiteFrame({ children, categories, offers, store }: { children: React.ReactNode; categories: NavCategory[]; offers: StripOffer[]; store: FooterStore | null }) {
   const pathname = usePathname();
   const admin = pathname === "/admin" || pathname.startsWith("/admin/");
   // Cart: the normal header scrolls away with the page and has no category bar.
