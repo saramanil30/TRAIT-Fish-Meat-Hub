@@ -50,17 +50,17 @@ test("server Auth validation, current membership, and forged direct actions",asy
  assert.ok((await actions.saveMaster({},form)).error);
  assert.equal(state.calls.some(c=>c.url.endsWith("/save_category")),false);
  state.role="EMPLOYEE";state.calls=[];
- const price=new FormData();price.set("id","00000000-0000-4000-8000-000000000001");price.set("version","1");price.set("price","500");price.set("available","true");
+ const price=new FormData();price.set("id","00000000-0000-4000-8000-000000000001");price.set("version","1");price.set("price","500");price.set("available","true");price.set("stockVersion","0");price.set("stock","2.5");price.set("weighed","true");
  assert.ok((await actions.saveDailyProduct({},price)).error);
- assert.equal(state.calls.some(c=>c.url.endsWith("/update_daily_product")),false);
+ assert.equal(state.calls.some(c=>c.url.endsWith("/save_daily_product")),false);
  const offerForm=new FormData();for(const [k,v] of Object.entries({store:"00000000-0000-4000-8000-000000000001",title:"Sale",message:"",kind:"PERCENT",amount:"10",start:"2026-09-29T00:00",end:"2026-10-01T00:00",scope:"STORE",active:"true"}))offerForm.set(k,v);
  state.calls=[];assert.ok((await offerActions.saveOffer({},offerForm)).error);assert.equal(state.calls.some(c=>c.url.endsWith("/save_offer")),false);
  state.role="OWNER";state.calls=[];assert.ok((await offerActions.saveOffer({},offerForm)).success);
  assert.equal(JSON.parse(state.calls.find(c=>c.url.endsWith("/save_offer")).options.body).amount,1000);
  state.role="OWNER";state.calls=[];
  assert.ok((await actions.saveDailyProduct({},price)).success);
- const request=state.calls.find(c=>c.url.endsWith("/update_daily_product"));
- assert.deepEqual(JSON.parse(request.options.body),{offering:price.get("id"),expected_version:1,price_paise:50000,is_available:true});
+ const request=state.calls.find(c=>c.url.endsWith("/save_daily_product"));
+ assert.deepEqual(JSON.parse(request.options.body),{offering:price.get("id"),expected_version:1,price_paise:50000,is_available:true,expected_stock_version:0,stock:2500});
  assert.equal(request.options.headers.Authorization,"Bearer test-token");
  assert.equal(request.options.headers["Content-Profile"],"api");
  assert.equal(request.options.cache,"no-store");
@@ -81,4 +81,11 @@ test("admin money inputs are rupees, stored as paise", () => {
  assert.equal(permissions.rupeesToPaise("0"),0);
  assert.equal(permissions.rupeesToPaise("50000"),5000000);
  for(const bad of ["","-5","1.234","₹50","5e3","abc","1234567890"]) assert.throws(()=>permissions.rupeesToPaise(bad));
+});
+test("stock today: blank is unlimited, kg become grams, packs are whole numbers",()=>{
+ assert.equal(permissions.parseStock("",true),null);
+ assert.equal(permissions.parseStock(" 2.5 ",true),2500);
+ assert.equal(permissions.parseStock("0",false),0);
+ assert.equal(permissions.parseStock("12",false),12);
+ for(const [value,weighed] of [["-1",true],["1.2345",true],["1.5",false],["abc",false]])assert.throws(()=>permissions.parseStock(value,weighed));
 });

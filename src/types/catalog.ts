@@ -28,6 +28,8 @@ export interface Product extends SalePricing {
   category: CategorySlug;
   pricePerKg: number;
   available: boolean;
+  /** Remaining stock (grams for weights, packs otherwise), sent only when low; absent = plenty or untracked. */
+  stockLeft?: number | null;
   image: string;
   imageAlt: string;
   cut: string;

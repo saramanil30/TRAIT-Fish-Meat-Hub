@@ -1,5 +1,5 @@
 "use client";
-import {isRaw, priceLabel, quantityLabel, quantityOptionText, quantityOptions, saleTotal} from "@/lib/pricing";
+import {inStockOptions, isRaw, priceLabel, quantityLabel, quantityOptionText, quantityOptions, saleTotal, stockLeftText} from "@/lib/pricing";
 
 
 import Image from "next/image";
@@ -25,7 +25,9 @@ export function ProductSelection({ product, item, onClose, onSaved }: { product:
   const closeButton = useRef<HTMLButtonElement>(null);
   const submitting = useRef(false);
   const [preparationId, setPreparationId] = useState<PreparationId>(item?.preparationId ?? product.preparationOptions[0].id);
-  const [rawWeightGrams, setRawWeightGrams] = useState(item?.rawWeightGrams ?? item?.quantity ?? quantityOptions(product)[0]);
+  const options = inStockOptions(product);
+  const saved = item?.rawWeightGrams ?? item?.quantity;
+  const [rawWeightGrams, setRawWeightGrams] = useState(saved !== undefined && options.includes(saved) ? saved : options[0] ?? quantityOptions(product)[0]);
   const [instructions, setInstructions] = useState(item?.specialInstructions ?? "");
   const [showInstructions, setShowInstructions] = useState(Boolean(item?.specialInstructions));
   const [error, setError] = useState("");
@@ -93,9 +95,9 @@ export function ProductSelection({ product, item, onClose, onSaved }: { product:
       <div className="selection-content">
         <div className="selection-main">
           <Image className="selection-photo" src={product.image} alt={product.imageAlt} width={448} height={336} />
-          <div className="selection-product"><div><div className="selection-name-row"><h3>{product.name}</h3><p><strong>{priceLabel(product)}</strong></p></div>{product.localName && <p>{product.localName}</p>}<span>{product.available ? "Available" : "Sold out"}</span></div></div>
+          <div className="selection-product"><div><div className="selection-name-row"><h3>{product.name}</h3><p><strong>{priceLabel(product)}</strong></p></div>{product.localName && <p>{product.localName}</p>}<span>{product.available ? stockLeftText(product) ?? "Available" : "Sold out"}</span></div></div>
           {product.cut && <p className="selection-description">{product.cut}</p>}
-          <div className="weight-select"><label htmlFor={id + "-weight"}>{product.pricingBasis === "NET_WEIGHT" ? <>Quantity <small className="weight-note">net weight</small></> : quantityLabel(product)}</label><select id={id + "-weight"} value={rawWeightGrams} onChange={event => setRawWeightGrams(Number(event.target.value))}>{quantityOptions(product).map(weight => <option key={weight} value={weight}>{quantityOptionText(product,weight)}</option>)}</select></div>
+          <div className="weight-select"><label htmlFor={id + "-weight"}>{product.pricingBasis === "NET_WEIGHT" ? <>Quantity <small className="weight-note">net weight</small></> : quantityLabel(product)}</label><select id={id + "-weight"} value={rawWeightGrams} onChange={event => setRawWeightGrams(Number(event.target.value))}>{options.map(weight => <option key={weight} value={weight}>{quantityOptionText(product,weight)}</option>)}</select></div>
           <div className="selection-total-row"><div><span>Item price</span><strong aria-live="polite" data-item-price>{formatMoney(price)}</strong><small aria-live="polite">For {quantityOptionText(product,rawWeightGrams)}</small></div></div>
         </div>
         <div className="selection-side">

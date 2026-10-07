@@ -5,6 +5,10 @@ export function quantityLabel(p: SalePricing) { return isRaw(p) ? 'Quantity (bef
 export function priceUnit(p: SalePricing) { return isRaw(p) ? 'kg' : p.pricingBasis === 'NET_WEIGHT' ? formatWeight(p.priceUnitGrams ?? 0)+' NET weight' : p.pricingBasis === 'TRAY' ? 'tray ('+p.unitsPerPack+' eggs)' : 'unit'; }
 export function priceLabel(p: SalePricing & {pricePerKg: number}) { return formatMoney(p.pricePaise ?? Math.round(p.pricePerKg*100))+' / '+priceUnit(p); }
 export function quantityOptions(p: Product) { return isRaw(p) ? p.selectableWeightsGrams : p.saleQuantities ?? []; }
+/** Options the remaining stock can still cover; every option while stock is plentiful or untracked. */
+export function inStockOptions(p: Product) { const left=p.stockLeft; return quantityOptions(p).filter(q => left == null || q <= left); }
+/** "Only 1.5 kg left" / "Only 2 trays left" when stock is low, else null. */
+export function stockLeftText(p: Product) { return p.stockLeft == null ? null : 'Only '+(isRaw(p) || p.pricingBasis === 'NET_WEIGHT' ? formatWeight(p.stockLeft) : p.stockLeft+' '+(p.pricingBasis === 'TRAY' ? (p.stockLeft===1?'tray':'trays') : (p.stockLeft===1?'unit':'units')))+' left'; }
 /** Card price: "₹400 / kg" for raw and net weights (net prices converted to per kg), "₹450 / tray", "₹60 / unit". */
 export function cardPriceLabel(p: SalePricing & {pricePerKg: number}) {
  const price = p.pricePaise ?? Math.round(p.pricePerKg*100);

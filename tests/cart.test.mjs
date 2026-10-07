@@ -143,3 +143,13 @@ test('tray and NET units retain exact prices, quantity identity and storage sema
  assert.throws(()=>createCartItem({...eggs,orderable:false},{preparationId:'cleaned',quantity:1,specialInstructions:''},'bad'));
  assert.deepEqual(restoreCart(serializeCart([a,b]),[eggs,fish]),[a,b]);
 });
+test('low stock limits choices and shows "Only X left"; plentiful or untracked stock shows nothing', async () => {
+ const { inStockOptions, stockLeftText } = await loadTypeScript('../src/lib/pricing.ts');
+ assert.deepEqual(inStockOptions({ ...seer, stockLeft: 1500 }), seer.selectableWeightsGrams.filter(w => w <= 1500));
+ assert.deepEqual(inStockOptions({ ...seer, stockLeft: null }), seer.selectableWeightsGrams);
+ assert.equal(stockLeftText({ ...seer, stockLeft: 1500 }), 'Only 1.5 kg left');
+ assert.equal(stockLeftText({ ...seer, stockLeft: null }), null);
+ const eggs = { ...seer, pricingBasis: 'TRAY', unitsPerPack: 30, saleQuantities: [1, 2], stockLeft: 1 };
+ assert.equal(stockLeftText(eggs), 'Only 1 tray left');
+ assert.deepEqual(inStockOptions(eggs), [1]);
+});

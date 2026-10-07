@@ -8,7 +8,11 @@ import { deliveryAddress } from "@/lib/address";
 import { headers } from "next/headers";
 import { whatsappLink, customerStatusMessage, WHATSAPP_WINDOW } from "@/lib/whatsapp";
 type Order={discount_paise?:number;offer_snapshot?:{title:string};id:string;order_number:string;status:string;fulfillment_method:string;total_paise:number;version:number;created_at:string;fulfillment_snapshot?:{name?:string;mobileE164?:string;address?:Record<string,string>}};
-type Detail={order:Order;items:{id:string;raw_weight_grams:number|null;sale_quantity?:number;pricing_basis?:string;units_per_pack?:number;line_total_paise:number;instructions:string;product_snapshot:{productName:string;preparationName:string}}[];payments:{id:string;method:string;status:string;amountPaise:number;refundedPaise?:number;version:number}[]};
+type Detail={order:Order;items:{id:string;raw_weight_grams:number|null;sale_quantity?:number;pricing_basis?:string;units_per_pack?:number;line_total_paise:number;instructions:string;product_snapshot:{productName:string;preparationName:string}}[];payments:{id:string;method:string;status:string;amountPaise:number;refundedPaise?:number;version:number}[];stock?:StockMove[]};
+type StockMove={id:string;kind:"ORDER"|"CANCEL_RESTORE";productName:string;measure:"GRAMS"|"PACKS";change:number;before:number|null;after:number|null;note:string|null};
+const stockAmount=(m:StockMove,n:number)=>m.measure==="GRAMS"?formatWeight(n):String(n);
+/** "Seer Fish: −1 kg (3 kg → 2 kg)"; restores show "+", skipped restores show the note. */
+function stockText(m:StockMove){return m.productName+": "+(m.change<0?"−":"+")+stockAmount(m,Math.abs(m.change))+(m.before!==null&&m.after!==null?" ("+stockAmount(m,m.before)+" → "+stockAmount(m,m.after)+")":"")+(m.note?" · "+m.note:"");}
 const PAGE_SIZE=25;
 const statusText:Record<string,string>={PLACED:"New",CONFIRMED:"Confirmed",PREPARING:"Preparing",READY:"Ready",OUT_FOR_DELIVERY:"Out for delivery",DELIVERED:"Delivered",CANCELLED:"Cancelled"};
 const paymentText:Record<string,string>={PENDING:"Unpaid",VERIFYING:"Checking",PAID:"Paid",FAILED:"Failed",REFUNDED:"Refunded"};
@@ -80,6 +84,7 @@ export async function Operations({token,context,store,orderId,section,before,cur
       {i.instructions&&<p className="ord-note">Note: {i.instructions}</p>}
       {weighing&&isWeighed(i)&&<OperationalForm operation="weight" id={order.id} version={Number(order.version)} label="Save" className="ord-form ord-weight" buttonClassName="ord-small"><input type="hidden" name="item" value={i.id}/><label>Actual weight (g)<input name="grams" type="number" min="1" inputMode="numeric" required/></label></OperationalForm>}
      </li>)}</ul>
+     {!!d.stock?.length&&<div className="ord-note"><strong>Stock impact</strong><ul>{d.stock.map(m=><li key={m.id}>{m.kind==="ORDER"?"Deducted":"Restored on cancel"} · {stockText(m)}</li>)}</ul></div>}
      {!!order.discount_paise&&<p className="ord-note">Offer {order.offer_snapshot?.title}: −{formatMoney(Number(order.discount_paise))}</p>}
      <div className="ord-customer">
       <p><strong>{customer?.name||"Customer"}</strong>{customer?.mobileE164&&<> · <a href={"tel:"+customer.mobileE164}>{customer.mobileE164}</a></>}</p>

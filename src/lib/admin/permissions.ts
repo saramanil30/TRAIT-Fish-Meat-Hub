@@ -20,3 +20,12 @@ export function parseDailyPrice(value: string): number {
   if (!Number.isSafeInteger(paise) || paise < 1 || paise > 100000000) throw new Error("Price must be between ₹0.01 and ₹1,000,000 per kg.");
   return paise;
 }
+/** "Stock today": blank = unlimited; kg (up to 3 decimals) to grams for weighed items, whole trays/units otherwise. */
+export function parseStock(value: string, weighed: boolean): number | null {
+  const v = value.trim();
+  if (!v) return null;
+  if (!(weighed ? /^\d{1,5}(\.\d{1,3})?$/ : /^\d{1,6}$/).test(v)) throw new Error(weighed ? "Enter stock in kg with at most three decimals, or leave blank for unlimited." : "Enter stock as a whole number, or leave blank for unlimited.");
+  const amount = weighed ? Math.round(Number(v) * 1000) : Number(v);
+  if (!Number.isSafeInteger(amount) || amount > 100000000) throw new Error("Stock is too large.");
+  return amount;
+}
