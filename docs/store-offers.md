@@ -1,4 +1,4 @@
-﻿# Store offers
+# Store offers
 
 Implemented in `20260929000000_store_offers.sql` and applied to the connected Supabase project on 2026-09-29.
 
@@ -26,3 +26,14 @@ Offers use the existing business/store staff authorization, audit log and RPC-on
 Validation: `npm test`, `npm run test:offers-db`, `node tests/sale-units-db.mjs`, typecheck, production build, and checkout/staff browser checks. Database tests cover management roles, tenant isolation, expiry, stale versions/quotes, product/category scope, integer rounding, capped fixed discounts, unchanged delivery fees/minimum checks, payment amounts, immutable snapshots and retry behavior. Browser tests use isolated fixtures and do not create live orders or offers.
 
 Hosted verification: 23 catalogue products preserved; before/after row fingerprint `e3baa9fcbf569db2718944a887a4de95`. Offers table is empty, forced RLS is enabled, and direct table access is denied to anon/authenticated/service_role/checkout/payment-verifier roles. Frontend publishing was not performed.
+
+## Minimum order, maximum discount and banner images
+
+Added in `20261009000000_offer_conditions_images.sql` (run it once in the SQL editor).
+
+- **Discount type**: "Percent (%)" (stored in basis points) or "Flat amount (₹)" (whole rupees, stored in paise). The server converts rupees to paise.
+- **Minimum order (₹)**: optional. The coupon applies only when the offer's *eligible* items reach it. Below it, the cart and checkout show "Add ₹X more to use CODE"; coupon rows show "On orders above ₹999".
+- **Maximum discount (₹)**: optional, percent offers only. Flat discounts never exceed the eligible amount. Everything rounds to whole rupees (`app.offer_discount`, mirrored in `src/lib/cart-offer.ts`).
+- **Banner image**: optional. The browser converts it to WebP; the server checks the WebP signature and the 1 MB limit, then uploads with the staff session to `offer-images/{business}/{sha256}.webp`. The `offer-images` bucket is public-read and WebP-only (1 MB); the insert policy allows only active ADMIN/OWNER staff, under their own business folder. `api.save_offer` also checks the path belongs to the caller's business and the object exists.
+- **Dates**: a date with no time starts at 00:00 IST and ends at 23:59 IST.
+- **Homepage band**: one slide per active offer (image left, details right; image above on phones; centred text without an image). It shares one 5-second clock with the header strip, so both show the same offer; hovering, touching or focusing either pauses both.

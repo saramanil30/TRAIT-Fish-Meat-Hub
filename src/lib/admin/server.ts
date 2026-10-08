@@ -74,6 +74,18 @@ export function validProductWebp(bytes: Uint8Array) {
  const ascii = (from: number, to: number) => String.fromCharCode(...bytes.subarray(from, to));
  return bytes.length >= 16 && bytes.length <= productImageLimitBytes && ascii(0, 4) === "RIFF" && ascii(8, 12) === "WEBP";
 }
+/** Offer banners: WebP only, at most 1 MB, stored at offer-images/{business}/{sha256}.webp (matches app.offers.image_path).
+ *  Returns the object path. Storage policies allow only ADMIN and OWNER, under their own business. */
+export async function uploadOfferImage(token: string, businessId: string, bytes: Uint8Array) {
+ if (!validProductWebp(bytes)) throw new Error("Upload a JPEG, PNG or WebP image under 1 MB after conversion.");
+ const {url,key} = config();
+ const path = businessId + "/" + createHash("sha256").update(bytes).digest("hex") + ".webp";
+ const response = await fetch(url + "/storage/v1/object/offer-images/" + path, { method: "POST", cache: "no-store", signal: AbortSignal.timeout(30000), headers: { apikey: key, Authorization: "Bearer " + token, "Content-Type": "image/webp", "x-upsert": "false" }, body: Buffer.from(bytes) });
+ // A 409 means identical bytes were already uploaded for this business.
+ const duplicate = response.status === 409 || (!response.ok && String((await response.clone().json().catch(() => ({}))).statusCode) === "409");
+ if (!response.ok && !duplicate) throw new Error("Image upload is not available. Check the offer image storage setup.");
+ return path;
+}
 export async function uploadProductImage(token: string, businessId: string, productId: string, alt: string, bytes: Uint8Array) {
  if (!validProductWebp(bytes)) throw new Error("Upload a JPEG, PNG or WebP photo under 1 MB after conversion.");
  const {url,key} = config();

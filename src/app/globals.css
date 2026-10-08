@@ -1284,3 +1284,26 @@ main.storefront :is(.product-card, .order-panel, .cart-items, .cart-summary, .em
 .offer-pane .offer-rotator-dots span { width:9px; height:9px; }
 /* Phones: the offer text and code need the strip's full width, so the collection label steps aside while offers show. */
 @media(max-width:767px) { .site-top .collection-strip:has(.strip-offer) strong, .strip-offer-ends { display:none; } }
+.coupon-list small.coupon-short, .coupon-applied .coupon-short { color:var(--brand-red-dark); font-weight:700; }
+/* Offer band slides: with a banner, image left and details right (image above on phones); without one, centred text. */
+.offer-pane .offer-list { width:100%; max-width:1040px; }
+.offer-pane .offer-rotator-slide { display:grid; }
+.offer-pane .offer-item { display:grid; justify-items:center; align-content:center; }
+.offer-pane .offer-text { display:grid; justify-items:center; max-width:760px; min-width:0; }
+.offer-pane .offer-text p { margin:4px 0; }
+.offer-pane .offer-scope { font-weight:600; }
+.offer-pane .offer-ends { font-size:13px !important; color:rgb(255 255 255 / 75%) !important; }
+.offer-image { display:block; width:100%; aspect-ratio:3/2; object-fit:cover; border-radius:12px; background:rgb(255 255 255 / 10%); box-shadow:0 10px 30px rgb(0 0 0 / 22%); }
+.offer-pane .offer-item.has-image { grid-template-columns:minmax(0,5fr) minmax(0,6fr); gap:36px; align-items:center; justify-items:stretch; text-align:left; }
+.offer-pane .offer-item.has-image .offer-text { justify-items:start; }
+.offer-pane .offer-item.has-image .offer-code-line { justify-content:flex-start; }
+@media(max-width:767px) {
+  .offer-pane .offer-item.has-image { grid-template-columns:minmax(0,1fr); gap:16px; text-align:center; }
+  .offer-pane .offer-item.has-image .offer-text { justify-items:center; }
+  .offer-pane .offer-item.has-image .offer-code-line { justify-content:center; }
+  .offer-image { aspect-ratio:16/9; }
+}
+.admin-date-time { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; }
+.admin-offer-image { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.admin-offer-image img { width:160px; height:96px; object-fit:cover; border-radius:6px; border:1px solid var(--border); }
+.admin-offer-image label { display:flex; flex-direction:row; align-items:center; gap:6px; }
