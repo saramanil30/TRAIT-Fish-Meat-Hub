@@ -25,7 +25,14 @@ globalThis.fetch=async(input,options)=>{
   if(url.endsWith("/save_offer"))return role==='EMPLOYEE'?Response.json({error:'forbidden'},{status:403}):Response.json(testOffer.id);
   // One order per WhatsApp message template (Admin Orders).
   const fixtureOrders=["CONFIRMED","OUT_FOR_DELIVERY","READY","DELIVERED","CANCELLED"].map((status,i)=>({id:'00000000-0000-4000-8000-00000000002'+i,order_number:'TFM-99910'+i,status,fulfillment_method:status==="READY"?"STORE_PICKUP":"HOME_DELIVERY",total_paise:45000+i*100,version:1,created_at:'2026-10-0'+(i+1)+'T06:00:00Z',fulfillment_snapshot:{name:'Test Customer '+i,mobileE164:'+9199999000'+i,address:{line1:'Flat '+i+' Test Street',locality:'Kokapet',city:'Hyderabad',pincode:'500075'}}}));
-  if(url.endsWith("/order_queue_page"))return Response.json(fixtureOrders);
+  if(url.endsWith("/order_queue_page")){const status=JSON.parse(options.body).status_filter;return Response.json(status?fixtureOrders.filter(o=>o.status===status):fixtureOrders);}
+  // Mirrors api.admin_dashboard: EMPLOYEE gets counts and slots only, never money.
+  if(url.endsWith("/admin_dashboard")){
+   const counts={needsAction:{PLACED:3,CONFIRMED:1,PREPARING:2,READY:0,OUT_FOR_DELIVERY:1},slots:[{slot:"MORNING",delivery:4,pickup:1,open:2},{slot:"AFTERNOON",delivery:2,pickup:0,open:2},{slot:"EVENING",delivery:0,pickup:0,open:0}]};
+   if(role==="EMPLOYEE")return Response.json(counts);
+   const totals=(n,k)=>({orders:n,revenuePaise:n*k,averagePaise:k,collectedPaise:Math.round(n*k*.6),cashCollectedPaise:Math.round(n*k*.4),pendingPaise:Math.round(n*k*.4)});
+   return Response.json({...counts,summary:{current:totals(9,86500),previous:totals(7,91000)},lowStock:[{name:"Seer Fish",onHand:0,measure:"GRAMS",pricingBasis:"RAW_WEIGHT"},{name:"Free Range Brown Eggs",onHand:1,measure:"PACKS",pricingBasis:"TRAY"},{name:"White Prawns",onHand:1500,measure:"GRAMS",pricingBasis:"RAW_WEIGHT"}],topProducts:[{name:"Free Range Brown Eggs",orders:3,revenuePaise:135000},{name:"Mutton Curry Cut",orders:1,revenuePaise:100000},{name:"Sea Prawns Big",orders:1,revenuePaise:80000},{name:"Seabass / Pandugappa",orders:1,revenuePaise:80000},{name:"Bombay Duck",orders:1,revenuePaise:40000}],recentOrders:fixtureOrders.map(o=>({id:o.id,order_number:o.order_number,status:o.status,fulfillment_method:o.fulfillment_method,total_paise:o.total_paise,created_at:o.created_at,customer:o.fulfillment_snapshot.name}))});
+  }
   if(url.endsWith("/order_detail")){const order=fixtureOrders.find(o=>o.id===JSON.parse(options.body).target_order);return Response.json({order,items:[{id:order.id+'-1',raw_weight_grams:1000,line_total_paise:order.total_paise,instructions:'',product_snapshot:{productName:'Seer Fish',preparationName:'Curry cut'}}],payments:[]});}
   if(url.endsWith("/catalogue_master"))return Response.json({categories:[],products:[]});
   if(url.endsWith("/business_policy"))return Response.json(null);

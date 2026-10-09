@@ -41,10 +41,10 @@ let socket;
       for(const role of ['ADMIN','OWNER','EMPLOYEE']){
         await send('Network.setCookie',{name:'trait_staff_access',value:'fixture-'+role,url:'http://127.0.0.1:3217/admin',path:'/admin',httpOnly:true,sameSite:'Strict'});
         const allowed=role==='ADMIN'?['dashboard','orders','catalogue','categories','prices','employees','payments','reports','settings']:role==='OWNER'?['dashboard','orders','prices','employees','payments','reports','settings']:['dashboard','orders'];
-        allowed.push('offers');
+        if(role!=='EMPLOYEE')allowed.push('offers');
         for(const section of allowed){
           await navigate('/admin/'+role.toLowerCase()+'/'+section);
-          await until('!!document.querySelector(".admin-live")');
+          await until('!!document.querySelector(".admin-live")').catch(async e=>{throw new Error(role+" "+section+": "+(await evaluate("document.body.innerText.slice(0,300)")));});
           assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'),'staff '+role+' '+section+' '+width);
           if(section==='offers'){
             assert.ok(await evaluate('document.body.textContent.includes("Fresh test offer")'));
@@ -62,6 +62,17 @@ let socket;
           await navigate('/admin/'+role.toLowerCase()+'/catalogue');
           assert.equal(await evaluate('document.querySelectorAll(".admin-live").length'),0);
         }
+        // Dashboard: everyone gets "Needs action" and slots; only ADMIN/OWNER see money.
+        await navigate('/admin/'+role.toLowerCase()+'/dashboard'+(role==='EMPLOYEE'?'':'?period=7d'));
+        assert.ok(await evaluate('document.querySelector(".dash").textContent.includes("Needs action")&&document.querySelectorAll(".dash-table tbody tr").length===3'),'dashboard basics '+role);
+        assert.equal(await evaluate('/₹|Revenue|Average order|Top products|Latest orders/.test(document.querySelector(".dash").textContent)'),role!=='EMPLOYEE','dashboard money visibility '+role);
+        if(role!=='EMPLOYEE')assert.equal(await evaluate('document.querySelector(".dash-periods [aria-current=page]").textContent'),'7 days');
+        assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'),'dashboard overflow '+role+' '+width);
+        const fullHeight=await evaluate('document.documentElement.scrollHeight');
+        await send('Emulation.setDeviceMetricsOverride',{width,height:fullHeight,deviceScaleFactor:1,mobile:false});await snapshot('dashboard-'+role+'-'+width);
+        await send('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:false});
+        await navigate(await evaluate('document.querySelector(".dash-status a[href*=\'status=CONFIRMED\']").getAttribute("href")'));
+        assert.ok(await evaluate('document.querySelector(".ord-filter")?.textContent.includes("Confirmed")&&document.querySelectorAll(".ord-row").length===1'),'filtered orders '+role);
         await navigate('/admin/'+role.toLowerCase()+'/orders');await snapshot('live-'+role+'-'+width);
         console.log('PASS authenticated '+role+' pages and role navigation at '+width+'px using isolated RPC fixtures');
       }

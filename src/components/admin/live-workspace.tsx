@@ -6,6 +6,7 @@ import { Operations, BusinessPolicy } from "./operations";
 import { DeliverySettings } from "./delivery-settings";
 import { HomepageTextSettings } from "./homepage-text-settings";
 import { BusinessReport } from "./report";
+import { StaffDashboard } from "./dashboard";
 import { StaffDirectory } from "./staff-directory";
 import { OperationalForm } from "./operational-form";
 import { signOut } from "@/app/admin/actions";
@@ -15,10 +16,11 @@ import { sectionLabels } from "@/lib/admin/presentation";
 import { DailyProducts, MutationForm, type DailyProduct } from "./live-forms";
 type Category={id:string;name:string;parent_id:string|null;sort_order:number;is_active:boolean};
 function Active({value=true}:{value?:boolean}) {return <label>Status<select name="active" defaultValue={String(value)}><option value="true">Active</option><option value="false">Retired / inactive</option></select></label>;}
-export async function LiveWorkspace({context,token,section,storeId,orderId,days,before,cursor,fromDate,untilDate}:{context:StaffContext;token:string;section:StaffSection;storeId?:string;orderId?:string;days?:number;before?:string;cursor?:string;fromDate?:string;untilDate?:string}) {
+export async function LiveWorkspace({context,token,section,storeId,orderId,days,before,cursor,fromDate,untilDate,period,status}:{context:StaffContext;token:string;section:StaffSection;storeId?:string;orderId?:string;days?:number;before?:string;cursor?:string;fromDate?:string;untilDate?:string;period?:string;status?:string}) {
  const base="/admin/"+context.role.toLowerCase(); const store=context.stores.find(s=>s.id===storeId)??context.stores[0];
  let content;
- if(section==="orders"||section==="payments"||section==="dashboard") content=<Operations token={token} context={context} store={store?.id} orderId={orderId} section={section} before={before} cursor={cursor}/>;
+ if(section==="dashboard") content=<StaffDashboard token={token} context={context} store={store?.id} period={period}/>;
+ else if(section==="orders"||section==="payments") content=<Operations token={token} context={context} store={store?.id} orderId={orderId} section={section} before={before} cursor={cursor} status={section==="orders"?status:undefined}/>;
  else if(section==="offers") content=<OffersWorkspace token={token} role={context.role} store={store?.id}/>;
  else if(section==="reports") content=<BusinessReport token={token} store={store?.id} days={days} fromDate={fromDate} untilDate={untilDate}/>;
  else if(section==="prices") content=store?<><p>Prices use each displayed product unit: raw kg, NET weight, unit or tray. Every price change preserves its history. Saving affects future pricing only.</p><DailyProducts products={await staffRpc<DailyProduct[]>(token,"daily_products",{target_store:store.id})}/></>:<p>No accessible stores.</p>;

@@ -14,7 +14,7 @@ const stockAmount=(m:StockMove,n:number)=>m.measure==="GRAMS"?formatWeight(n):St
 /** "Seer Fish: −1 kg (3 kg → 2 kg)"; restores show "+", skipped restores show the note. */
 function stockText(m:StockMove){return m.productName+": "+(m.change<0?"−":"+")+stockAmount(m,Math.abs(m.change))+(m.before!==null&&m.after!==null?" ("+stockAmount(m,m.before)+" → "+stockAmount(m,m.after)+")":"")+(m.note?" · "+m.note:"");}
 const PAGE_SIZE=25;
-const statusText:Record<string,string>={PLACED:"New",CONFIRMED:"Confirmed",PREPARING:"Preparing",READY:"Ready",OUT_FOR_DELIVERY:"Out for delivery",DELIVERED:"Delivered",CANCELLED:"Cancelled"};
+export const statusText:Record<string,string>={PLACED:"New",CONFIRMED:"Confirmed",PREPARING:"Preparing",READY:"Ready",OUT_FOR_DELIVERY:"Out for delivery",DELIVERED:"Delivered",CANCELLED:"Cancelled"};
 const paymentText:Record<string,string>={PENDING:"Unpaid",VERIFYING:"Checking",PAID:"Paid",FAILED:"Failed",REFUNDED:"Refunded"};
 const methodText:Record<string,string>={CASH:"Cash",UPI:"UPI",ONLINE:"Online"};
 /** The one forward step staff take next; the database still validates every transition. */
@@ -29,7 +29,7 @@ function nextStep(o:Order):{status:string;label:string}|null {
   default:return null;
  }
 }
-const badge=(kind:string)=>"admin-badge badge-"+kind.toLowerCase().replaceAll("_","-");
+export const badge=(kind:string)=>"admin-badge badge-"+kind.toLowerCase().replaceAll("_","-");
 type Item=Detail["items"][number];
 const isWeighed=(i:Item)=>!i.pricing_basis||i.pricing_basis==="RAW_WEIGHT"||i.pricing_basis==="NET_WEIGHT";
 function amountText(i:Item){
@@ -37,13 +37,15 @@ function amountText(i:Item){
  if(i.pricing_basis==="UNIT")return i.sale_quantity+" unit"+(i.sale_quantity===1?"":"s");
  return formatWeight(Number(i.raw_weight_grams??i.sale_quantity??0))+(i.pricing_basis==="NET_WEIGHT"?" NET":" raw");
 }
-export async function Operations({token,context,store,orderId,section,before,cursor}:{token:string;context:StaffContext;store?:string;orderId?:string;section:string;before?:string;cursor?:string}){
+export async function Operations({token,context,store,orderId,section,before,cursor,status}:{token:string;context:StaffContext;store?:string;orderId?:string;section:string;before?:string;cursor?:string;status?:string}){
  if(!store)return <p>No accessible stores.</p>;
  const validCursor=!!before&&Number.isFinite(Date.parse(before))&&/^[a-f0-9-]{36}$/i.test(cursor??"");
- const orders=await staffRpc<Order[]>(token,"order_queue_page",{target_store:store,row_limit:PAGE_SIZE,before_time:validCursor?before:null,before_id:validCursor?cursor:null});
+ // Dashboard "Needs action" links filter by status; the argument is only sent when filtering.
+ const filter=status&&Object.hasOwn(statusText,status)?status:undefined;
+ const orders=await staffRpc<Order[]>(token,"order_queue_page",{target_store:store,row_limit:PAGE_SIZE,before_time:validCursor?before:null,before_id:validCursor?cursor:null,...(filter&&{status_filter:filter})});
  // The queue has no customer, items or payment, so each row reads its detail through the same permission-checked RPC.
  const details=await Promise.all(orders.map(o=>staffRpc<Detail>(token,"order_detail",{target_order:o.id}).catch(()=>null)));
- const base="/admin/"+context.role.toLowerCase()+"/"+section+"?store="+store;
+ const all="/admin/"+context.role.toLowerCase()+"/"+section+"?store="+store,base=all+(filter?"&status="+filter:"");
  // Same page for every role; only the actions a role may take are shown. The database enforces them regardless.
  const manager=context.role!=="EMPLOYEE";
  // Customer site address for the tracking link in WhatsApp messages; the request's own host when NEXT_PUBLIC_SITE_URL is unset.
@@ -51,7 +53,8 @@ export async function Operations({token,context,store,orderId,section,before,cur
  const site=process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/,"")||(host?(/^(localhost|127\.)/.test(host)?"http://":"https://")+host:"");
  const last=orders[orders.length-1];
  return <div className="ord-list">
-  <p className="ord-intro">{orders.length?"Tap an order to see items, address and actions.":"No orders yet."}</p>
+  {filter&&<p className="ord-filter">Showing <span className={badge(filter)}>{statusText[filter]}</span> orders · <Link href={all}>Show all</Link></p>}
+  <p className="ord-intro">{orders.length?"Tap an order to see items, address and actions.":filter?"No orders with this status.":"No orders yet."}</p>
   {orders.map((o,index)=>{
    const d=details[index];
    const order=d?.order??o;

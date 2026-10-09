@@ -12,7 +12,7 @@ import { requireStaff, refreshCookie } from "@/lib/admin/server";
 import { canAccessSection, staffSections, type StaffSection } from "@/lib/admin/permissions";
 import "@/components/admin/admin.css";
 export const metadata: Metadata = { title: "Staff workspace", robots: { index: false, follow: false } };
-export default async function AdminPage({ params,searchParams }: { params: Promise<{ path?: string[] }>;searchParams:Promise<{store?:string;order?:string;days?:string;before?:string;cursor?:string;from?:string;until?:string}> }) {
+export default async function AdminPage({ params,searchParams }: { params: Promise<{ path?: string[] }>;searchParams:Promise<{store?:string;order?:string;days?:string;before?:string;cursor?:string;from?:string;until?:string;period?:string;status?:string}> }) {
  const {path=[]}=await params;
  if(path.length===1&&path[0]==="recovery") return <StaffRecovery/>;
  if(path.length===1&&path[0]==="forgot-password") return <ForgotPassword/>;
@@ -28,6 +28,7 @@ export default async function AdminPage({ params,searchParams }: { params: Promi
  try {staff=await requireStaff();} catch {redirect("/admin/login");}
  if(path.length!==2||!staffSections.includes(path[1] as StaffSection)) redirect("/admin/"+staff.context.role.toLowerCase()+"/dashboard");
  const section=path[1] as StaffSection;
+ const query=await searchParams;
  if(path[0]!==staff.context.role.toLowerCase()||!canAccessSection(staff.context.role,section)) notFound();
- return <LiveWorkspace context={staff.context} token={staff.token} section={section} storeId={(await searchParams).store} orderId={(await searchParams).order} days={Number((await searchParams).days??30)} before={(await searchParams).before} cursor={(await searchParams).cursor} fromDate={(await searchParams).from} untilDate={(await searchParams).until}/>;
+ return <LiveWorkspace context={staff.context} token={staff.token} section={section} storeId={query.store} orderId={query.order} days={Number(query.days??30)} before={query.before} cursor={query.cursor} fromDate={query.from} untilDate={query.until} period={query.period} status={query.status}/>;
 }
