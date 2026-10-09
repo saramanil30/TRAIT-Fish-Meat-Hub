@@ -55,8 +55,8 @@ let socket;
               await snapshot('offers-'+role+'-'+width);
             }
           }
-          if(role==='EMPLOYEE')assert.equal(await evaluate('document.querySelectorAll("nav a[href*=prices],nav a[href*=employees],nav a[href*=reports],nav a[href*=settings]").length'),0);
-          if(role==='OWNER')assert.equal(await evaluate('document.querySelectorAll("nav a[href*=catalogue],nav a[href*=categories]").length'),0);
+          if(role==='EMPLOYEE')assert.equal(await evaluate('document.querySelectorAll("nav[aria-label^=Staff] a[href*=prices],nav[aria-label^=Staff] a[href*=employees],nav[aria-label^=Staff] a[href*=reports],nav[aria-label^=Staff] a[href*=settings]").length'),0);
+          if(role==='OWNER')assert.equal(await evaluate('document.querySelectorAll("nav[aria-label^=Staff] a[href*=catalogue],nav[aria-label^=Staff] a[href*=categories]").length'),0);
         }
         if(role!=='ADMIN'){
           await navigate('/admin/'+role.toLowerCase()+'/catalogue');
@@ -73,6 +73,36 @@ let socket;
         await send('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:false});
         await navigate(await evaluate('document.querySelector(".dash-status a[href*=\'status=CONFIRMED\']").getAttribute("href")'));
         assert.ok(await evaluate('document.querySelector(".ord-filter")?.textContent.includes("Confirmed")&&document.querySelectorAll(".ord-row").length===1'),'filtered orders '+role);
+        // Reports (ADMIN/OWNER): presets, custom range, daily bars, every tab, and the Excel export of the current view.
+        const reports='/admin/'+role.toLowerCase()+'/reports';
+        if(role==='EMPLOYEE'){
+         assert.equal(await evaluate('fetch("/admin/report-export?range=today").then(r=>r.status)'),403,'employee export blocked');
+        } else {
+         await navigate(reports+'?range=month');
+         assert.equal(await evaluate('document.querySelector(".rep-ranges [aria-current=page]").textContent'),'This month');
+         assert.equal(await evaluate('document.querySelectorAll(".rep-cards>div").length'),6);
+         assert.ok(await evaluate('!/UTC|T00:00|Z\\b/.test(document.querySelector(".rep").innerText)'),'no UTC/ISO text '+role);
+         await navigate(reports+'?range=custom&from=2026-09-01&until=2026-09-30&tab=products');
+         assert.equal(await evaluate('document.querySelectorAll(".rep-chart").length'),2);
+         assert.equal(await evaluate('document.querySelectorAll(".rep-chart:first-of-type .rep-bar").length'),30,'one bar per day, inclusive');
+         assert.equal(await evaluate('document.querySelector(".rep-heading").textContent.includes("1 Sept 2026 – 30 Sept 2026")||document.querySelector(".rep-heading").textContent.includes("1 Sep 2026 – 30 Sep 2026")'),true);
+         assert.equal(await evaluate('document.querySelector("input[name=from]").value'),'2026-09-01');
+         for(const t of ['products','categories','payments','fulfilment','coupons','cancellations','cash']){
+          await navigate(reports+'?range=custom&from=2026-09-01&until=2026-09-30&tab='+t);
+          assert.ok(await evaluate('document.querySelectorAll(".rep-table tbody tr").length>0'),'tab '+t+' '+role);
+          assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'),'reports overflow '+t+' '+width);
+          if(t==='products'||t==='cash'){
+           const h=await evaluate('document.documentElement.scrollHeight');
+           await send('Emulation.setDeviceMetricsOverride',{width,height:h,deviceScaleFactor:1,mobile:false});await snapshot('reports-'+t+'-'+role+'-'+width);
+           await send('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:false});
+          }
+         }
+         assert.equal(await evaluate('document.querySelectorAll(".rep>.rep-table").length'),2,'cash by day and by staff');
+         const exported=await evaluate('fetch(document.querySelector(".rep-export").getAttribute("href")).then(async r=>({status:r.status,type:r.headers.get("content-type"),name:r.headers.get("content-disposition"),bytes:Array.from(new Uint8Array(await r.arrayBuffer()))}))');
+         assert.equal(exported.status,200);assert.match(exported.type,/spreadsheetml/);assert.match(exported.name,/trait-report-2026-09-01-to-2026-09-30-cash\.xlsx/);
+         assert.deepEqual(exported.bytes.slice(0,2),[0x50,0x4b]);
+         if(width===1440&&role==='ADMIN')fs.writeFileSync(path.join(temporary,'export.xlsx'),Buffer.from(exported.bytes));
+        }
         await navigate('/admin/'+role.toLowerCase()+'/orders');await snapshot('live-'+role+'-'+width);
         console.log('PASS authenticated '+role+' pages and role navigation at '+width+'px using isolated RPC fixtures');
       }

@@ -26,6 +26,20 @@ globalThis.fetch=async(input,options)=>{
   // One order per WhatsApp message template (Admin Orders).
   const fixtureOrders=["CONFIRMED","OUT_FOR_DELIVERY","READY","DELIVERED","CANCELLED"].map((status,i)=>({id:'00000000-0000-4000-8000-00000000002'+i,order_number:'TFM-99910'+i,status,fulfillment_method:status==="READY"?"STORE_PICKUP":"HOME_DELIVERY",total_paise:45000+i*100,version:1,created_at:'2026-10-0'+(i+1)+'T06:00:00Z',fulfillment_snapshot:{name:'Test Customer '+i,mobileE164:'+9199999000'+i,address:{line1:'Flat '+i+' Test Street',locality:'Kokapet',city:'Hyderabad',pincode:'500075'}}}));
   if(url.endsWith("/order_queue_page")){const status=JSON.parse(options.body).status_filter;return Response.json(status?fixtureOrders.filter(o=>o.status===status):fixtureOrders);}
+  // Mirrors api.sales_report: ADMIN/OWNER only; one row per day in the inclusive range.
+  if(url.endsWith("/sales_report")){
+   if(role==="EMPLOYEE")return Response.json({code:"42501",message:"Forbidden"},{status:403});
+   const {from_day,until_day}=JSON.parse(options.body),daily=[];
+   for(let t=Date.parse(from_day+"T00:00:00Z"),i=0;t<=Date.parse(until_day+"T00:00:00Z");t+=86400000,i++)daily.push({day:new Date(t).toISOString().slice(0,10),orders:i%4,revenuePaise:(i%4)*86500+(i%3)*12000});
+   return Response.json({from:from_day,until:until_day,daily,summary:{orders:9,revenuePaise:778500,discountPaise:26500,deliveryFeePaise:24000,cancelled:2,cancelledPaise:197500},
+    products:[{name:"Free Range Brown Eggs",category:"EGGS",grams:0,packs:3,trays:true,orders:3,revenuePaise:135000},{name:"Seabass / Pandugappa",category:"SEAFOOD",grams:2500,packs:0,trays:false,orders:2,revenuePaise:200000},{name:"Bombay Duck",category:"SEAFOOD",grams:1000,packs:0,trays:false,orders:1,revenuePaise:40000}],
+    categories:[{name:"SEAFOOD",grams:3500,packs:0,orders:3,revenuePaise:240000},{name:"EGGS",grams:0,packs:3,orders:3,revenuePaise:135000}],
+    payments:[{method:"CASH",orders:6,collectedPaise:85000,pendingPaise:256500,refundedPaise:0},{method:"UPI",orders:3,collectedPaise:350000,pendingPaise:91000,refundedPaise:5000}],
+    fulfilment:[{method:"HOME_DELIVERY",orders:7,revenuePaise:690000,deliveryFeePaise:24000},{method:"STORE_PICKUP",orders:2,revenuePaise:88500,deliveryFeePaise:0}],
+    coupons:[{code:"SAVE10",title:"Flat 10% off on selected products",uses:2,discountPaise:26500,revenuePaise:248500}],
+    cancellations:[{orderNumber:"TFM-999104",placedAt:"2026-10-03T17:50:10Z",cancelledAt:"2026-10-06T00:33:53Z",amountPaise:22500,reason:"Customer asked to cancel after a very long wait for delivery",by:"Isolated OWNER",role:"OWNER"}],
+    cash:[{day:from_day,staff:"Isolated ADMIN",collections:2,receivedPaise:85000,refundedPaise:0},{day:from_day,staff:"Isolated EMPLOYEE",collections:1,receivedPaise:42000,refundedPaise:2000}]});
+  }
   // Mirrors api.admin_dashboard: EMPLOYEE gets counts and slots only, never money.
   if(url.endsWith("/admin_dashboard")){
    const counts={needsAction:{PLACED:3,CONFIRMED:1,PREPARING:2,READY:0,OUT_FOR_DELIVERY:1},slots:[{slot:"MORNING",delivery:4,pickup:1,open:2},{slot:"AFTERNOON",delivery:2,pickup:0,open:2},{slot:"EVENING",delivery:0,pickup:0,open:0}]};
