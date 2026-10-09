@@ -7,6 +7,8 @@ import { currentOffers } from "@/lib/offers";
 import { formatMoney } from "@/lib/format";
 import { storefrontInfo, storeAddress, hoursLines, phoneDigits } from "@/lib/storefront-info";
 import type { FooterStore } from "@/components/layout/footer";
+import { linkPreview } from "@/lib/homepage-text-server";
+import { defaultLinkPreview, shareImageUrl } from "@/lib/link-preview";
 
 
 import "./globals.css";
@@ -29,13 +31,22 @@ const headingFont = localFont({
   ], variable: "--font-heading", display: "swap",
 });
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = {
-  // Absolute URLs for shared links (Open Graph image); set NEXT_PUBLIC_SITE_URL to the live site address.
-  metadataBase: process.env.NEXT_PUBLIC_SITE_URL ? new URL(process.env.NEXT_PUBLIC_SITE_URL) : undefined,
-  title: { default: "TRAIT Fish & Meat Hub | Fresh, Your Way", template: "%s | TRAIT Fish & Meat Hub" },
-  description: "Fresh fish, seafood, chicken, mutton and eggs from TRAIT Fish & Meat Hub, Kokapet, Hyderabad. Choose your weight and cut; home delivery or store pickup.",
-  openGraph: { type: "website", siteName: "TRAIT Fish & Meat Hub", locale: "en_IN", title: "TRAIT Fish & Meat Hub | Fresh, Your Way", description: "Fresh fish, seafood, chicken, mutton and eggs, cleaned and cut your way. Home delivery or store pickup in Hyderabad." },
-};
+// Shared-link preview: Settings → Link preview (title, description, 1200×630 image), or the built-in preview.
+// The image is always set here, not via an app/opengraph-image file, because file-based metadata would override it.
+export async function generateMetadata(): Promise<Metadata> {
+  const saved = await linkPreview();
+  const title = saved.title ?? defaultLinkPreview.title, description = saved.description ?? defaultLinkPreview.description;
+  const custom = saved.imagePath ? shareImageUrl(saved.imagePath, saved.version) : null;
+  const image = custom ? { url: custom, width: 1200, height: 630, alt: title, type: "image/jpeg" } : defaultLinkPreview.image;
+  return {
+    // Absolute URLs for shared links (Open Graph image); set NEXT_PUBLIC_SITE_URL to the live site address.
+    metadataBase: process.env.NEXT_PUBLIC_SITE_URL ? new URL(process.env.NEXT_PUBLIC_SITE_URL) : undefined,
+    title: { default: "TRAIT Fish & Meat Hub | Fresh, Your Way", template: "%s | TRAIT Fish & Meat Hub" },
+    description: "Fresh fish, seafood, chicken, mutton and eggs from TRAIT Fish & Meat Hub, Kokapet, Hyderabad. Choose your weight and cut; home delivery or store pickup.",
+    openGraph: { type: "website", siteName: "TRAIT Fish & Meat Hub", locale: "en_IN", title, description, images: [image] },
+    twitter: { card: "summary_large_image", title, description, images: [image] },
+  };
+}
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   let categories: ShopCategory[] = [];
   try { categories = shopCategories(await liveCatalogue()); } catch { /* Navigation shows "All" only while the catalogue is unavailable. */ }

@@ -23,7 +23,7 @@ const state={cookie:"test-token",role:"OWNER",active:true,calls:[],authValid:tru
 const cookieUrl=moduleUrl("export async function cookies(){return globalThis.__staffTestCookies;}");
 globalThis.__staffTestCookies={get:()=>state.cookie?{value:state.cookie}:undefined,set:(name,value,options)=>{state.cookie=value;state.cookieOptions=options;},delete:()=>{state.cookie=null;}};
 const serverSource=readFileSync(new URL("../src/lib/admin/server.ts",import.meta.url),"utf8")
- .replace('import "server-only";','').replace('"next/headers"',JSON.stringify(cookieUrl)).replace('"./permissions"',JSON.stringify(permissionsUrl));
+ .replace('import "server-only";','').replace('"next/headers"',JSON.stringify(cookieUrl)).replace('"./permissions"',JSON.stringify(permissionsUrl)).replace('"../share-image"',JSON.stringify(moduleUrl(readFileSync(new URL("../src/lib/share-image.ts",import.meta.url),"utf8"))));
 const serverUrl=moduleUrl(serverSource);
 const server=await import(serverUrl);
 const navUrl=moduleUrl('export function redirect(path){throw new Error("REDIRECT:"+path);}');

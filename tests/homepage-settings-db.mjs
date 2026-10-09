@@ -43,7 +43,30 @@ const audit=(await query("select actor_id,context from app.audit_logs where acti
 assert.equal(audit.length,3);assert.equal(audit[0].actor_id,id(21));assert.deepEqual(audit[0].context.fields,['badge','headline','highlight']);
 for(const role of ['anon','authenticated','service_role','trait_checkout'])assert.equal(await value("select has_table_privilege($1,'app.store_homepage_text','SELECT,INSERT,UPDATE,DELETE') as value",[role]),false);
 assert.equal(await value("select relrowsecurity and relforcerowsecurity as value from pg_class where oid='app.store_homepage_text'::regclass"),true);
+// Link preview.
+const hash="b".repeat(64);
+const savePreview=(actor,version,title,description,image)=>as(actor,"select api.save_link_preview($1,$2,$3,$4,$5) as value",[id(10),version,title,description,image]);
+const preview=()=>as(null,"select api.link_preview($1) as value",[id(10)],"anon");
+assert.deepEqual(await preview(),{});
+assert.deepEqual(await as(21,"select api.link_preview_settings($1) as value",[id(10)]),{version:0});
+assert.equal(await savePreview(21,0,"Fresh fish today","Cleaned and cut your way",id(1)+"/"+hash+".jpg"),1);
+assert.deepEqual(await preview(),{title:"Fresh fish today",description:"Cleaned and cut your way",imagePath:id(1)+"/"+hash+".jpg",version:1});
+assert.equal(await savePreview(20,1,null,null,null),2);
+assert.deepEqual(await preview(),{version:2});
+await assert.rejects(()=>savePreview(21,1,"Stale",null,null),e=>e.code==="40001");
+for(const [t,d,img] of [["<b>",null,null],["x".repeat(71),null,null],[null,"y".repeat(201),null],[" pad",null,null],[null,null,id(2)+"/"+hash+".jpg"],[null,null,id(1)+"/"+hash+".webp"],[null,null,id(1)+"/../x.jpg"]])
+ await assert.rejects(()=>savePreview(21,2,t,d,img),e=>e.code==="22023");
+for(const actor of [22,23]){await assert.rejects(()=>savePreview(actor,2,"No",null,null),e=>e.code==="42501");await assert.rejects(()=>as(actor,"select api.link_preview_settings($1) as value",[id(10)]),e=>e.code==="42501");}
+await assert.rejects(()=>as(null,"select api.save_link_preview($1,$2,$3,$4,$5) as value",[id(10),2,"x",null,null],"anon"),/permission denied/);
+const can=(actor,name)=>as(actor,"select api.can_upload_share_image($1) as value",[name]);
+assert.equal(await can(20,id(1)+"/"+hash+".jpg"),true);assert.equal(await can(21,id(1)+"/"+hash+".jpg"),true);
+assert.equal(await can(22,id(1)+"/"+hash+".jpg"),false);assert.equal(await can(23,id(1)+"/"+hash+".jpg"),false);assert.equal(await can(21,id(1)+"/"+hash+".png"),false);
+assert.equal((await query("select count(*)::int as n from app.audit_logs where action='LINK_PREVIEW_SAVED'")).rows[0].n,2);
+for(const role of ["anon","authenticated","service_role","trait_checkout"])assert.equal(await value("select has_table_privilege($1,'app.store_link_preview','SELECT,INSERT,UPDATE,DELETE') as value",[role]),false);
+assert.equal(await value("select relrowsecurity and relforcerowsecurity as value from pg_class where oid='app.store_link_preview'::regclass"),true);
+console.log("PASS link preview: ADMIN/OWNER audited saves, plain text limits, own-business JPEG only, upload check, closed table");
 await query('update app.stores set is_active=false where id=$1',[id(10)]);
 assert.deepEqual(await published(),{});
-console.log('PASS audited saves, table closed with forced RLS, inactive store publishes nothing');
+assert.deepEqual(await preview(),{});
+console.log("PASS audited saves, tables closed with forced RLS, inactive store publishes nothing");
 await db.close();

@@ -1,6 +1,7 @@
 import "server-only";
 import { cookies } from "next/headers";
 import { createHash } from "node:crypto";
+import { validShareJpeg } from "../share-image";
 import { staffRoles, type StaffRole, type StaffSection, canAccessSection } from "./permissions";
 export type StaffContext = { id: string; businessId: string; role: StaffRole; name: string; stores: { id: string; name: string }[] };
 export const sessionCookie = "trait_staff_access";
@@ -97,4 +98,15 @@ export async function uploadProductImage(token: string, businessId: string, prod
  const duplicate = response.status === 409 || (!response.ok && String((await response.clone().json().catch(() => ({}))).statusCode) === "409");
  if (!response.ok && !duplicate) throw new Error("Photo upload is not available. Check the product image storage setup.");
  await staffRpc(token, "save_product_image", { target_id: null, product: productId, local_asset: null, bucket: "product-images", object_path: path, alternate_text: alt, primary_image: true, active: true, display_order: 0 });
+}
+/** Stores at share-images/{business}/{sha256}.jpg and returns the path. Storage policies allow only ADMIN and OWNER, under their own business. */
+export async function uploadShareImage(token: string, businessId: string, bytes: Uint8Array) {
+ if (!validShareJpeg(bytes)) throw new Error("The share image must be a 1200×630 JPEG of at most 300 KB.");
+ const {url,key} = config();
+ const path = businessId + "/" + createHash("sha256").update(bytes).digest("hex") + ".jpg";
+ const response = await fetch(url + "/storage/v1/object/share-images/" + path, { method: "POST", cache: "no-store", signal: AbortSignal.timeout(30000), headers: { apikey: key, Authorization: "Bearer " + token, "Content-Type": "image/jpeg", "x-upsert": "false" }, body: Buffer.from(bytes) });
+ // A 409 means identical bytes were already uploaded for this business.
+ const duplicate = response.status === 409 || (!response.ok && String((await response.clone().json().catch(() => ({}))).statusCode) === "409");
+ if (!response.ok && !duplicate) throw new Error("Image upload is not available. Check the share image storage setup.");
+ return path;
 }
