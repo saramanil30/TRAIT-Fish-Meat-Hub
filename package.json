@@ -27,7 +27,8 @@
     "test:delivery-areas-db": "node tests/delivery-areas-db.mjs",
     "test:order-lookup-db": "node tests/order-lookup-db.mjs",
     "test:stock-db": "node tests/stock-db.mjs",
-    "test:offer-conditions-db": "node tests/offer-conditions-db.mjs"
+    "test:offer-conditions-db": "node tests/offer-conditions-db.mjs",
+    "test:homepage-text-db": "node tests/homepage-text-db.mjs"
   },
   "dependencies": {
     "next": "16.3.5",
