@@ -20,4 +20,4 @@ Settings → **Link preview** (ADMIN and OWNER): a share image (JPG, exactly 120
 
 Settings → **Share to WhatsApp**: pick a photo, edit the message (the site link is added), then the phone's share sheet opens (Web Share API with files). Where photos can't be shared it shares the message and link only, or opens WhatsApp (`wa.me`) when there is no share sheet.
 
-Migration: `supabase/migrations/20261009010000_homepage_text_link_preview.sql`. Tests: `npm run test:homepage-settings-db`, `tests/share-image.test.mjs` (in `npm test`).
+Migrations: `supabase/migrations/20261009010000_homepage_text.sql` (homepage text), `supabase/migrations/20261009020000_link_preview.sql` (link preview). Tests: `npm run test:homepage-settings-db`, `tests/share-image.test.mjs` (in `npm test`).
