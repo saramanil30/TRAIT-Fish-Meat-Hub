@@ -1313,3 +1313,28 @@ main.storefront :is(.product-card, .order-panel, .cart-items, .cart-summary, .em
 .hero-preview .hero-title { font-family:var(--font-heading),Impact,sans-serif; font-weight:700; font-size:clamp(26px,2.6vw,40px); line-height:1.17; margin-bottom:16px; letter-spacing:.01em; text-transform:uppercase; overflow-wrap:anywhere; }
 .hero-preview .hero-title em { font-style:normal; color:#ffb4ab; }
 .hero .hero-copy, .hero-feature>div { overflow-wrap:anywhere; }
+/* Checkout: delivery / pickup slot — day tabs, then slot cards; closed or full slots are greyed and cannot be chosen. */
+.slot-picker { border:0; padding:0; margin:24px 0 0; min-width:0; }
+.slot-picker:focus { outline:none; }
+.slot-picker legend { margin-bottom:14px; }
+.slot-days { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin-bottom:12px; }
+.slot-day { display:grid; gap:2px; justify-items:center; min-height:56px; padding:8px 6px; border:1px solid var(--border); border-radius:10px; background:white; color:var(--text-primary); cursor:pointer; font:inherit; }
+.slot-day strong { font-size:14px; }
+.slot-day small { font-size:11px; color:var(--text-secondary); }
+.slot-day[aria-pressed=true] { background:var(--charcoal); border-color:var(--charcoal); color:white; }
+.slot-day[aria-pressed=true] small { color:rgba(255,255,255,.8); }
+.slot-day:focus-visible { outline:3px solid var(--brand-red-dark); outline-offset:2px; }
+.slot-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; }
+.slot-card { position:relative; display:grid; gap:2px; min-height:76px; padding:12px 14px; border:1px solid transparent; border-radius:10px; background:var(--surface); cursor:pointer; }
+.slot-card input { position:absolute; inset:0; width:100%; height:100%; margin:0; opacity:0; cursor:pointer; }
+.slot-card .slot-name { font-weight:700; font-size:15px; }
+.slot-card .slot-time { font-size:14px; }
+.slot-card small { font-size:12px; color:var(--text-secondary); }
+.slot-card:has(input:checked) { background:var(--brand-red-light); border-color:var(--brand-red); }
+.slot-card:has(input:focus-visible) { outline:3px solid var(--brand-red-dark); outline-offset:2px; }
+.slot-card.is-unavailable { opacity:.55; cursor:not-allowed; background:#f1f1f1; }
+.slot-card.is-unavailable input { cursor:not-allowed; }
+.slot-card.is-unavailable .slot-time { text-decoration:line-through; }
+.slot-picker[aria-invalid=true] .slot-cards { outline:2px solid var(--brand-red); outline-offset:4px; border-radius:10px; }
+.slot-picker .cart-error { margin-top:10px; }
+.order-slot { font-weight:700; }

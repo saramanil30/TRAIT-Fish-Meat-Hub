@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
-    "test": "node --test tests/cart.test.mjs tests/order.test.mjs tests/admin-access.test.mjs tests/checkout-integration.test.mjs tests/share-image.test.mjs tests/sales-report.test.mjs",
+    "test": "node --test tests/cart.test.mjs tests/order.test.mjs tests/admin-access.test.mjs tests/checkout-integration.test.mjs tests/share-image.test.mjs tests/sales-report.test.mjs tests/delivery-slots.test.mjs",
     "test:checkout-browser": "node tests/checkout-browser.mjs",
     "test:cart": "node --test tests/cart.test.mjs",
     "test:cart-browser": "node tests/cart-browser.mjs",
@@ -27,6 +27,7 @@
     "test:delivery-areas-db": "node tests/delivery-areas-db.mjs",
     "test:order-lookup-db": "node tests/order-lookup-db.mjs",
     "test:stock-db": "node tests/stock-db.mjs",
+    "test:delivery-slots-db": "node tests/delivery-slots-db.mjs",
     "test:offer-conditions-db": "node tests/offer-conditions-db.mjs",
     "test:homepage-settings-db": "node tests/homepage-settings-db.mjs"
   },

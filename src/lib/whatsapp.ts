@@ -10,19 +10,20 @@ export function whatsappLink(e164: string, text?: string): string {
   return "https://wa.me/" + e164.replace(/\D/g, "") + (text ? "?text=" + encodeURIComponent(text) : "");
 }
 
-type StatusOrder = { name?: string; number: string; totalPaise: number; status: string; pickup: boolean; site: string };
+type StatusOrder = { name?: string; number: string; totalPaise: number; status: string; pickup: boolean; site: string; slot?: string };
 /** Staff → customer: a message for the order's current status. */
 export function customerStatusMessage(o: StatusOrder): string {
   const hi = "Hi" + (o.name ? " " + o.name : "") + ", your TRAIT order " + o.number + " (" + formatMoney(o.totalPaise) + ")";
   const track = " Track with your mobile: " + o.site + "/track-order";
+  const when = o.slot ? " for " + o.slot : "";
   switch (o.status) {
-    case "CONFIRMED": return hi + " is confirmed. We are preparing it fresh for you." + track;
+    case "CONFIRMED": return hi + " is confirmed" + when + ". We are preparing it fresh for you." + track;
     case "OUT_FOR_DELIVERY": return hi + " is out for delivery. Please keep your phone handy." + track;
     case "READY": return o.pickup ? hi + " is ready for pickup. Please bring your order number to the store." + track : hi + " is packed and will be out for delivery soon." + track;
     case "DELIVERED": return hi + (o.pickup ? " has been picked up." : " has been delivered.") + " Thank you for shopping with TRAIT!";
     case "CANCELLED": return hi + " has been cancelled. Reply here if you have any questions.";
     case "PREPARING": return hi + " is being cleaned and cut your way." + track;
-    default: return hi + " has been received. We will confirm it shortly." + track;
+    default: return hi + " has been received" + when + ". We will confirm it shortly." + track;
   }
 }
 
@@ -30,7 +31,7 @@ export function customerStatusMessage(o: StatusOrder): string {
 export type ShopOrderDetails = { items: string[]; address?: string };
 /** sessionStorage key: checkout saves the details here just before opening the confirmation page. */
 export const shopOrderKey = (trackingToken: string) => "trait-wa-order:" + trackingToken;
-type ShopOrder = ShopOrderDetails & { number: string; totalPaise?: number; pickup: boolean };
+type ShopOrder = ShopOrderDetails & { number: string; totalPaise?: number; pickup: boolean; slot?: string };
 /** Customer → shop: the placed order, so the shop has it in WhatsApp. */
 export function orderToShopMessage(o: ShopOrder): string {
   return ["Hi TRAIT, I just placed order " + o.number + ".",
@@ -38,5 +39,6 @@ export function orderToShopMessage(o: ShopOrder): string {
     "",
     ...(o.totalPaise !== undefined ? ["Total: " + formatMoney(o.totalPaise)] : []),
     o.pickup ? "Store pickup" : "Home delivery" + (o.address ? " to: " + o.address : ""),
+    ...(o.slot ? [(o.pickup ? "Pickup" : "Delivery") + " slot: " + o.slot] : []),
   ].join("\n");
 }

@@ -16,6 +16,7 @@ import { appliedCoupon, type CartOffer } from "@/lib/cart-offer";
 import { useCoupon } from "@/lib/coupon-store";
 import { quantityOptionText } from "@/lib/pricing";
 import { shopOrderKey, type ShopOrderDetails } from "@/lib/whatsapp";
+import { slotDate, slotDayName, slotLabel, slotRange, slotTime, type SlotDay } from "@/lib/delivery-slots";
 
 const fields = [
   { key: "name", label: "Customer Name", autoComplete: "name", max: 80 },
@@ -27,7 +28,7 @@ const fields = [
   { key: "state", label: "State", autoComplete: "address-level1", max: 120 },
   { key: "pincode", label: "Pincode", autoComplete: "postal-code", max: 6 },
 ] as const;
-export function CheckoutContent({ buyNow = false, deliveryFeePaise = null, feeVaries = false, offers = [] }: { buyNow?: boolean; deliveryFeePaise?: number | null; feeVaries?: boolean; offers?: readonly CartOffer[] }) {
+export function CheckoutContent({ buyNow = false, deliveryFeePaise = null, feeVaries = false, offers = [], slotDays = [] }: { buyNow?: boolean; deliveryFeePaise?: number | null; feeVaries?: boolean; offers?: readonly CartOffer[]; slotDays?: readonly SlotDay[] }) {
   const cart = useCart();
   const buyNowItems = useBuyNow();
   // Buy now checks out only its own item; the cart is left as it was.
@@ -45,6 +46,12 @@ export function CheckoutContent({ buyNow = false, deliveryFeePaise = null, feeVa
   const [saving, setSaving] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
   const submitting = useRef(false);
+  // A saved choice counts only while that slot is still open; the server re-checks cutoff and capacity.
+  const slotDay = slotDays.find(d => d.date === draft.slotDate);
+  const chosenSlot = slotDay?.slots.find(s => s.id === draft.slotId && s.status === "open");
+  const [shownDate, setShownDate] = useState(() => (chosenSlot && slotDay?.date) || slotDays.find(d => d.slots.some(s => s.status === "open"))?.date || slotDays[0]?.date || "");
+  const shownDay = slotDays.find(d => d.date === shownDate) ?? slotDays[0];
+  const details: CheckoutDetails = { ...draft, slotId: chosenSlot?.id, slotDate: chosenSlot ? draft.slotDate : undefined };
   const title = useRef<HTMLHeadingElement>(null);
   // Before review, the applied coupon is estimated in the browser; the review step shows the server's recalculated quote.
   function withCoupon(totals: OrderTotals): OrderTotals {
@@ -61,19 +68,24 @@ export function CheckoutContent({ buyNow = false, deliveryFeePaise = null, feeVa
     saveCheckoutDraft({ ...draft, [key]: value });
     setErrors({}); setError(""); setQuote(undefined); setReview(false);
   }
+  function chooseSlot(date: string, id: string) {
+    saveCheckoutDraft({ ...draft, slotDate: date, slotId: id });
+    setErrors({}); setError(""); setQuote(undefined); setReview(false);
+  }
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (submitting.current) return;
-    const invalid = validateCheckout(draft);
+    const invalid = validateCheckout(details);
+    if (slotDays.length && !chosenSlot) invalid.slotId = "Choose a " + (draft.deliveryMethod === "pickup" ? "pickup" : "delivery") + " slot.";
     setErrors(invalid); setError("");
     if (Object.keys(invalid).length) {
       setReview(false);
-      requestAnimationFrame(() => document.getElementById("checkout-" + Object.keys(invalid)[0])?.focus());
+      requestAnimationFrame(() => document.getElementById("checkout-" + (invalid.slotId ? "slotId" : Object.keys(invalid)[0]))?.focus());
       return;
     }
     if (!review) {
       submitting.current=true; setSaving(true);
-      try {const result=await reviewCheckout(items,draft,applied?applied.offer.code:null);if(!result.quote){setError(result.error??"Quote unavailable.");return;}setQuote(result.quote);setReviewedCart(serializeCart(items));setReview(true);focusTitle();}
+      try {const result=await reviewCheckout(items,details,applied?applied.offer.code:null);if(!result.quote){setError(result.error??"Quote unavailable.");return;}setQuote(result.quote);setReviewedCart(serializeCart(items));setReview(true);focusTitle();}
       catch {setError("Connection interrupted. Please try reviewing your order again.");}
       finally {submitting.current=false;setSaving(false);}
       return;
@@ -115,9 +127,17 @@ export function CheckoutContent({ buyNow = false, deliveryFeePaise = null, feeVa
     <div className={(review ? "checkout-layout checkout-review" : "checkout-layout") + (summaryOpen ? " summary-open" : "")}><form id="checkout-form" noValidate onSubmit={submit} className="checkout-form"><fieldset disabled={saving} style={{border:0,padding:0,minWidth:0}}>
       {error && <p role="alert" className="cart-error">{error}</p>}
       {Object.keys(errors).length > 0 && <p role="alert" className="cart-error">Please correct the highlighted fields.</p>}
-      {review ? <section className="order-panel"><h2>Ready for a final look?</h2><CustomerDetails customer={draft} /><p className="field-help">Please review the current prices and delivery charge.</p><button className="plain-button" type="button" onClick={() => { setReview(false); focusTitle(); }}>Edit details</button></section> : <><section className="order-panel checkout-details-panel">
+      {review ? <section className="order-panel"><h2>Ready for a final look?</h2><CustomerDetails customer={draft} slot={chosenSlot && draft.slotDate ? slotLabel({ ...chosenSlot, date: draft.slotDate }) : undefined} /><p className="field-help">Please review the current prices and delivery charge.</p><button className="plain-button" type="button" onClick={() => { setReview(false); focusTitle(); }}>Edit details</button></section> : <><section className="order-panel checkout-details-panel">
         <fieldset><legend><span className="section-number">1</span> Delivery method</legend><div className="checkout-options">{([ ["delivery", "Home Delivery"], ["pickup", "Store Pickup"] ] as const).map(([value, label]) => <label className="choice" key={value}><input type="radio" name="deliveryMethod" value={value} checked={draft.deliveryMethod === value} onChange={() => change("deliveryMethod", value)} />{label}</label>)}</div></fieldset>
-        <h2><span className="section-number">2</span> Your details</h2><p className="field-help">Fields marked * are required.</p>
+        {shownDay && <fieldset className="slot-picker" id="checkout-slotId" tabIndex={-1} aria-invalid={!!errors.slotId} aria-describedby={errors.slotId ? "error-slotId" : undefined}><legend><span className="section-number">2</span> {draft.deliveryMethod === "pickup" ? "Pickup" : "Delivery"} time</legend>
+          <div className="slot-days" role="group" aria-label="Day">{slotDays.map(d => { const free = d.slots.some(s => s.status === "open"); return <button type="button" key={d.date} className="slot-day" aria-pressed={d.date === shownDay.date} onClick={() => setShownDate(d.date)}><strong>{slotDayName(d.date)}</strong><small>{free ? slotDate(d.date).replace(/^\w+, /, "") : "No slots left"}</small></button>; })}</div>
+          <div className="slot-cards">{shownDay.slots.map(s => { const open = s.status === "open"; const today = slotDayName(shownDay.date) === "Today"; return <label key={s.id} className={"slot-card" + (open ? "" : " is-unavailable")}>
+            <input type="radio" name="slot" value={s.id} disabled={!open} checked={open && chosenSlot?.id === s.id && draft.slotDate === shownDay.date} onChange={() => chooseSlot(shownDay.date, s.id)} />
+            <span className="slot-name">{s.name}</span><span className="slot-time">{slotRange(s.startsAt, s.endsAt)}</span>
+            <small>{s.status === "full" ? "Full" : s.status === "closed" ? "Closed" : today ? "Order by " + slotTime(s.cutoffAt) : "Available"}</small></label>; })}</div>
+          {errors.slotId && <p className="cart-error" id="error-slotId">{errors.slotId}</p>}
+        </fieldset>}
+        <h2><span className="section-number">{shownDay ? 3 : 2}</span> Your details</h2><p className="field-help">Fields marked * are required.</p>
         <div className="checkout-fields">{fields.filter(field => draft.deliveryMethod === "delivery" || ["name", "mobile"].includes(field.key)).map(field => field.key === "city" || field.key === "state" ? <div key={field.key}>
           <label htmlFor={"checkout-" + field.key}>{field.label}</label>
           <input id={"checkout-" + field.key} name={field.key} type="text" value={field.key === "city" ? SERVICE_CITY : SERVICE_STATE} readOnly aria-readonly="true" className="checkout-fixed" />
@@ -127,7 +147,7 @@ export function CheckoutContent({ buyNow = false, deliveryFeePaise = null, feeVa
           {errors[field.key] && <p className="cart-error" id={"error-" + field.key}>{errors[field.key]}</p>}
         </div>)}</div>
         {draft.deliveryMethod === "pickup" && <p className="field-help">No delivery address is needed. See our delivery and pickup page for the store location and opening hours.</p>}
-        </section><fieldset className="order-panel payment-panel"><legend><span className="section-number">3</span> Payment method</legend><div className="checkout-options">{([ ["cash", draft.deliveryMethod === "pickup" ? "Cash at pickup" : "Cash on Delivery"], ["upi", "UPI at delivery / pickup"] ] as const).map(([value, label]) => <label className="choice" key={value}><input type="radio" name="paymentMethod" value={value} checked={draft.paymentMethod === value} onChange={() => change("paymentMethod", value)} />{label}</label>)}</div><p className="field-help">Pay by cash or UPI when you receive your order at delivery or pickup.</p></fieldset>
+        </section><fieldset className="order-panel payment-panel"><legend><span className="section-number">{shownDay ? 4 : 3}</span> Payment method</legend><div className="checkout-options">{([ ["cash", draft.deliveryMethod === "pickup" ? "Cash at pickup" : "Cash on Delivery"], ["upi", "UPI at delivery / pickup"] ] as const).map(([value, label]) => <label className="choice" key={value}><input type="radio" name="paymentMethod" value={value} checked={draft.paymentMethod === value} onChange={() => change("paymentMethod", value)} />{label}</label>)}</div><p className="field-help">Pay by cash or UPI when you receive your order at delivery or pickup.</p></fieldset>
       </>}
     </fieldset></form><OrderSummary id="checkout-summary" deliveryConfirmed={!!quote && review} pickup={draft.deliveryMethod === "pickup"} feeVaries={feeVaries} editable={!buyNow} items={quote && review ? items.map((item,i)=>({...item,...quote.lines[i]})) : items} totals={totals} coupon={<CouponPicker offers={offers} items={items} applied={applied} onChange={() => { setError(""); setQuote(undefined); setReview(false); }} />}
       action={<><button type="submit" form="checkout-form" className="button primary checkout-submit" disabled={saving || !items.length}>{actionLabel}</button>{error && <p className="cart-error checkout-action-error">{error}</p>}</>} /></div>

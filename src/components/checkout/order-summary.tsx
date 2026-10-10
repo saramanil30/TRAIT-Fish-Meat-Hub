@@ -27,6 +27,6 @@ export function OrderSummary({ items, totals, editable = false, deliveryConfirme
     <p className="field-help">Cleaning estimates are approximate, not guaranteed delivered weights.</p>
   </section>;
 }
-export function CustomerDetails({ customer }: { customer: CheckoutDetails }) {
-  return <dl className="customer-details"><div><dt>Customer</dt><dd>{customer.name}<br />{customer.mobile}</dd></div><div><dt>{customer.deliveryMethod === "delivery" ? "Home Delivery" : "Store Pickup"}</dt><dd>{customer.deliveryMethod === "delivery" ? <>{customer.address}<br />{customer.locality}, {SERVICE_CITY}, {SERVICE_STATE} {customer.pincode}{customer.landmark && <><br />Landmark: {customer.landmark}</>}</> : "Store Pickup"}</dd></div><div><dt>Payment method</dt><dd>{customer.paymentMethod === "cash" ? "Cash" : "UPI"} at {customer.deliveryMethod === "pickup" ? "pickup" : "delivery"}</dd></div></dl>;
+export function CustomerDetails({ customer, slot }: { customer: CheckoutDetails; slot?: string }) {
+  return <dl className="customer-details"><div><dt>Customer</dt><dd>{customer.name}<br />{customer.mobile}</dd></div>{slot && <div><dt>{customer.deliveryMethod === "delivery" ? "Delivery slot" : "Pickup slot"}</dt><dd>{slot}</dd></div>}<div><dt>{customer.deliveryMethod === "delivery" ? "Home Delivery" : "Store Pickup"}</dt><dd>{customer.deliveryMethod === "delivery" ? <>{customer.address}<br />{customer.locality}, {SERVICE_CITY}, {SERVICE_STATE} {customer.pincode}{customer.landmark && <><br />Landmark: {customer.landmark}</>}</> : "Store Pickup"}</dd></div><div><dt>Payment method</dt><dd>{customer.paymentMethod === "cash" ? "Cash" : "UPI"} at {customer.deliveryMethod === "pickup" ? "pickup" : "delivery"}</dd></div></dl>;
 }

@@ -60,9 +60,9 @@ export async function saveDailyProduct(_state: ActionState,form: FormData): Prom
   if (!Number.isSafeInteger(version)||version<1) throw new Error("Reload the product.");
   const stockVersion=Number(text(form,"stockVersion"));
   if (!Number.isSafeInteger(stockVersion)||stockVersion<0) throw new Error("Reload the product.");
-  // One transaction: price and availability, then stock (blank = unlimited).
+  // One transaction: price and availability, then stock: the physical count in the shop (blank = unlimited).
   await staffRpc(token,"save_daily_product",{offering:uuid(text(form,"id")),expected_version:version,price_paise:parseDailyPrice(text(form,"price")),is_available:boolean(form,"available"),expected_stock_version:stockVersion,stock:parseStock(text(form,"stock"),text(form,"weighed")==="true")});
-  revalidatePath("/admin","layout"); return {success:"Price, availability and stock saved."};
+  revalidatePath("/admin","layout"); return {success:"Saved. Available = in shop − reserved."};
  } catch(error) { return {error:error instanceof Error ? error.message : "Unable to save."}; }
 }
 export async function saveMaster(_state: ActionState,form: FormData): Promise<ActionState> {

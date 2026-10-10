@@ -14,6 +14,9 @@ export interface CheckoutDetails {
   pincode: string;
   city?: string;
   state?: string;
+  /** Chosen delivery/pickup slot and its India date; absent when the store has no slots. */
+  slotId?: string;
+  slotDate?: string;
 }
 export type CheckoutErrors = Partial<Record<keyof CheckoutDetails, string>>;
 export interface OrderTotals {

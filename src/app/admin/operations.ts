@@ -11,7 +11,7 @@ const rupees=(f:FormData,k:string)=>rupeesToPaise(text(f,k));
 export async function operationalAction(_:ActionState,f:FormData):Promise<ActionState>{
  try{
   const kind=text(f,"operation");
-  const {token}=await requireStaff(["policy","delivery"].includes(kind)?"settings":["provision","staff-profile","recovery"].includes(kind)?"employees":["refund","cash-refund"].includes(kind)?"payments":"orders");
+  const {token}=await requireStaff(["policy","delivery","slot"].includes(kind)?"settings":["provision","staff-profile","recovery"].includes(kind)?"employees":["refund","cash-refund"].includes(kind)?"payments":"orders");
   if(kind==="status")await staffRpc(token,"transition_order",{target_order:id(f,"id"),expected_version:number(f,"version"),next_status:text(f,"status"),reason:text(f,"reason")||null});
   else if(kind==="cash")await staffRpc(token,"receive_cash",{target_payment:id(f,"id"),expected_version:number(f,"version")});
   else if(kind==="reference")await staffRpc(token,"submit_payment_reference",{target_payment:id(f,"id"),expected_version:number(f,"version"),reference:text(f,"reference")});
@@ -24,6 +24,11 @@ export async function operationalAction(_:ActionState,f:FormData):Promise<Action
    const existing=text(f,"id")?null:(await staffRpc<{id:string;pincode:string;version:number}[]>(token,"delivery_areas",{target_store:store})).find(a=>a.pincode===pincode);
    const target=text(f,"id")?{id:id(f,"id"),version:number(f,"version")}:existing?{id:existing.id,version:Number(existing.version)}:null;
    await staffRpc(token,"save_delivery_area",{target_id:target?.id??null,target_store:store,expected_version:target?.version??null,area_pincode:pincode,area_name:text(f,"name"),fee_paise:rupees(f,"fee"),minimum_paise:rupees(f,"minimum"),active:text(f,"active")==="true"});
+  }
+  else if(kind==="slot"){
+   // Times arrive as "HH:MM" from time inputs; api.save_delivery_slot checks ADMIN/OWNER, store access, order of times and capacity.
+   const hhmm=(k:string)=>{const v=text(f,k).slice(0,5);if(!/^([01]\d|2[0-3]):[0-5]\d$/.test(v))throw new Error("Invalid time");return v;};
+   await staffRpc(token,"save_delivery_slot",{target_store:id(f,"store"),target_slot:text(f,"id")?id(f,"id"):null,expected_version:number(f,"version"),slot_name:text(f,"name").replace(/\s+/g," ").trim(),starts:hhmm("starts"),ends:hhmm("ends"),cutoff:hhmm("cutoff"),capacity:number(f,"max"),active:text(f,"active")==="true"});
   }
   else if(kind==="staff-profile") await staffRpc(token,"save_staff_profile",{target_staff:id(f,"id"),expected_version:number(f,"version"),staff_name:text(f,"name"),store_ids:f.getAll("stores").map(String),active:text(f,"active")==="true"});
   else if(kind==="recovery"){

@@ -3,16 +3,21 @@ import { staffRpc, type StaffContext } from "@/lib/admin/server";
 import { formatDateTimeIST, formatMoney, formatWeight } from "@/lib/format";
 import { AutoRefresh } from "./auto-refresh";
 import { badge, statusText } from "./operations";
+import { slotDate, slotDayName, slotRange } from "@/lib/delivery-slots";
 type Totals={orders:number;revenuePaise:number;averagePaise:number;collectedPaise:number;cashCollectedPaise:number;pendingPaise:number};
-type Slot={slot:"MORNING"|"AFTERNOON"|"EVENING";delivery:number;pickup:number;open:number};
-type Dashboard={needsAction:Record<string,number>;slots:Slot[];summary?:{current:Totals;previous:Totals};
+/** Today's slot (id null = orders placed today without a slot). */
+type Slot={id:string|null;name:string|null;startsAt:string|null;endsAt:string|null;maxOrders:number|null;booked:number;delivery:number;pickup:number;open:number};
+type Prep={name:string;pricingBasis:string|null;unitsPerPack:number|null;quantity:number};
+type Scheduled={date:string;slotId:string;name:string;startsAt:string;endsAt:string;orders:number;delivery:number;pickup:number;products:Prep[]};
+type Dashboard={today?:string;needsAction:Record<string,number>;slots:Slot[];scheduled?:Scheduled[];summary?:{current:Totals;previous:Totals};
  lowStock?:{name:string;onHand:number;measure:"GRAMS"|"PACKS";pricingBasis:string}[];topProducts?:{name:string;orders:number;revenuePaise:number}[];
  recentOrders?:{id:string;order_number:string;status:string;fulfillment_method:string;total_paise:number;created_at:string;customer:string|null}[]};
 export const dashboardPeriods=["today","yesterday","7d","30d"] as const;
 type Period=typeof dashboardPeriods[number];
 const periodText:Record<Period,{label:string;versus:string}>={today:{label:"Today",versus:"vs same time yesterday"},yesterday:{label:"Yesterday",versus:"vs the day before"},"7d":{label:"7 days",versus:"vs previous 7 days"},"30d":{label:"30 days",versus:"vs previous 30 days"}};
 const openStatuses=["PLACED","CONFIRMED","PREPARING","READY","OUT_FOR_DELIVERY"];
-const slotText:Record<Slot["slot"],string>={MORNING:"Morning · before 12 pm",AFTERNOON:"Afternoon · 12–4 pm",EVENING:"Evening · after 4 pm"};
+/** What to prepare: weight for weighed items, else trays / units. */
+const prepText=(p:Prep)=>{const n=Number(p.quantity);return p.pricingBasis==="TRAY"?n+" tray"+(n===1?"":"s"):p.pricingBasis==="UNIT"?n+" unit"+(n===1?"":"s"):formatWeight(n);};
 const stockText=(s:NonNullable<Dashboard["lowStock"]>[number])=>s.onHand===0?"Sold out":s.measure==="GRAMS"?formatWeight(s.onHand)+" left":s.onHand+" "+(s.pricingBasis==="TRAY"?"tray":"unit")+(s.onHand===1?"":"s")+" left";
 /** "▲ 12%" against the previous period; pending money going up is bad, so its colours flip. */
 function Change({now,before,inverse=false}:{now:number;before:number;inverse?:boolean}){
@@ -32,6 +37,8 @@ export async function StaffDashboard({token,context,store,period:requested}:{tok
  const money=!!d.summary;
  const waiting=openStatuses.reduce((sum,s)=>sum+Number(d.needsAction[s]??0),0);
  const cur=d.summary?.current,prev=d.summary?.previous;
+ const slots=d.slots.filter(s=>"booked" in s),scheduled=d.scheduled??[];
+ const days=[...new Set(scheduled.map(s=>s.date))];
  const cards=cur&&prev?[
   {label:"Orders",value:String(cur.orders),now:cur.orders,before:prev.orders},
   {label:"Revenue",value:formatMoney(Number(cur.revenuePaise)),now:Number(cur.revenuePaise),before:Number(prev.revenuePaise),note:"Excludes cancelled"},
@@ -47,10 +54,21 @@ export async function StaffDashboard({token,context,store,period:requested}:{tok
    <section className="dash-panel"><h2>Needs action <span className="dash-count">{waiting}</span></h2>
     <ul className="dash-status">{openStatuses.map(s=><li key={s}><Link href={ordersLink("&status="+s)}><span className={badge(s)}>{statusText[s]}</span><strong>{Number(d.needsAction[s]??0)}</strong></Link></li>)}</ul>
    </section>
-   <section className="dash-panel"><h2>Today&apos;s orders by time</h2>
-    <table className="dash-table"><thead><tr><th scope="col">Slot</th><th scope="col">Delivery</th><th scope="col">Pickup</th><th scope="col">Still open</th></tr></thead>
-    <tbody>{d.slots.map(s=><tr key={s.slot}><th scope="row">{slotText[s.slot]}</th><td>{s.delivery}</td><td>{s.pickup}</td><td>{s.open}</td></tr>)}</tbody></table>
-    <p className="dash-muted">By order time; cancelled orders are not counted.</p>
+   <section className="dash-panel"><h2>Today&apos;s slots</h2>
+    {slots.length?<table className="dash-table dash-slots"><thead><tr><th scope="col">Slot</th><th scope="col">Booked</th><th scope="col">Delivery</th><th scope="col">Pickup</th><th scope="col">Open</th></tr></thead>
+    <tbody>{slots.map(s=><tr key={s.id??"none"}><th scope="row"><Link href={ordersLink("&day="+(d.today??"")+(s.id?"&slot="+s.id:""))}>{s.id?<>{s.name} <small>{slotRange(s.startsAt!,s.endsAt!)}</small></>:<>No slot <small>placed today</small></>}</Link></th>
+     <td className={s.maxOrders!==null&&Number(s.booked)>=s.maxOrders?"dash-sold-out":undefined}>{s.booked}{s.maxOrders!==null&&<small>/{s.maxOrders}</small>}</td><td>{s.delivery}</td><td>{s.pickup}</td><td>{s.open}</td></tr>)}</tbody></table>
+    :<p className="dash-muted">No delivery slots set up. Add them in Settings.</p>}
+    <p className="dash-muted">Cancelled orders are not counted. Tap a slot to see its orders.</p>
+   </section>
+   <section className="dash-panel dash-wide"><h2>Scheduled orders <span className="dash-count">{scheduled.reduce((n,s)=>n+Number(s.orders),0)}</span></h2>
+    {days.length?days.map(day=><div key={day} className="dash-sched-day"><h3>{slotDayName(day,d.today)}, {slotDate(day)}</h3>
+     <ul className="dash-sched">{scheduled.filter(s=>s.date===day).map(s=><li key={s.slotId}><Link href={ordersLink("&day="+day+"&slot="+s.slotId)}>
+      <span className="dash-sched-head"><strong>{s.name} <small>{slotRange(s.startsAt,s.endsAt)}</small></strong><span>{s.orders} order{Number(s.orders)===1?"":"s"} · {s.delivery} delivery · {s.pickup} pickup</span></span>
+      <span className="dash-sched-prep">{s.products.map(p=><span key={p.name+p.pricingBasis}>{p.name} <strong>{prepText(p)}</strong></span>)}</span>
+     </Link></li>)}</ul></div>)
+    :<p className="dash-muted">No orders for later days yet.</p>}
+    <p className="dash-muted">Orders for later days, by slot, with the total to prepare. They don&apos;t reserve today&apos;s stock.</p>
    </section>
    {money&&<>
     <section className="dash-panel"><h2>Low stock</h2>

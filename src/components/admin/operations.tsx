@@ -7,7 +7,8 @@ import { ActionDialog } from "./action-dialog";
 import { deliveryAddress } from "@/lib/address";
 import { headers } from "next/headers";
 import { whatsappLink, customerStatusMessage, WHATSAPP_WINDOW } from "@/lib/whatsapp";
-type Order={discount_paise?:number;offer_snapshot?:{title:string};id:string;order_number:string;status:string;fulfillment_method:string;total_paise:number;version:number;created_at:string;fulfillment_snapshot?:{name?:string;mobileE164?:string;address?:Record<string,string>}};
+import { SLOT_DATE, SLOT_ID, slotDate, slotDayName, slotLabel, slotRange, type OrderSlot } from "@/lib/delivery-slots";
+type Order={discount_paise?:number;offer_snapshot?:{title:string};id:string;order_number:string;status:string;fulfillment_method:string;total_paise:number;version:number;created_at:string;slot?:OrderSlot|null;fulfillment_snapshot?:{name?:string;mobileE164?:string;address?:Record<string,string>;slot?:OrderSlot}};
 type Detail={order:Order;items:{id:string;raw_weight_grams:number|null;sale_quantity?:number;pricing_basis?:string;units_per_pack?:number;line_total_paise:number;instructions:string;product_snapshot:{productName:string;preparationName:string}}[];payments:{id:string;method:string;status:string;amountPaise:number;refundedPaise?:number;version:number}[];stock?:StockMove[]};
 type StockMove={id:string;kind:"ORDER"|"CANCEL_RESTORE";productName:string;measure:"GRAMS"|"PACKS";change:number;before:number|null;after:number|null;note:string|null};
 const stockAmount=(m:StockMove,n:number)=>m.measure==="GRAMS"?formatWeight(n):String(n);
@@ -37,15 +38,18 @@ function amountText(i:Item){
  if(i.pricing_basis==="UNIT")return i.sale_quantity+" unit"+(i.sale_quantity===1?"":"s");
  return formatWeight(Number(i.raw_weight_grams??i.sale_quantity??0))+(i.pricing_basis==="NET_WEIGHT"?" NET":" raw");
 }
-export async function Operations({token,context,store,orderId,section,before,cursor,status}:{token:string;context:StaffContext;store?:string;orderId?:string;section:string;before?:string;cursor?:string;status?:string}){
+export async function Operations({token,context,store,orderId,section,before,cursor,status,day,slot}:{token:string;context:StaffContext;store?:string;orderId?:string;section:string;before?:string;cursor?:string;status?:string;day?:string;slot?:string}){
  if(!store)return <p>No accessible stores.</p>;
  const validCursor=!!before&&Number.isFinite(Date.parse(before))&&/^[a-f0-9-]{36}$/i.test(cursor??"");
  // Dashboard "Needs action" links filter by status; the argument is only sent when filtering.
  const filter=status&&Object.hasOwn(statusText,status)?status:undefined;
- const orders=await staffRpc<Order[]>(token,"order_queue_page",{target_store:store,row_limit:PAGE_SIZE,before_time:validCursor?before:null,before_id:validCursor?cursor:null,...(filter&&{status_filter:filter})});
+ // Dashboard slot rows and Scheduled orders open the list for one day, optionally one slot.
+ const dayFilter=day&&SLOT_DATE.test(day)?day:undefined,slotFilter=slot&&SLOT_ID.test(slot)?slot:undefined;
+ const orders=await staffRpc<Order[]>(token,"order_queue_page",{target_store:store,row_limit:PAGE_SIZE,before_time:validCursor?before:null,before_id:validCursor?cursor:null,...(filter&&{status_filter:filter}),...(dayFilter&&{date_filter:dayFilter}),...(slotFilter&&{slot_filter:slotFilter})});
  // The queue has no customer, items or payment, so each row reads its detail through the same permission-checked RPC.
  const details=await Promise.all(orders.map(o=>staffRpc<Detail>(token,"order_detail",{target_order:o.id}).catch(()=>null)));
- const all="/admin/"+context.role.toLowerCase()+"/"+section+"?store="+store,base=all+(filter?"&status="+filter:"");
+ const all="/admin/"+context.role.toLowerCase()+"/"+section+"?store="+store,base=all+(filter?"&status="+filter:"")+(dayFilter?"&day="+dayFilter:"")+(slotFilter?"&slot="+slotFilter:"");
+ const slotName=slotFilter?orders.find(o=>o.slot?.id===slotFilter)?.slot:undefined;
  // Same page for every role; only the actions a role may take are shown. The database enforces them regardless.
  const manager=context.role!=="EMPLOYEE";
  // Customer site address for the tracking link in WhatsApp messages; the request's own host when NEXT_PUBLIC_SITE_URL is unset.
@@ -54,13 +58,15 @@ export async function Operations({token,context,store,orderId,section,before,cur
  const last=orders[orders.length-1];
  return <div className="ord-list">
   {filter&&<p className="ord-filter">Showing <span className={badge(filter)}>{statusText[filter]}</span> orders · <Link href={all}>Show all</Link></p>}
-  <p className="ord-intro">{orders.length?"Tap an order to see items, address and actions.":filter?"No orders with this status.":"No orders yet."}</p>
+  {dayFilter&&<p className="ord-filter">Showing orders for <strong>{slotDayName(dayFilter)}, {slotDate(dayFilter)}{slotFilter&&" · "+(slotName?slotName.name+" "+slotRange(slotName.startsAt,slotName.endsAt):"one slot")}</strong> · <Link href={all}>Show all</Link></p>}
+  <p className="ord-intro">{orders.length?"Tap an order to see items, address and actions.":filter?"No orders with this status.":dayFilter?"No orders for this day and slot.":"No orders yet."}</p>
   {orders.map((o,index)=>{
    const d=details[index];
    const order=d?.order??o;
    const pickup=order.fulfillment_method==="STORE_PICKUP";
    const payment=d?.payments?.[d.payments.length-1];
    const customer=d?.order.fulfillment_snapshot;
+   const orderSlot=customer?.slot??o.slot??undefined;
    const address=deliveryAddress(customer?.address);
    const step=nextStep(order);
    const status=order.status==="DELIVERED"&&pickup?"Picked up":statusText[order.status]??order.status;
@@ -69,7 +75,7 @@ export async function Operations({token,context,store,orderId,section,before,cur
    return <details key={o.id} className="ord-row" open={o.id===orderId}>
     <summary>
      <span className="ord-line"><strong className="ord-number">{order.order_number}</strong><span className={badge(order.status)}>{status}</span><strong className="ord-total">{formatMoney(Number(order.total_paise))}</strong></span>
-     <span className="ord-line ord-meta"><span>{customer?.name||"Customer"}</span><span>{d?d.items.length+" item"+(d.items.length===1?"":"s"):"…"}</span><span>{pickup?"Pickup":"Delivery"}</span>{payment&&<span className={badge(payment.status)}>{methodText[payment.method]??payment.method} · {paymentText[payment.status]??payment.status}</span>}</span>
+     <span className="ord-line ord-meta"><span>{customer?.name||"Customer"}</span><span>{d?d.items.length+" item"+(d.items.length===1?"":"s"):"…"}</span><span>{pickup?"Pickup":"Delivery"}</span>{orderSlot&&<span className="ord-slot">{slotDayName(orderSlot.date)} · {orderSlot.name} {slotRange(orderSlot.startsAt,orderSlot.endsAt)}</span>}{payment&&<span className={badge(payment.status)}>{methodText[payment.method]??payment.method} · {paymentText[payment.status]??payment.status}</span>}</span>
     </summary>
     {!d?<p role="alert">Details unavailable. Reload the page.</p>:<div className="ord-body">
      {(step||canCancel)&&<div className="ord-actions">
@@ -91,7 +97,8 @@ export async function Operations({token,context,store,orderId,section,before,cur
      {!!order.discount_paise&&<p className="ord-note">Offer {order.offer_snapshot?.title}: −{formatMoney(Number(order.discount_paise))}</p>}
      <div className="ord-customer">
       <p><strong>{customer?.name||"Customer"}</strong>{customer?.mobileE164&&<> · <a href={"tel:"+customer.mobileE164}>{customer.mobileE164}</a></>}</p>
-      {customer?.mobileE164&&<a className="admin-button secondary ord-whatsapp" href={whatsappLink(customer.mobileE164,customerStatusMessage({name:customer.name,number:order.order_number,totalPaise:Number(order.total_paise),status:order.status,pickup,site}))} target={WHATSAPP_WINDOW}>WhatsApp customer</a>}
+      {customer?.mobileE164&&<a className="admin-button secondary ord-whatsapp" href={whatsappLink(customer.mobileE164,customerStatusMessage({name:customer.name,number:order.order_number,totalPaise:Number(order.total_paise),status:order.status,pickup,site,slot:orderSlot?slotLabel(orderSlot):undefined}))} target={WHATSAPP_WINDOW}>WhatsApp customer</a>}
+      {orderSlot&&<p><strong>{pickup?"Pickup slot":"Delivery slot"}:</strong> {slotLabel(orderSlot)}</p>}
       {pickup?<p>Store pickup</p>:<><p>{address.line}</p>{address.landmark&&<p className="ord-note">Landmark: {address.landmark}</p>}</>}
       <p className="admin-muted">Placed {new Date(order.created_at).toLocaleString("en-IN",{timeZone:"Asia/Kolkata",dateStyle:"medium",timeStyle:"short"})}</p>
      </div>

@@ -173,3 +173,20 @@
 .rep-muted{margin:0!important;font-size:13px;color:#4f5b55}
 @media(min-width:720px){.rep-cards{grid-template-columns:repeat(3,minmax(0,1fr))}.rep-custom{display:flex;flex-wrap:wrap}.rep-custom label{flex:0 1 200px}.rep-custom button{flex:0 0 auto}.rep-charts{grid-template-columns:1fr 1fr}}
 @media(min-width:1200px){.rep-cards{grid-template-columns:repeat(6,minmax(0,1fr))}.rep-cards dd{font-size:24px}}
+/* Dashboard: today's slots (rows open that slot's orders) and scheduled orders for later days. */
+.dash-slots th a{display:grid;min-height:44px;align-content:center;text-decoration:none}
+.dash-slots th small,.dash-slots td small{font-size:12px;color:#4f5b55;font-weight:400}
+.dash-sched-day+.dash-sched-day{margin-top:12px}
+.trait-admin .dash-sched-day h3{font-size:14px;margin:0 0 6px;color:#4f5b55}
+.dash-sched{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.dash-sched a{display:grid;gap:6px;padding:12px;border:1px solid #d8dfd9;border-radius:10px;text-decoration:none;color:inherit}
+.dash-sched a:hover{background:#f3f6f4}
+.dash-sched-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px;font-size:14px}
+.dash-sched-head small{font-weight:400;color:#4f5b55}
+.dash-sched-head>span{font-size:13px;color:#4f5b55}
+.dash-sched-prep{display:flex;flex-wrap:wrap;gap:6px}
+.dash-sched-prep>span{padding:4px 10px;border-radius:999px;background:#eef3ef;font-size:13px}
+.ord-slot{font-weight:600;color:#173c32}
+.stock-cell{white-space:nowrap}
+.slot-settings summary{min-height:44px}
+@media(min-width:720px){.dash-sched{grid-template-columns:repeat(2,minmax(0,1fr))}}

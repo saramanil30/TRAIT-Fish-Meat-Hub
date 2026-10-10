@@ -1,5 +1,6 @@
 import { cartSubtotalPaise } from "./cart";
 import type { CartItem } from "../types/cart";
+import { SLOT_DATE, SLOT_ID } from "./delivery-slots";
 import type { CheckoutDetails, CheckoutErrors, DeliveryMethod, MockOrder, OrderStatus, OrderTotals } from "../types/order";
 
 // Preview configuration only. A future server must calculate its own delivery fee,
@@ -22,6 +23,7 @@ export function validateCheckout(details: CheckoutDetails): CheckoutErrors {
   if (!["cash", "upi"].includes(details.paymentMethod)) errors.paymentMethod = "Choose a payment method.";
   if ((details.deliveryMethod === "delivery" || details.name.trim()) && (details.name.trim().length < 2 || details.name.trim().length > 80)) errors.name = "Enter your name (2-80 characters).";
   if (!/^[6-9]\d{9}$/.test(normalizeMobile(details.mobile))) errors.mobile = "Enter a valid 10-digit Indian mobile number, optionally with +91.";
+  if ((details.slotId || details.slotDate) && !(SLOT_ID.test(details.slotId ?? "") && SLOT_DATE.test(details.slotDate ?? ""))) errors.slotId = "Choose a delivery slot.";
   if (details.deliveryMethod === "delivery") {
     if (details.address.trim().length < 5 || details.address.trim().length > 300) errors.address = "Enter your delivery address (5-300 characters).";
     if (details.locality.trim().length < 2 || details.locality.trim().length > 100) errors.locality = "Enter your area / locality (2-100 characters).";

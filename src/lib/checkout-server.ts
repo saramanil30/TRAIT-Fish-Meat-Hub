@@ -3,6 +3,7 @@ import postgres from "postgres";
 import { createCipheriv, createDecipheriv, createHash, randomBytes, randomUUID } from "node:crypto";
 import { headers } from "next/headers";
 import { SUPABASE_ROOT_CA } from "@/lib/supabase-ca";
+import type { SlotDay } from "@/lib/delivery-slots";
 let pool: ReturnType<typeof postgres> | undefined;
 function db() {
  const url=process.env.TRAIT_CHECKOUT_DATABASE_URL;
@@ -70,6 +71,16 @@ export async function commitOrder(value:string) {
  return {trackingToken:e.token};
 }
 
+/** Slot statuses for today and the next two days; [] when the store has no active slots or the service is unavailable. */
+export async function deliverySlotOptions():Promise<SlotDay[]> {
+ const store=process.env.TRAIT_STORE_ID;
+ if(!store) return [];
+ try {
+  const sql=await checkoutDatabase();
+  const rows=await sql`select api.delivery_slot_options(${store}::uuid) as result`;
+  return (rows[0].result??[]) as SlotDay[];
+ } catch (cause) {logCheckoutFailure("slots",cause);return [];}
+}
 export type OpenOrder={orderNumber:string;placedAt:string;status:string;totalPaise:number;history:{status:string;at:string}[]|null};
 /** Open orders for a normalized +91 mobile at this store. Status data only; call after rate limiting. */
 export async function openOrdersByMobile(mobileE164:string):Promise<OpenOrder[]> {
