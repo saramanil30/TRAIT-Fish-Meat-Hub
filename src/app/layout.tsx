@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { SiteFrame, type StripOffer } from "@/components/layout/site-frame";
-import { liveCatalogue } from "@/lib/live-catalogue";
+import { liveShop } from "@/lib/live-catalogue";
 import { shopCategories, type ShopCategory } from "@/lib/shop-categories";
 import { currentOffers } from "@/lib/offers";
 import { formatMoney } from "@/lib/format";
@@ -49,7 +49,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   let categories: ShopCategory[] = [];
-  try { categories = shopCategories(await liveCatalogue()); } catch { /* Navigation shows "All" only while the catalogue is unavailable. */ }
+  try { const shop = await liveShop(); categories = shopCategories(shop.products, shop.categories); } catch { /* Navigation shows "All" only while the catalogue is unavailable. */ }
   // Current offers for the sticky header strip; text is built here so server and browser render the same dates.
   let offers: StripOffer[] = [];
   try { offers = (await currentOffers()).map(o => ({ id: o.id, code: o.code, text: o.title + (o.code ? "" : " · " + (o.kind === "PERCENT" ? o.value / 100 + "% off" : formatMoney(o.value) + " off")), ends: "ends " + new Date(o.endsAt).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short" }) })); } catch { /* No strip while offers are unavailable. */ }

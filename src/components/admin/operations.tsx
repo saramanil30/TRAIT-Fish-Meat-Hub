@@ -90,7 +90,7 @@ export async function Operations({token,context,store,orderId,section,before,cur
      </div>)}
      <ul className="ord-items">{d.items.map(i=><li key={i.id}>
       <div className="ord-item-line"><span><strong>{i.product_snapshot.productName}</strong> · {i.product_snapshot.preparationName} · {amountText(i)}</span><span>{formatMoney(Number(i.line_total_paise))}</span></div>
-      {i.instructions&&<p className="ord-note">Note: {i.instructions}</p>}
+      {i.instructions&&<p className="ord-note">Cutting instructions: {i.instructions}</p>}
       {weighing&&isWeighed(i)&&<OperationalForm operation="weight" id={order.id} version={Number(order.version)} label="Save" className="ord-form ord-weight" buttonClassName="ord-small"><input type="hidden" name="item" value={i.id}/><label>Actual weight (g)<input name="grams" type="number" min="1" inputMode="numeric" required/></label></OperationalForm>}
      </li>)}</ul>
      {!!d.stock?.length&&<div className="ord-note"><strong>Stock impact</strong><ul>{d.stock.map(m=><li key={m.id}>{m.kind==="ORDER"?"Deducted":"Restored on cancel"} · {stockText(m)}</li>)}</ul></div>}

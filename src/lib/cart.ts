@@ -35,7 +35,7 @@ export function createCartItem(product: Product, selection: ProductSelection, id
   if (!preparation) throw new Error("Please choose an available preparation.");
   const quantity=isRaw(product)?selection.rawWeightGrams:selection.quantity;
   if (quantity===undefined || !quantityOptions(product).includes(quantity)) throw new Error("Please choose an available quantity.");
-  if (selection.specialInstructions.length > MAX_INSTRUCTIONS_LENGTH) throw new Error("Please keep instructions within 300 characters.");
+  if (selection.specialInstructions.length > MAX_INSTRUCTIONS_LENGTH) throw new Error("Please keep cutting instructions within 300 characters.");
   const cleaningLossPercent = applicableCleaningLoss(product, preparation);
   return {
     ...selection,

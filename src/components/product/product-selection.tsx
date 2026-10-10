@@ -103,10 +103,10 @@ export function ProductSelection({ product, item, onClose, onSaved }: { product:
         <div className="selection-side">
           <fieldset><legend>Preparation</legend><div className="choice-list">{product.preparationOptions.map(option => <label className="choice" key={option.id}><input type="radio" name={id + "-preparation"} value={option.id} checked={preparationId === option.id} onChange={() => setPreparationId(option.id)} /><span>{option.label}</span></label>)}</div>{estimated !== undefined && <p className="cleaning-estimate" aria-live="polite">After cleaning: about {formatWeight(estimated)} (~{loss}% removed). An estimate, not a guarantee.</p>}</fieldset>
           {showInstructions ? <div className="instructions-field">
-            <label className="instructions-label" htmlFor={id + "-instructions"}>Cooking instructions <span>(optional)</span></label>
-            <textarea autoFocus={!item?.specialInstructions} id={id + "-instructions"} value={instructions} onChange={event => setInstructions(event.target.value)} maxLength={MAX_INSTRUCTIONS_LENGTH} rows={2} placeholder="For example: please make the pieces small" aria-describedby={id + "-instructions-help"} />
+            <label className="instructions-label" htmlFor={id + "-instructions"}>Cutting instructions <span>(optional)</span></label>
+            <textarea autoFocus={!item?.specialInstructions} id={id + "-instructions"} value={instructions} onChange={event => setInstructions(event.target.value)} maxLength={MAX_INSTRUCTIONS_LENGTH} rows={2} placeholder="e.g. small pieces, remove skin, keep head" aria-describedby={id + "-instructions-help"} />
             <p id={id + "-instructions-help"} className="field-help">{instructions.length}/{MAX_INSTRUCTIONS_LENGTH} characters. Please do not include personal or payment details.</p>
-          </div> : <button type="button" className="instructions-toggle" aria-expanded="false" onClick={() => setShowInstructions(true)}>+ Add cooking instructions</button>}
+          </div> : <button type="button" className="instructions-toggle" aria-expanded="false" onClick={() => setShowInstructions(true)}>+ Add cutting instructions</button>}
           {error && <p role="alert" className="cart-error">{error}</p>}
         </div>
       </div>

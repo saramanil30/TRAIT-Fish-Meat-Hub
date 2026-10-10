@@ -16,7 +16,7 @@ export function OrderSummary({ items, totals, editable = false, deliveryConfirme
       <div className="order-item-copy"><div className="order-line-heading"><h3>{item.productName}</h3><strong>{formatMoney(item.lineTotalPaise)}</strong></div>
       <p>{item.preparation.label} <span aria-hidden="true">&middot;</span> {quantityOptionText(item,item.rawWeightGrams??item.quantity??0)}</p>
       {item.estimatedCleanedWeightGrams !== undefined && <p className="order-cleaned">Estimated cleaned weight: ~{formatWeight(item.estimatedCleanedWeightGrams)}</p>}
-      {item.specialInstructions && <p className="order-instructions">Notes: {item.specialInstructions}</p>}</div>
+      {item.specialInstructions && <p className="order-instructions">Cutting instructions: {item.specialInstructions}</p>}</div>
     </li>)}</ul>
     {coupon}
     <dl className="order-totals"><div><dt>Subtotal</dt><dd>{formatMoney(totals.subtotalPaise)}</dd></div>{!!totals.discountPaise && <div><dt>{totals.offer?.code ? "Coupon (" + totals.offer.code + ")" : "Offer discount" + (totals.offer?.title ? " — " + totals.offer.title : "")}</dt><dd className="order-discount">−{formatMoney(totals.discountPaise)}</dd></div>}<div><dt>Delivery</dt><dd data-delivery-fee>{pickup ? "Free (store pickup)" : (!deliveryConfirmed && feeVaries ? "from " : "") + formatMoney(totals.deliveryChargePaise)}</dd></div><div className="order-grand-total"><dt>Total</dt><dd data-order-total>{formatMoney(totals.grandTotalPaise)}</dd></div></dl>

@@ -150,7 +150,7 @@ export function CartContent({ deliveryFeePaise, feeVaries = false, offers = [] }
 
     {item.specialInstructions && (
       <p className="cart-instructions cart-row-instructions">
-        <strong>Special instructions:</strong>{" "}
+        <strong>Cutting instructions:</strong>{" "}
         {item.specialInstructions}
       </p>
     )}

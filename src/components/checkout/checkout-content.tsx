@@ -59,7 +59,7 @@ export function CheckoutContent({ buyNow = false, deliveryFeePaise = null, feeVa
   }
   // The confirmation page's "Send order to shop on WhatsApp" message lists these; only this browser session has them.
   function rememberForShop(trackingToken: string) {
-    const details: ShopOrderDetails = { items: items.map(i => i.productName + " · " + i.preparation.label + " · " + quantityOptionText(i, i.rawWeightGrams ?? i.quantity ?? 0) + (i.specialInstructions ? " (Note: " + i.specialInstructions + ")" : "")),
+    const details: ShopOrderDetails = { items: items.map(i => i.productName + " · " + i.preparation.label + " · " + quantityOptionText(i, i.rawWeightGrams ?? i.quantity ?? 0) + (i.specialInstructions ? " (Cutting instructions: " + i.specialInstructions + ")" : "")),
       address: draft.deliveryMethod === "pickup" ? undefined : [draft.address, draft.locality, draft.landmark && "Landmark: " + draft.landmark, draft.city || SERVICE_CITY, draft.pincode].filter(Boolean).join(", ") };
     try { sessionStorage.setItem(shopOrderKey(trackingToken), JSON.stringify(details)); } catch { /* The message then has no items or address. */ }
   }
