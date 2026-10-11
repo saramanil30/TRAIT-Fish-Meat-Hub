@@ -1,7 +1,7 @@
 "use client";
 import { startTransition,useActionState,useState } from "react";
-import { saveOffer } from "@/app/admin/offer-actions";
-export type OfferRecord={id:string;title:string;message:string;discount_kind:string;discount_value:number;starts_at:string;ends_at:string;scope:string;product_ids:string[];category_ids:string[];is_active:boolean;version:number;code?:string;min_order_paise?:number;max_discount_paise?:number|null;image_path?:string|null};
+import { changeOfferState,saveOffer } from "@/app/admin/offer-actions";
+export type OfferRecord={id:string;title:string;message:string;discount_kind:string;discount_value:number;starts_at:string;ends_at:string;scope:string;product_ids:string[];category_ids:string[];is_active:boolean;version:number;code?:string;min_order_paise?:number;max_discount_paise?:number|null;image_path?:string|null;archived_at?:string|null};
 type Choice={id:string;name:string};
 const imageLimit=1048576;
 /** Converts a banner photo to WebP under 1 MB, at most 1200×800, keeping its shape. */
@@ -51,4 +51,17 @@ export function OfferForm({offer,store,products,categories,imageBase}:{offer?:Of
  {imageError&&<p role="alert">{imageError}</p>}
  <label>Status<select name="active" defaultValue={String(offer?.is_active??false)}><option value="false">Inactive</option><option value="true">Active during scheduled dates</option></select></label>
  <p>A discount applies only when the customer applies this code. One coupon per order; discounts exclude delivery and are rounded to whole rupees.</p><button className="admin-button">{pending?"Saving…":"Save offer"}</button></fieldset>{state.error&&<p role="alert">{state.error}</p>}{state.success&&<p role="status">{state.success}</p>}</form>;
+}
+/** Stop now / Delete for live offers, Restore for deleted ones. Delete archives: nothing is erased. */
+export function OfferControls({offer,store,ended=false}:{offer:OfferRecord;store:string;ended?:boolean}) {
+ const [state,dispatch,pending]=useActionState(changeOfferState,{});
+ function run(operation:"ARCHIVE"|"RESTORE"|"STOP"){
+  if(operation==="ARCHIVE"&&!window.confirm("Delete offer \""+offer.title+"\"? It stops immediately and is hidden from the website and this list. Its code "+(offer.code??"")+" stays reserved. You can restore it from Show deleted."))return;
+  const form=new FormData();form.set("id",offer.id);form.set("store",store);form.set("version",String(offer.version));form.set("operation",operation);
+  startTransition(()=>dispatch(form));
+ }
+ return <div className="admin-offer-controls">{offer.archived_at?<button type="button" className="admin-button secondary" disabled={pending} onClick={()=>run("RESTORE")}>Restore</button>:<>
+  {!ended&&<button type="button" className="admin-button secondary" disabled={pending} onClick={()=>run("STOP")}>Stop now</button>}
+  <button type="button" className="admin-button secondary" disabled={pending} onClick={()=>run("ARCHIVE")}>Delete</button></>}
+  {state.error&&<p role="alert">{state.error}</p>}{state.success&&<p role="status">{state.success}</p>}</div>;
 }

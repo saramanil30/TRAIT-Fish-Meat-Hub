@@ -5,14 +5,15 @@ import ts from "typescript";
 function moduleUrl(source) {return "data:text/javascript;base64,"+Buffer.from(ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText).toString("base64");}
 const permissionsUrl=moduleUrl(readFileSync(new URL("../src/lib/admin/permissions.ts",import.meta.url),"utf8"));
 const permissions=await import(permissionsUrl);
-test("role capability matrix denies OWNER catalogue and all EMPLOYEE product operations",()=>{
+test("role capability matrix: OWNER gets product content only, EMPLOYEE no product operations",()=>{
  for(const section of permissions.staffSections) {
  assert.equal(permissions.canAccessSection("ADMIN",section),true);
- assert.equal(permissions.canAccessSection("OWNER",section),!["catalogue","categories"].includes(section));
+ assert.equal(permissions.canAccessSection("OWNER",section),section!=="categories");
  assert.equal(permissions.canAccessSection("EMPLOYEE",section),["dashboard","orders"].includes(section));
  assert.equal(permissions.canAccessSection("forged",section),false);
  }
  assert.equal(permissions.canManageCatalogue("OWNER"),false);
+ assert.equal(permissions.canEditProductContent("OWNER"),true);assert.equal(permissions.canEditProductContent("ADMIN"),true);assert.equal(permissions.canEditProductContent("EMPLOYEE"),false);
  assert.equal(permissions.canManageDailyProducts("EMPLOYEE"),false);
 });
 test("daily price parser rejects coercion, overflow and fractional paise",()=>{
@@ -53,10 +54,24 @@ test("server Auth validation, current membership, and forged direct actions",asy
  const price=new FormData();price.set("id","00000000-0000-4000-8000-000000000001");price.set("version","1");price.set("price","500");price.set("available","true");price.set("stockVersion","0");price.set("stock","2.5");price.set("weighed","true");
  assert.ok((await actions.saveDailyProduct({},price)).error);
  assert.equal(state.calls.some(c=>c.url.endsWith("/save_daily_product")),false);
- const offerForm=new FormData();for(const [k,v] of Object.entries({store:"00000000-0000-4000-8000-000000000001",title:"Sale",message:"",kind:"PERCENT",amount:"10",start:"2026-09-29T00:00",end:"2026-10-01T00:00",scope:"STORE",active:"true"}))offerForm.set(k,v);
+ const offerForm=new FormData();for(const [k,v] of Object.entries({store:"00000000-0000-4000-8000-000000000001",title:"Sale",message:"",kind:"PERCENT",amount:"10",code:"SALE10",startDate:"2026-09-29",endDate:"2026-10-01",scope:"STORE",active:"true"}))offerForm.set(k,v);
  state.calls=[];assert.ok((await offerActions.saveOffer({},offerForm)).error);assert.equal(state.calls.some(c=>c.url.endsWith("/save_offer")),false);
  state.role="OWNER";state.calls=[];assert.ok((await offerActions.saveOffer({},offerForm)).success);
  assert.equal(JSON.parse(state.calls.find(c=>c.url.endsWith("/save_offer")).options.body).amount,1000);
+ // OWNER: product photo/local name/description only; offer delete (archive), restore and stop. EMPLOYEE: neither.
+ const content=new FormData();content.set("id","00000000-0000-4000-8000-000000000002");content.set("name","Fish");content.set("local","Vanjaram");content.set("description","Fresh");
+ const offerState=new FormData();for(const [k,v] of Object.entries({id:"00000000-0000-4000-8000-000000000003",store:"00000000-0000-4000-8000-000000000001",version:"2",operation:"ARCHIVE"}))offerState.set(k,v);
+ state.role="EMPLOYEE";state.calls=[];
+ assert.ok((await actions.saveProductContent({},content)).error);assert.ok((await offerActions.changeOfferState({},offerState)).error);
+ assert.equal(state.calls.some(c=>/save_product_content|change_offer_state/.test(c.url)),false);
+ state.role="OWNER";state.calls=[];
+ assert.ok((await actions.saveProductContent({},content)).success);
+ assert.deepEqual(JSON.parse(state.calls.find(c=>c.url.endsWith("/save_product_content")).options.body),{product:content.get("id"),local_name:"Vanjaram",description:"Fresh"});
+ const master=new FormData();master.set("kind","product");master.set("id",content.get("id"));state.calls=[];
+ assert.ok((await actions.saveMaster({},master)).error);assert.equal(state.calls.some(c=>/save_product$|configure_product_pricing/.test(c.url)),false);
+ for(const operation of ["ARCHIVE","RESTORE","STOP"]){offerState.set("operation",operation);state.calls=[];assert.ok((await offerActions.changeOfferState({},offerState)).success);
+  assert.deepEqual(JSON.parse(state.calls.find(c=>c.url.endsWith("/change_offer_state")).options.body),{target_id:offerState.get("id"),target_store:offerState.get("store"),expected_version:2,operation});}
+ offerState.set("operation","DELETE");state.calls=[];assert.ok((await offerActions.changeOfferState({},offerState)).error);assert.equal(state.calls.some(c=>c.url.endsWith("/change_offer_state")),false);
  state.role="OWNER";state.calls=[];
  assert.ok((await actions.saveDailyProduct({},price)).success);
  const request=state.calls.find(c=>c.url.endsWith("/save_daily_product"));

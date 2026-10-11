@@ -1,6 +1,6 @@
 "use client";
 import {startTransition, useActionState,useState} from "react";
-import {saveMaster,type ActionState} from "@/app/admin/actions";
+import {saveMaster,saveProductContent,type ActionState} from "@/app/admin/actions";
 type Preparation={name:string;cleaning_loss_percent?:number};
 type Basis="RAW_WEIGHT"|"NET_WEIGHT"|"UNIT"|"TRAY";
 export type EditableProduct={pricing_basis?:string;price_unit_grams?:number;units_per_pack?:number;sale_quantities?:number[];catalogue_price_paise?:number;catalogue_published?:boolean;id:string;category_id:string;name:string;local_name:string;description:string;image_path:string;allowed_weights:number[];preparations:Preparation[];is_active:boolean};
@@ -54,5 +54,32 @@ export function ProductForm({product:p,categories}:{product:EditableProduct|null
   <label>Status<select name="active" defaultValue={String(p?.is_active??true)}><option value="true">Active</option><option value="false">Retired / inactive</option></select><small>Active products can be sold in stores that offer them. Retired products leave the website and stop selling; order history is kept.</small></label>
   <label>Approved catalogue listing<select name="published" defaultValue={String(p?.catalogue_published??false)}><option value="true">Listed</option><option value="false">Not listed</option></select><small>Lists the product, at its reference price, in the business-wide catalogue used when no store is connected and when setting up new stores. It does not change what a store sells today.</small></label>
   <button className="admin-button">{pending?"Saving…":"Save product"}</button>
+ </fieldset>{state.error&&<p role="alert">{state.error}</p>}{state.success&&<p role="status">{state.success}</p>}</form>;
+}
+export type ContentProduct={id:string;name:string;local_name:string;description:string;category:string|null;is_active:boolean;photo:string|null;image_path:string};
+/** OWNER (and ADMIN): photo, local name and description only. Every other product field is ADMIN-only. */
+export function ProductContentForm({product:p,photoBase}:{product:ContentProduct;photoBase?:string}){
+ const [state,dispatch,pending]=useActionState<ActionState,FormData>(saveProductContent,{});
+ const [photoError,setPhotoError]=useState("");
+ const current=p.photo&&photoBase?photoBase+p.photo:p.image_path||null;
+ async function submit(form:FormData){
+  setPhotoError("");
+  const photo=form.get("photo");
+  if(photo instanceof File&&photo.size>0){
+   try{form.set("photo",await toWebp(photo));}catch(error){setPhotoError(error instanceof Error?error.message:"This photo could not be read.");return;}
+  }
+  startTransition(() => dispatch(form));
+ }
+ return <form action={submit} className="admin-live-form"><fieldset disabled={pending}>
+  <input type="hidden" name="id" value={p.id}/><input type="hidden" name="name" value={p.name}/>
+  <p><strong>{p.name}</strong>{p.category?" · "+p.category:""}{p.is_active?"":" · Retired"}</p>
+  {/* eslint-disable-next-line @next/next/no-img-element */}
+  {current&&<img src={current} alt={p.name} width={120} height={120}/>}
+  <label>Photo<input name="photo" type="file" accept="image/jpeg,image/png,image/webp"/><small>JPEG, PNG or WebP. Saved as an 800×800 WebP under 1 MB and becomes the main photo.</small></label>
+  {photoError&&<p role="alert">{photoError}</p>}
+  <label>Local name<input name="local" maxLength={160} defaultValue={p.local_name}/></label>
+  <label>Description<textarea name="description" maxLength={4000} defaultValue={p.description}/></label>
+  <p className="admin-muted">Name, category, pricing, preparations and status are managed by ADMIN.</p>
+  <button className="admin-button">{pending?"Saving…":"Save"}</button>
  </fieldset>{state.error&&<p role="alert">{state.error}</p>}{state.success&&<p role="status">{state.success}</p>}</form>;
 }

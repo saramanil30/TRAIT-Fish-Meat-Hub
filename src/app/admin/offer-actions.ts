@@ -50,3 +50,15 @@ export async function saveOffer(_:ActionState,form:FormData):Promise<ActionState
   revalidatePath("/");revalidatePath("/admin","layout");return {success:"Offer saved. Checkout uses current eligibility."};
  } catch (cause) {return {error:cause instanceof Error&&cause.message.startsWith("That code")?cause.message:"Unable to save. Check the fields and store access, or reload if this offer changed."};}
 }
+const offerOperations={ARCHIVE:"Offer deleted. It has stopped and its code stays reserved; restore it from Show deleted.",RESTORE:"Offer restored as Inactive. Set it Active to run it again.",STOP:"Offer stopped. Its end time is now."} as const;
+/** Delete (archive), restore or stop now. No hard deletes; the database audits each change. */
+export async function changeOfferState(_:ActionState,form:FormData):Promise<ActionState> {
+ try {
+  const {token,context}=await requireStaff("offers");
+  if(context.role!=="OWNER"&&context.role!=="ADMIN") return {error:"Only OWNER and ADMIN can manage offers."};
+  const operation=String(form.get("operation")??"");
+  if(!(operation in offerOperations)) return {error:"Unknown action."};
+  await staffRpc(token,"change_offer_state",{target_id:String(form.get("id")??""),target_store:String(form.get("store")??""),expected_version:Number(form.get("version"))||null,operation});
+  revalidatePath("/");revalidatePath("/admin","layout");return {success:offerOperations[operation as keyof typeof offerOperations]};
+ } catch {return {error:"Unable to update this offer. Reload the page and try again."};}
+}

@@ -4,11 +4,13 @@ export const staffSections = ["dashboard", "orders", "catalogue", "categories", 
 export type StaffSection = typeof staffSections[number];
 export function canAccessSection(role: StaffRole, section: StaffSection): boolean {
   if (role === "ADMIN") return true;
-  if (role === "OWNER") return section !== "catalogue" && section !== "categories";
+  // OWNER sees Catalogue only to change product photos, local names and descriptions.
+  if (role === "OWNER") return section !== "categories";
   return role === "EMPLOYEE" && (section === "dashboard" || section === "orders");
 }
 export function canManageDailyProducts(role: StaffRole) { return role === "ADMIN" || role === "OWNER"; }
 export function canManageCatalogue(role: StaffRole) { return role === "ADMIN"; }
+export function canEditProductContent(role: StaffRole) { return role === "ADMIN" || role === "OWNER"; }
 /** Admin money input in rupees (e.g. "50" or "49.50") to paise; up to ₹999,999,999.99. */
 export function rupeesToPaise(value: string): number {
   if (!/^\d{1,9}(\.\d{1,2})?$/.test(value.trim())) throw new Error("Enter an amount in rupees with at most two decimal places.");

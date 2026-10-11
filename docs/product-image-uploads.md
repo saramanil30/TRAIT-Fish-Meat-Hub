@@ -1,6 +1,6 @@
 # Product photo uploads — storage setup
 
-The ADMIN product form uploads photos straight to Supabase Storage. The browser converts each photo to an 800×800 WebP under 1 MB. The server checks the WebP signature and size, then uploads it with the signed-in staff session to `product-images/{business}/{product}/{sha256}.webp`. Finally it records the photo as the product's primary image through `api.save_product_image`.
+The ADMIN product form and the OWNER product content form (photo, local name, description) upload photos straight to Supabase Storage. The browser converts each photo to an 800×800 WebP under 1 MB. The server checks the WebP signature and size, then uploads it with the signed-in staff session to `product-images/{business}/{product}/{sha256}.webp`. Finally it records the photo as the product's primary image through `api.set_product_photo` (ADMIN or OWNER, own business and product only).
 
 This is the same bucket, path and limits that `scripts/resume-verified-images.mjs` uses.
 
@@ -31,5 +31,7 @@ CREATE POLICY "ADMIN uploads product photos" ON storage.objects FOR INSERT TO au
 WITH CHECK (bucket_id='product-images' AND api.can_upload_product_image(name));
 COMMIT;
 ```
+
+Migration `20261011000000_owner_content_offer_archive.sql` widens `api.can_upload_product_image` to ADMIN and OWNER and renames the policy to "ADMIN and OWNER upload product photos". EMPLOYEE still cannot upload.
 
 Public reads use the bucket's public URL, so no read policy is needed. Uploads never overwrite (`x-upsert: false`). Re-uploading identical bytes is treated as already done.

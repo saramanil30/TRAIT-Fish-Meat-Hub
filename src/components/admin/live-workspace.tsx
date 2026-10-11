@@ -1,6 +1,6 @@
 import { OffersWorkspace } from "./offers";
 import { StaffSession } from "./session";
-import { ProductForm, type EditableProduct } from "./product-choices";
+import { ProductForm, ProductContentForm, type ContentProduct, type EditableProduct } from "./product-choices";
 import Link from "next/link";
 import { Operations, BusinessPolicy } from "./operations";
 import { DeliverySettings } from "./delivery-settings";
@@ -25,7 +25,11 @@ export async function LiveWorkspace({context,token,section,storeId,orderId,befor
  else if(section==="offers") content=<OffersWorkspace token={token} role={context.role} store={store?.id}/>;
  else if(section==="reports") content=<BusinessReport token={token} store={store?.id} base={base+"/reports"} range={range} fromDate={fromDate} untilDate={untilDate} tab={tab}/>;
  else if(section==="prices") content=store?<><p>Prices use each displayed product unit: raw kg, NET weight, unit or tray. Every price change preserves its history. Saving affects future pricing only.</p><p className="admin-muted"><strong>Morning stock:</strong> enter what is physically in the shop under <em>In shop</em>. <em>Reserved</em> is today&apos;s open orders not yet dispatched; customers can buy what is <em>Available</em> (In shop − Reserved). Orders for later days don&apos;t reserve stock — see Scheduled orders on the Dashboard.</p><DailyProducts products={await staffRpc<DailyProduct[]>(token,"daily_products",{target_store:store.id})}/></>:<p>No accessible stores.</p>;
- else if(section==="catalogue"||section==="categories") {
+ else if(section==="catalogue"&&context.role==="OWNER") {
+ const products=await staffRpc<ContentProduct[]>(token,"product_content");
+ const photoBase=process.env.SUPABASE_URL?process.env.SUPABASE_URL+"/storage/v1/object/public/product-images/":undefined;
+ content=<><p>You can change each product&apos;s photo, local name and description.</p>{products.map(p=><details key={p.id}><summary>{p.name}</summary><ProductContentForm product={p} photoBase={photoBase}/></details>)}{!products.length&&<p>No products yet.</p>}</>;
+ } else if(section==="catalogue"||section==="categories") {
  const master=await staffRpc<{categories:Category[];products:EditableProduct[]}>(token,"catalogue_master");
  content=section==="categories"?<>{[null,...master.categories].map(c=><details key={c?.id??"new"}><summary>{c?.name??"Add category"}</summary><MutationForm kind="master"><input type="hidden" name="kind" value="category"/><input type="hidden" name="id" value={c?.id??""}/><label>Name<input name="name" required defaultValue={c?.name}/></label><label>Parent<select name="parent" defaultValue={c?.parent_id??""}><option value="">None</option>{master.categories.filter(x=>x.id!==c?.id).map(x=><option key={x.id} value={x.id}>{x.name}</option>)}</select></label><label>Display order<input name="sort" type="number" min="0" required defaultValue={c?.sort_order??0}/></label><Active value={c?.is_active}/></MutationForm></details>)}</>:
  <>{[null,...master.products].map(p=><details key={p?.id??"new"}><summary>{p?.name??"Add product"}</summary><ProductForm product={p} categories={master.categories}/></details>)}

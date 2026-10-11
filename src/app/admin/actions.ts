@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { authRequest, requireStaff, resolveStaff, sessionCookie, refreshCookie, saveStaffSession, clearStaffSession, staffRpc, uploadProductImage, validProductWebp } from "@/lib/admin/server";
-import { parseDailyPrice, parseStock } from "@/lib/admin/permissions";
+import { canEditProductContent, parseDailyPrice, parseStock } from "@/lib/admin/permissions";
 export type ActionState = { error?: string; success?: string };
 const text = (form: FormData, name: string) => String(form.get(name) ?? "");
 function uuid(value: string) { if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)) throw new Error("Invalid record."); return value; }
@@ -68,6 +68,8 @@ export async function saveDailyProduct(_state: ActionState,form: FormData): Prom
 export async function saveMaster(_state: ActionState,form: FormData): Promise<ActionState> {
  try {
   const {token,context}=await requireStaff("catalogue");
+  // Catalogue master changes are ADMIN-only (OWNER edits product content through saveProductContent).
+  if(context.role!=="ADMIN") throw new Error("Access denied.");
   const kind=text(form,"kind"); const id=text(form,"id");
   if (kind==="category") {
    const parent=text(form,"parent");
@@ -103,6 +105,23 @@ export async function saveMaster(_state: ActionState,form: FormData): Promise<Ac
   } else throw new Error("Invalid operation.");
   revalidatePath("/admin","layout"); return {success:"Catalogue saved."};
  } catch { return {error:"Unable to save. Check the fields, permissions, and existing records."}; }
+}
+/** ADMIN and OWNER: a product's photo, local name and description only. */
+export async function saveProductContent(_state: ActionState,form: FormData): Promise<ActionState> {
+ try {
+  const {token,context}=await requireStaff("catalogue");
+  if(!canEditProductContent(context.role)) throw new Error("Access denied.");
+  const product=uuid(text(form,"id"));
+  const photo=form.get("photo");
+  const bytes=photo instanceof File&&photo.size>0?new Uint8Array(await photo.arrayBuffer()):null;
+  if(bytes&&!validProductWebp(bytes)) return {error:"The photo must be a WebP image under 1 MB."};
+  await staffRpc(token,"save_product_content",{product,local_name:text(form,"local").slice(0,160),description:text(form,"description").slice(0,4000)});
+  if(bytes){
+   try{await uploadProductImage(token,context.businessId,product,text(form,"name").trim(),bytes);}
+   catch{revalidatePath("/admin","layout");return {error:"Text saved, but the photo could not be uploaded. Try again."};}
+  }
+  revalidatePath("/","layout"); return {success:"Product saved."};
+ } catch { return {error:"Unable to save. Check the fields and your access."}; }
 }
 export async function saveEmployeeAccess(_state: ActionState,form: FormData): Promise<ActionState> {
  try {

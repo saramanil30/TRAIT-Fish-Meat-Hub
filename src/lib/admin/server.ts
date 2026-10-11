@@ -97,7 +97,7 @@ export async function uploadProductImage(token: string, businessId: string, prod
  // A 409 means identical bytes were already uploaded for this product.
  const duplicate = response.status === 409 || (!response.ok && String((await response.clone().json().catch(() => ({}))).statusCode) === "409");
  if (!response.ok && !duplicate) throw new Error("Photo upload is not available. Check the product image storage setup.");
- await staffRpc(token, "save_product_image", { target_id: null, product: productId, local_asset: null, bucket: "product-images", object_path: path, alternate_text: alt, primary_image: true, active: true, display_order: 0 });
+ await staffRpc(token, "set_product_photo", { product: productId, object_path: path, alternate_text: alt });
 }
 /** Stores at share-images/{business}/{sha256}.jpg and returns the path. Storage policies allow only ADMIN and OWNER, under their own business. */
 export async function uploadShareImage(token: string, businessId: string, bytes: Uint8Array) {
