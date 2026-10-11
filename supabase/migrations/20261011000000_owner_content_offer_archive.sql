@@ -64,12 +64,6 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $fn$
   WHERE sp.id=app.current_staff_profile_id()
   AND p.business_id::text=split_part(object_name,'/',1) AND p.id::text=split_part(object_name,'/',2))
 $fn$;
-DO $$
-BEGIN
- IF to_regclass('storage.objects') IS NOT NULL AND EXISTS(SELECT 1 FROM pg_policies WHERE schemaname='storage' AND tablename='objects' AND policyname='ADMIN uploads product photos') THEN
-  ALTER POLICY "ADMIN uploads product photos" ON storage.objects RENAME TO "ADMIN and OWNER upload product photos";
- END IF;
-END $$;
 
 -- 2. Offers: "Delete" archives (no hard deletes). An archived offer is never active, so the storefront
 --    (store_offers) and checkout (offer_discount), which already require is_active, stop it immediately.
