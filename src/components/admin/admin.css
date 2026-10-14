@@ -190,3 +190,14 @@
 .stock-cell{white-space:nowrap}
 .slot-settings summary{min-height:44px}
 @media(min-width:720px){.dash-sched{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* New-order alerts: stacked bottom-left, each stays until opened or dismissed. */
+.order-alert-count { display:inline-grid; place-items:center; min-width:20px; height:20px; padding:0 6px; margin-left:6px; border-radius:10px; background:#c4121a; color:white; font-size:11px; font-weight:700; line-height:1; vertical-align:middle; }
+.order-alerts { position:fixed; left:16px; bottom:16px; z-index:50; display:flex; flex-direction:column; align-items:flex-start; gap:8px; width:min(420px,calc(100vw - 32px)); max-height:calc(100dvh - 32px); overflow:auto; }
+.order-alert { display:flex; align-items:stretch; width:100%; background:#15191f; color:white; border-left:4px solid #c4121a; border-radius:10px; box-shadow:0 8px 28px rgb(18 20 23 / 28%); animation:order-alert-in .2s ease-out; }
+.order-alert a { flex:1; min-width:0; min-height:48px; padding:12px 14px; color:white!important; font-size:13px; font-weight:600; line-height:1.4; text-decoration:none; overflow-wrap:anywhere; }
+.order-alert a:hover { text-decoration:underline; }
+.order-alert button { flex-shrink:0; min-width:48px; border:0; background:none; color:#c6cdd6; font-size:22px; }
+.order-alert button:hover { color:white; }
+.order-alerts-sound { box-shadow:0 8px 28px rgb(18 20 23 / 18%); }
+@keyframes order-alert-in { from { transform:translateY(8px); opacity:0; } }
+@media (prefers-reduced-motion:reduce) { .order-alert { animation:none; } }
