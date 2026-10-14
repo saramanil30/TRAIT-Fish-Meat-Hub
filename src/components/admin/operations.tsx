@@ -89,7 +89,7 @@ export async function Operations({token,context,store,orderId,section,before,cur
    return <details key={o.id} className="ord-row" data-order-id={o.id} open={o.id===orderId}>
     <summary>
      <span className="ord-line"><strong className="ord-number">{order.order_number}</strong><span className={badge(order.status)}>{status}</span><OrderClock createdAt={order.created_at} status={order.status} pickup={pickup} slot={orderSlot}/><strong className="ord-total">{formatMoney(Number(order.total_paise))}</strong></span>
-     <span className="ord-line ord-meta"><span>{customer?.name||"Customer"}</span><span>{d?d.items.length+" item"+(d.items.length===1?"":"s"):"…"}</span><span>{pickup?"Pickup":"Delivery"}</span>{orderSlot&&<span className="ord-slot">{slotDayName(orderSlot.date)} · {orderSlot.name} {slotRange(orderSlot.startsAt,orderSlot.endsAt)}</span>}{payment&&<span className={badge(payment.status)}>{methodText[payment.method]??payment.method} · {paymentText[payment.status]??payment.status}</span>}</span>
+     <span className="ord-line ord-meta"><span>{customer?.name||"Customer"}</span><span>{d?d.items.length+" item"+(d.items.length===1?"":"s"):"…"}</span><span>{pickup?"Pickup":"Delivery"}</span><span className="ord-slot">{orderSlot?slotDayName(orderSlot.date)+" · "+orderSlot.name+" "+slotRange(orderSlot.startsAt,orderSlot.endsAt):"ASAP"}</span>{payment&&<span className={badge(payment.status)}>{methodText[payment.method]??payment.method} · {paymentText[payment.status]??payment.status}</span>}</span>
     </summary>
     {!d?<p role="alert">Details unavailable. Reload the page.</p>:<div className="ord-body">
      <div className="ord-actions">
@@ -113,7 +113,7 @@ export async function Operations({token,context,store,orderId,section,before,cur
      <div className="ord-customer">
       <p><strong>{customer?.name||"Customer"}</strong>{customer?.mobileE164&&<> · <a href={"tel:"+customer.mobileE164}>{customer.mobileE164}</a></>}</p>
       {customer?.mobileE164&&<a className="admin-button secondary ord-whatsapp" href={whatsappLink(customer.mobileE164,customerStatusMessage({name:customer.name,number:order.order_number,totalPaise:Number(order.total_paise),status:order.status,pickup,site,slot:orderSlot?slotLabel(orderSlot):undefined}))} target={WHATSAPP_WINDOW}>WhatsApp customer</a>}
-      {orderSlot&&<p><strong>{pickup?"Pickup slot":"Delivery slot"}:</strong> {slotLabel(orderSlot)}</p>}
+      <p><strong>{pickup?"Pickup":"Delivery"}:</strong> {orderSlot?slotLabel(orderSlot):"ASAP"}</p>
       {pickup?<p>Store pickup</p>:<><p>{address.line}</p>{address.landmark&&<p className="ord-note">Landmark: {address.landmark}</p>}</>}
       <p className="admin-muted">Placed {new Date(order.created_at).toLocaleString("en-IN",{timeZone:"Asia/Kolkata",dateStyle:"medium",timeStyle:"short"})}</p>
      </div>

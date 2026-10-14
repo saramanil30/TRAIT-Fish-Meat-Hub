@@ -16,7 +16,8 @@ export async function LiveTracking({token,confirmation=false}:{token:string;conf
  const phone=store?.phone?phoneDigits(store.phone):"91"+IN_STORE_PHONE;
  const whatsapp=store?.whatsapp?phoneDigits(store.whatsapp):phone;
  const pickup=order?.method==="STORE_PICKUP";
- const slot=order?.slot?slotLabel(order.slot):undefined;
+ // No slot means the order was placed for now (ASAP).
+ const slot=order?.slot?slotLabel(order.slot):order?"ASAP":undefined;
  const help=<div className="order-help"><h2>Need help with this order?</h2><div className="order-help-actions"><a className="button secondary" href={"tel:+"+phone}>Call the store</a><a className="button secondary" href={"https://wa.me/"+whatsapp} target="_blank" rel="noopener noreferrer">WhatsApp us</a></div></div>;
  if(!order) return <div className="container page-section order-status-page"><h1>Order unavailable</h1><section className="order-panel"><p>This tracking link is invalid, expired, or temporarily unavailable. You can look up open orders with the mobile number you used.</p><div className="order-help-actions"><Link className="button primary" href="/track-order">Find my order</Link><Link className="button secondary" href="/">Continue shopping</Link></div>{help}</section></div>;
  return <div className="container page-section order-status-page">
@@ -25,7 +26,7 @@ export async function LiveTracking({token,confirmation=false}:{token:string;conf
   <div className="order-status-layout">
    <section className="order-panel tracking-panel" aria-labelledby="order-status-title">
     <p className="order-status-label">Current status</p><h2 id="order-status-title">{statusText(order.status)}</h2>
-    {slot&&<p className="order-slot">{pickup?"Pickup slot":"Delivery slot"}: {slot}</p>}
+    {slot&&<p className="order-slot">{pickup?"Pickup":"Delivery"}: {slot}</p>}
     <p>{pickup?"Store pickup":"Home delivery"} · Payment: {order.paymentStatus==="PENDING"?"cash or UPI at "+(pickup?"pickup":"delivery"):statusText(order.paymentStatus)}</p>
     {order.totalPaise!==undefined&&<dl className="order-totals"><div><dt>Subtotal</dt><dd>{formatMoney(order.subtotalPaise??0)}</dd></div>{!!order.discountPaise&&<div><dt>Coupon discount{order.offerTitle?" — "+order.offerTitle:""}</dt><dd className="order-discount">−{formatMoney(order.discountPaise)}</dd></div>}<div><dt>Delivery</dt><dd>{pickup?"Free (store pickup)":formatMoney(order.deliveryFeePaise??0)}</dd></div><div className="order-grand-total"><dt>Total to pay</dt><dd>{formatMoney(order.totalPaise)}</dd></div></dl>}
     <h3>Order updates</h3><ol className="order-lookup-timeline">{order.history.map((h,i)=><li key={i}><span>{statusText(h.status)}</span><time dateTime={h.at}>{formatDateTimeIST(h.at)}</time></li>)}</ol>

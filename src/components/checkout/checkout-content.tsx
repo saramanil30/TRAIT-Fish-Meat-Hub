@@ -28,7 +28,7 @@ const fields = [
   { key: "state", label: "State", autoComplete: "address-level1", max: 120 },
   { key: "pincode", label: "Pincode", autoComplete: "postal-code", max: 6 },
 ] as const;
-export function CheckoutContent({ buyNow = false, deliveryFeePaise = null, feeVaries = false, offers = [], slotDays = [] }: { buyNow?: boolean; deliveryFeePaise?: number | null; feeVaries?: boolean; offers?: readonly CartOffer[]; slotDays?: readonly SlotDay[] }) {
+export function CheckoutContent({ buyNow = false, deliveryFeePaise = null, feeVaries = false, offers = [], slotDays = [], asapOpen = false }: { buyNow?: boolean; deliveryFeePaise?: number | null; feeVaries?: boolean; offers?: readonly CartOffer[]; slotDays?: readonly SlotDay[]; asapOpen?: boolean }) {
   const cart = useCart();
   const buyNowItems = useBuyNow();
   // Buy now checks out only its own item; the cart is left as it was.
@@ -52,6 +52,9 @@ export function CheckoutContent({ buyNow = false, deliveryFeePaise = null, feeVa
   const [shownDate, setShownDate] = useState(() => (chosenSlot && slotDay?.date) || slotDays.find(d => d.slots.some(s => s.status === "open"))?.date || slotDays[0]?.date || "");
   const shownDay = slotDays.find(d => d.date === shownDate) ?? slotDays[0];
   const details: CheckoutDetails = { ...draft, slotId: chosenSlot?.id, slotDate: chosenSlot ? draft.slotDate : undefined };
+  // "Now (ASAP)" is the default while the shop is open: no slot chosen means ASAP. When it is closed, a slot is required.
+  const asap = asapOpen && !chosenSlot;
+  const when = draft.deliveryMethod === "pickup" ? "Pick up" : "Deliver";
   const title = useRef<HTMLHeadingElement>(null);
   // Before review, the applied coupon is estimated in the browser; the review step shows the server's recalculated quote.
   function withCoupon(totals: OrderTotals): OrderTotals {
@@ -68,6 +71,10 @@ export function CheckoutContent({ buyNow = false, deliveryFeePaise = null, feeVa
     saveCheckoutDraft({ ...draft, [key]: value });
     setErrors({}); setError(""); setQuote(undefined); setReview(false);
   }
+  function chooseAsap() {
+    saveCheckoutDraft({ ...draft, slotDate: undefined, slotId: undefined });
+    setErrors({}); setError(""); setQuote(undefined); setReview(false);
+  }
   function chooseSlot(date: string, id: string) {
     saveCheckoutDraft({ ...draft, slotDate: date, slotId: id });
     setErrors({}); setError(""); setQuote(undefined); setReview(false);
@@ -76,7 +83,7 @@ export function CheckoutContent({ buyNow = false, deliveryFeePaise = null, feeVa
     event.preventDefault();
     if (submitting.current) return;
     const invalid = validateCheckout(details);
-    if (slotDays.length && !chosenSlot) invalid.slotId = "Choose a " + (draft.deliveryMethod === "pickup" ? "pickup" : "delivery") + " slot.";
+    if (slotDays.length && !chosenSlot && !asapOpen) invalid.slotId = "Choose a " + (draft.deliveryMethod === "pickup" ? "pickup" : "delivery") + " slot.";
     setErrors(invalid); setError("");
     if (Object.keys(invalid).length) {
       setReview(false);
@@ -127,9 +134,11 @@ export function CheckoutContent({ buyNow = false, deliveryFeePaise = null, feeVa
     <div className={(review ? "checkout-layout checkout-review" : "checkout-layout") + (summaryOpen ? " summary-open" : "")}><form id="checkout-form" noValidate onSubmit={submit} className="checkout-form"><fieldset disabled={saving} style={{border:0,padding:0,minWidth:0}}>
       {error && <p role="alert" className="cart-error">{error}</p>}
       {Object.keys(errors).length > 0 && <p role="alert" className="cart-error">Please correct the highlighted fields.</p>}
-      {review ? <section className="order-panel"><h2>Ready for a final look?</h2><CustomerDetails customer={draft} slot={chosenSlot && draft.slotDate ? slotLabel({ ...chosenSlot, date: draft.slotDate }) : undefined} /><p className="field-help">Please review the current prices and delivery charge.</p><button className="plain-button" type="button" onClick={() => { setReview(false); focusTitle(); }}>Edit details</button></section> : <><section className="order-panel checkout-details-panel">
+      {review ? <section className="order-panel"><h2>Ready for a final look?</h2><CustomerDetails customer={draft} slot={chosenSlot && draft.slotDate ? slotLabel({ ...chosenSlot, date: draft.slotDate }) : asap ? "Now (ASAP)" : undefined} /><p className="field-help">Please review the current prices and delivery charge.</p><button className="plain-button" type="button" onClick={() => { setReview(false); focusTitle(); }}>Edit details</button></section> : <><section className="order-panel checkout-details-panel">
         <fieldset><legend><span className="section-number">1</span> Delivery method</legend><div className="checkout-options">{([ ["delivery", "Home Delivery"], ["pickup", "Store Pickup"] ] as const).map(([value, label]) => <label className="choice" key={value}><input type="radio" name="deliveryMethod" value={value} checked={draft.deliveryMethod === value} onChange={() => change("deliveryMethod", value)} />{label}</label>)}</div></fieldset>
         {shownDay && <fieldset className="slot-picker" id="checkout-slotId" tabIndex={-1} aria-invalid={!!errors.slotId} aria-describedby={errors.slotId ? "error-slotId" : undefined}><legend><span className="section-number">2</span> {draft.deliveryMethod === "pickup" ? "Pickup" : "Delivery"} time</legend>
+          {asapOpen && <label className="slot-card slot-asap"><input type="radio" name="slot" value="asap" checked={asap} onChange={chooseAsap} /><span className="slot-name">{when} now (ASAP)</span><small>{draft.deliveryMethod === "pickup" ? "We start preparing it right away" : "We prepare and send it right away"}</small></label>}
+          {asapOpen && <p className="slot-or">Or choose a slot</p>}
           <div className="slot-days" role="group" aria-label="Day">{slotDays.map(d => { const free = d.slots.some(s => s.status === "open"); return <button type="button" key={d.date} className="slot-day" aria-pressed={d.date === shownDay.date} onClick={() => setShownDate(d.date)}><strong>{slotDayName(d.date)}</strong><small>{free ? slotDate(d.date).replace(/^\w+, /, "") : "No slots left"}</small></button>; })}</div>
           <div className="slot-cards">{shownDay.slots.map(s => { const open = s.status === "open"; const today = slotDayName(shownDay.date) === "Today"; return <label key={s.id} className={"slot-card" + (open ? "" : " is-unavailable")}>
             <input type="radio" name="slot" value={s.id} disabled={!open} checked={open && chosenSlot?.id === s.id && draft.slotDate === shownDay.date} onChange={() => chooseSlot(shownDay.date, s.id)} />

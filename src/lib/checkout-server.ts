@@ -81,6 +81,16 @@ export async function deliverySlotOptions():Promise<SlotDay[]> {
   return (rows[0].result??[]) as SlotDay[];
  } catch (cause) {logCheckoutFailure("slots",cause);return [];}
 }
+/** Whether "Deliver now (ASAP)" can be offered: the store is open right now. False when unknown, so a slot is required. */
+export async function asapAvailable():Promise<boolean> {
+ const store=process.env.TRAIT_STORE_ID;
+ if(!store) return false;
+ try {
+  const sql=await checkoutDatabase();
+  const rows=await sql`select api.checkout_asap_available(${store}::uuid) as result`;
+  return rows[0].result===true;
+ } catch (cause) {logCheckoutFailure("asap",cause);return false;}
+}
 export type OpenOrder={orderNumber:string;placedAt:string;status:string;totalPaise:number;history:{status:string;at:string}[]|null};
 /** Open orders for a normalized +91 mobile at this store. Status data only; call after rate limiting. */
 export async function openOrdersByMobile(mobileE164:string):Promise<OpenOrder[]> {

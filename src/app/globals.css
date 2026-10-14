@@ -1340,3 +1340,6 @@ main.storefront :is(.product-card, .order-panel, .cart-items, .cart-summary, .em
 .slot-picker[aria-invalid=true] .slot-cards { outline:2px solid var(--brand-red); outline-offset:4px; border-radius:10px; }
 .slot-picker .cart-error { margin-top:10px; }
 .order-slot { font-weight:700; }
+/* Checkout: "Deliver now (ASAP)", the default above the slots while the shop is open. */
+.slot-asap { margin-bottom:4px; min-height:64px; }
+.slot-or { margin:14px 0 10px; font-size:13px; font-weight:600; color:var(--text-secondary); }

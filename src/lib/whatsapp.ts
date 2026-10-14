@@ -39,6 +39,6 @@ export function orderToShopMessage(o: ShopOrder): string {
     "",
     ...(o.totalPaise !== undefined ? ["Total: " + formatMoney(o.totalPaise)] : []),
     o.pickup ? "Store pickup" : "Home delivery" + (o.address ? " to: " + o.address : ""),
-    ...(o.slot ? [(o.pickup ? "Pickup" : "Delivery") + " slot: " + o.slot] : []),
+    ...(o.slot ? [(o.pickup ? "Pickup" : "Delivery") + ": " + o.slot] : []),
   ].join("\n");
 }
