@@ -209,7 +209,7 @@
 .order-bell-button:hover { background:#fff3f1; }
 .order-bell-button svg { width:22px; height:22px; }
 .order-bell-button .order-alert-count { position:absolute; top:-6px; right:-6px; margin:0; }
-.order-bell-panel { position:absolute; right:0; top:calc(100% + 8px); z-index:60; width:min(380px,calc(100vw - 32px)); max-height:min(520px,calc(100dvh - 120px)); display:flex; flex-direction:column; background:white; border:1px solid var(--admin-line); border-radius:12px; box-shadow:0 16px 48px rgb(18 20 23 / 18%); overflow:hidden; }
+.order-bell-panel { position:fixed; z-index:60; max-height:min(520px,calc(100dvh - 120px)); display:flex; flex-direction:column; background:white; border:1px solid var(--admin-line); border-radius:12px; box-shadow:0 16px 48px rgb(18 20 23 / 18%); overflow:hidden; }
 .order-bell-head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:8px 8px 8px 16px; border-bottom:1px solid var(--admin-line); min-height:56px; }
 .order-bell-panel ul { list-style:none; margin:0; padding:0; overflow:auto; flex:1; }
 .order-bell-panel li { display:flex; align-items:stretch; border-bottom:1px solid #edf0f5; }

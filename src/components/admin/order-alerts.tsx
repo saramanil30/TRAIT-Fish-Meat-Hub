@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { pollOrderAlerts, type OrderAlert, type OrderAlertCursor } from "@/app/admin/actions";
 import { formatMoney } from "@/lib/format";
 import { slotDayName, slotRange } from "@/lib/delivery-slots";
@@ -22,7 +23,8 @@ function setItems(next: Item[]) {
  try { sessionStorage.setItem(STATE_KEY, JSON.stringify({ cursor, items } satisfies Saved)); } catch { /* Alerts still work for this page. */ }
 }
 function setSound(next: Sound) { sound = next; emit(); }
-const markRead = (id: string) => setItems(items.map(i => i.order.id === id ? { ...i, read: true, toast: false } : i));
+// Every way of opening an order (Orders row, ?order= link, bell, toast, notification) marks it read here.
+const markRead = (id: string) => { if (items.some(i => i.order.id === id && (!i.read || i.toast))) setItems(items.map(i => i.order.id === id ? { ...i, read: true, toast: false } : i)); };
 const closeToast = (id: string) => setItems(items.map(i => i.order.id === id ? { ...i, toast: false } : i));
 const markAllRead = () => setItems(items.map(i => ({ ...i, read: true, toast: false })));
 const unreadCount = () => items.filter(i => !i.read).length;
@@ -63,21 +65,29 @@ export function OrderBell({ base }: { base: string }) {
  const list = useSyncExternalStore(subscribe, () => items, () => none);
  const soundState = useSyncExternalStore(subscribe, () => sound, () => "off" as Sound);
  const [open, setOpen] = useState(false);
+ const [place, setPlace] = useState<{ top: number; right: number; width: number }>();
  const root = useRef<HTMLDivElement>(null);
+ // Fixed under the bell, right-aligned to it, and kept 16px inside both screen edges (phones included).
+ const toggle = () => {
+  const bell = root.current?.getBoundingClientRect();
+  if (!open && bell) { const view = document.documentElement.clientWidth, width = Math.min(380, view - 32); setPlace({ top: bell.bottom + 8, width, right: Math.max(16, Math.min(view - bell.right, view - 16 - width)) }); }
+  setOpen(!open);
+ };
  const unread = list.filter(i => !i.read).length;
  useEffect(() => {
   if (!open) return;
   const outside = (e: PointerEvent) => { if (!root.current?.contains(e.target as Node)) setOpen(false); };
   const escape = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
-  document.addEventListener("pointerdown", outside); document.addEventListener("keydown", escape);
-  return () => { document.removeEventListener("pointerdown", outside); document.removeEventListener("keydown", escape); };
+  const close = () => setOpen(false);
+  document.addEventListener("pointerdown", outside); document.addEventListener("keydown", escape); window.addEventListener("resize", close); window.addEventListener("scroll", close, { passive: true });
+  return () => { document.removeEventListener("pointerdown", outside); document.removeEventListener("keydown", escape); window.removeEventListener("resize", close); window.removeEventListener("scroll", close); };
  }, [open]);
  return <div className="order-bell" ref={root}>
-  <button type="button" className="order-bell-button" aria-expanded={open} aria-haspopup="true" aria-label={"New orders" + (unread ? ", " + unread + " unread" : "")} onClick={() => setOpen(!open)}>
+  <button type="button" className="order-bell-button" aria-expanded={open} aria-haspopup="true" aria-label={"New orders" + (unread ? ", " + unread + " unread" : "")} onClick={toggle}>
    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15zM10 20a2 2 0 0 0 4 0" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round"/></svg>
    {unread > 0 && <span className="order-alert-count">{unread > 99 ? "99+" : unread}</span>}
   </button>
-  {open && <div className="order-bell-panel" role="dialog" aria-label="New orders">
+  {open && <div className="order-bell-panel" role="dialog" aria-label="New orders" style={place}>
    <div className="order-bell-head"><strong>New orders</strong>{unread > 0 && <button type="button" className="admin-text-button" onClick={markAllRead}>Mark all as read</button>}</div>
    {list.length ? <ul>{[...list].reverse().map(({ order: o, read }) => <li key={o.id} className={read ? undefined : "is-unread"}>
     <Link href={orderHref(base, o)} onClick={() => { markRead(o.id); setOpen(false); }}><strong>{o.order_number}</strong> {detail(o)}<small>{o.store_name} · {ago(o.created_at)}</small></Link>
@@ -95,6 +105,15 @@ export function OrderAlerts({ base }: { base: string }) {
  const list = useSyncExternalStore(subscribe, () => items, () => none);
  const soundState = useSyncExternalStore(subscribe, () => sound, () => "off" as Sound);
  const started = useRef(false);
+ const opened = useSearchParams().get("order");
+
+ // An order opened by link (?order=) or by expanding its row on the Orders page counts as read.
+ useEffect(() => { if (opened) markRead(opened); }, [opened, list]);
+ useEffect(() => {
+  const toggled = (e: Event) => { const row = e.target; if (row instanceof HTMLDetailsElement && row.open && row.dataset.orderId) markRead(row.dataset.orderId); };
+  document.addEventListener("toggle", toggled, true);
+  return () => document.removeEventListener("toggle", toggled, true);
+ }, []);
 
  // Restore this tab's alerts and the remembered sound choice (re-armed on the first click or key press).
  useEffect(() => {

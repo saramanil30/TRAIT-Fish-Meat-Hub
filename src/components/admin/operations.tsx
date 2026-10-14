@@ -72,7 +72,7 @@ export async function Operations({token,context,store,orderId,section,before,cur
    const status=order.status==="DELIVERED"&&pickup?"Picked up":statusText[order.status]??order.status;
    const canCancel=manager&&!["DELIVERED","CANCELLED"].includes(order.status);
    const weighing=["PREPARING","READY","OUT_FOR_DELIVERY"].includes(order.status);
-   return <details key={o.id} className="ord-row" open={o.id===orderId}>
+   return <details key={o.id} className="ord-row" data-order-id={o.id} open={o.id===orderId}>
     <summary>
      <span className="ord-line"><strong className="ord-number">{order.order_number}</strong><span className={badge(order.status)}>{status}</span><strong className="ord-total">{formatMoney(Number(order.total_paise))}</strong></span>
      <span className="ord-line ord-meta"><span>{customer?.name||"Customer"}</span><span>{d?d.items.length+" item"+(d.items.length===1?"":"s"):"…"}</span><span>{pickup?"Pickup":"Delivery"}</span>{orderSlot&&<span className="ord-slot">{slotDayName(orderSlot.date)} · {orderSlot.name} {slotRange(orderSlot.startsAt,orderSlot.endsAt)}</span>}{payment&&<span className={badge(payment.status)}>{methodText[payment.method]??payment.method} · {paymentText[payment.status]??payment.status}</span>}</span>
