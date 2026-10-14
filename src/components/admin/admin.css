@@ -265,3 +265,6 @@
  .ticket { border:0; border-radius:0; padding:0; margin:0; break-after:page; }
  .ticket:last-child { break-after:auto; }
 }
+/* Product photo gallery (ADMIN and OWNER): main photo first, then the popup order. */
+.admin-photos{display:grid;gap:12px;margin:0 0 18px!important}.admin-photos legend{font-weight:700;font-size:13px;margin-bottom:10px}.admin-photo-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;list-style:none;margin:0;padding:0}.admin-photo-list li{display:grid;gap:8px;align-content:start;padding:8px;border:1px solid var(--admin-line);border-radius:10px;background:#fff}.admin-photo-list img{width:100%;height:auto;aspect-ratio:1;object-fit:cover;border-radius:6px;background:#f0f2f5}.admin-photo-main{display:flex;align-items:center;justify-content:center;min-height:44px;border-radius:8px;background:#e6f4ec;color:#186a3d;font-size:12px;font-weight:700}.admin-photo-list .admin-button{min-height:44px;padding:8px 10px;width:100%}.admin-photo-actions{display:flex;gap:6px}.admin-photo-actions .admin-button{flex:1;min-width:44px}
+@media(max-width:480px){.admin-photo-list{grid-template-columns:repeat(2,minmax(0,1fr))}}

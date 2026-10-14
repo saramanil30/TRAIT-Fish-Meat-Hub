@@ -123,6 +123,28 @@ export async function saveProductContent(_state: ActionState,form: FormData): Pr
   revalidatePath("/","layout"); return {success:"Product saved."};
  } catch { return {error:"Unable to save. Check the fields and your access."}; }
 }
+/** ADMIN and OWNER: a product's photo gallery (up to 5; the first is the main photo). Removing is soft. */
+export async function manageProductPhotos(_state: ActionState,form: FormData): Promise<ActionState> {
+ try {
+  const {token,context}=await requireStaff("catalogue");
+  if(!canEditProductContent(context.role)) throw new Error("Access denied.");
+  const product=uuid(text(form,"product")); const operation=text(form,"operation");
+  if(operation==="add") {
+   const photo=form.get("photo");
+   const bytes=photo instanceof File&&photo.size>0?new Uint8Array(await photo.arrayBuffer()):null;
+   if(!bytes||!validProductWebp(bytes)) return {error:"The photo must be a WebP image under 1 MB."};
+   await uploadProductImage(token,context.businessId,product,text(form,"alt").trim().slice(0,240),bytes);
+  } else if(operation==="arrange") {
+   const photos=text(form,"photos").split(",").map(uuid);
+   if(!photos.length||photos.length>5) throw new Error("Invalid record.");
+   await staffRpc(token,"arrange_product_photos",{product,photos});
+  } else if(operation==="remove") {
+   await staffRpc(token,"remove_product_photo",{product,photo:uuid(text(form,"photo"))});
+  } else throw new Error("Invalid operation.");
+  revalidatePath("/","layout");
+  return {success:operation==="add"?"Photo added.":operation==="remove"?"Photo removed.":"Photos updated."};
+ } catch (cause) { return {error:cause instanceof Error&&cause.message?cause.message:"Unable to update photos. Try again."}; }
+}
 export async function saveEmployeeAccess(_state: ActionState,form: FormData): Promise<ActionState> {
  try {
   const {token}=await requireStaff("employees");

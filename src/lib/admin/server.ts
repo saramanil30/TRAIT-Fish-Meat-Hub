@@ -26,6 +26,8 @@ export async function staffRpc<T>(token: string, name: string, args: Record<stri
   console.error("[staffRpc]", name, response.status, failure.code ?? "", failure.message ?? "", failure.hint ?? "");
   if (failure.code === "40001") throw new Error("This product changed. Reload the page before saving again.");
   if (failure.code === "23505" && name === "save_offer") throw new Error("That code is already used by another offer. Choose a different code.");
+ // Photo gallery limits are written for staff in the migration; show them as-is.
+ if (failure.code === "22023" && /^(add_product_photo|arrange_product_photos|remove_product_photo)$/.test(name) && /^(A product can have at most 5 photos|This photo is already in the gallery)$/.test(failure.message ?? "")) throw new Error(failure.message + ".");
   throw new Error("Operation unavailable or not permitted.");
  }
  const text = await response.text();
@@ -87,6 +89,8 @@ export async function uploadOfferImage(token: string, businessId: string, bytes:
  if (!response.ok && !duplicate) throw new Error("Image upload is not available. Check the offer image storage setup.");
  return path;
 }
+/** Uploads to product-images/{business}/{product}/{sha256}.webp and adds it to the end of the product's gallery
+ *  (it becomes the main photo when the product has none). */
 export async function uploadProductImage(token: string, businessId: string, productId: string, alt: string, bytes: Uint8Array) {
  if (!validProductWebp(bytes)) throw new Error("Upload a JPEG, PNG or WebP photo under 1 MB after conversion.");
  const {url,key} = config();
@@ -97,7 +101,7 @@ export async function uploadProductImage(token: string, businessId: string, prod
  // A 409 means identical bytes were already uploaded for this product.
  const duplicate = response.status === 409 || (!response.ok && String((await response.clone().json().catch(() => ({}))).statusCode) === "409");
  if (!response.ok && !duplicate) throw new Error("Photo upload is not available. Check the product image storage setup.");
- await staffRpc(token, "set_product_photo", { product: productId, object_path: path, alternate_text: alt });
+ await staffRpc(token, "add_product_photo", { product: productId, object_path: path, alternate_text: alt });
 }
 /** Stores at share-images/{business}/{sha256}.jpg and returns the path. Storage policies allow only ADMIN and OWNER, under their own business. */
 export async function uploadShareImage(token: string, businessId: string, bytes: Uint8Array) {

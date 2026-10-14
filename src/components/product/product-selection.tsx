@@ -2,7 +2,7 @@
 import {inStockOptions, isRaw, priceLabel, quantityLabel, quantityOptionText, quantityOptions, saleTotal, stockLeftText} from "@/lib/pricing";
 
 
-import Image from "next/image";
+import { ProductGallery } from "./product-gallery";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
@@ -94,7 +94,7 @@ export function ProductSelection({ product, item, onClose, onSaved }: { product:
     <form onSubmit={submit} className="selection-form">
       <div className="selection-content">
         <div className="selection-main">
-          <Image className="selection-photo" src={product.image} alt={product.imageAlt} width={448} height={336} />
+          <ProductGallery photos={product.gallery} image={product.image} alt={product.imageAlt} />
           <div className="selection-product"><div><div className="selection-name-row"><h3>{product.name}</h3><p><strong>{priceLabel(product)}</strong></p></div>{product.localName && <p>{product.localName}</p>}<span>{product.available ? stockLeftText(product) ?? "Available" : "Sold out"}</span></div></div>
           {product.cut && <p className="selection-description">{product.cut}</p>}
           <div className="weight-select"><label htmlFor={id + "-weight"}>{product.pricingBasis === "NET_WEIGHT" ? <>Quantity <small className="weight-note">net weight</small></> : quantityLabel(product)}</label><select id={id + "-weight"} value={rawWeightGrams} onChange={event => setRawWeightGrams(Number(event.target.value))}>{options.map(weight => <option key={weight} value={weight}>{quantityOptionText(product,weight)}</option>)}</select></div>

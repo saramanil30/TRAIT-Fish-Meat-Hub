@@ -1,6 +1,6 @@
 import { OffersWorkspace } from "./offers";
 import { StaffSession } from "./session";
-import { ProductForm, ProductContentForm, type ContentProduct, type EditableProduct } from "./product-choices";
+import { ProductForm, ProductContentForm, ProductPhotos, type ContentProduct, type EditableProduct, type GalleryPhoto } from "./product-choices";
 import Link from "next/link";
 import { Operations, BusinessPolicy } from "./operations";
 import { DeliverySettings } from "./delivery-settings";
@@ -17,6 +17,18 @@ import { canAccessSection, staffSections, type StaffSection } from "@/lib/admin/
 import { sectionLabels } from "@/lib/admin/presentation";
 import { DailyProducts, MutationForm, type DailyProduct } from "./live-forms";
 type Category={id:string;name:string;parent_id:string|null;sort_order:number;is_active:boolean};
+type StoredPhoto={id:string;assetPath:string|null;objectPath:string|null;alt:string};
+/** Each product's active photos (main first) with display URLs; local assets stay as they are. */
+async function productPhotos(token:string):Promise<Record<string,GalleryPhoto[]>|null>{
+ // Null until the photo gallery migration is applied; the rest of the catalogue still works.
+ const stored=await staffRpc<Record<string,StoredPhoto[]>>(token,"product_photos").catch(()=>null);
+ if(!stored)return null;
+ const base=process.env.SUPABASE_URL+"/storage/v1/object/public/product-images/";
+ return Object.fromEntries(Object.entries(stored).map(([id,list])=>[id,list.flatMap(p=>{
+  const url=p.objectPath?base+p.objectPath.split("/").map(encodeURIComponent).join("/"):p.assetPath;
+  return url?[{id:p.id,url,alt:p.alt}]:[];
+ })]));
+}
 function Active({value=true}:{value?:boolean}) {return <label>Status<select name="active" defaultValue={String(value)}><option value="true">Active</option><option value="false">Retired / inactive</option></select></label>;}
 export async function LiveWorkspace({context,token,section,storeId,orderId,before,cursor,fromDate,untilDate,period,status,range,tab,day,slot,q}:{context:StaffContext;token:string;section:StaffSection;storeId?:string;orderId?:string;before?:string;cursor?:string;fromDate?:string;untilDate?:string;period?:string;status?:string;range?:string;tab?:string;day?:string;slot?:string;q?:string}) {
  const base="/admin/"+context.role.toLowerCase(); const store=context.stores.find(s=>s.id===storeId)??context.stores[0];
@@ -27,13 +39,12 @@ export async function LiveWorkspace({context,token,section,storeId,orderId,befor
  else if(section==="reports") content=<BusinessReport token={token} store={store?.id} base={base+"/reports"} range={range} fromDate={fromDate} untilDate={untilDate} tab={tab}/>;
  else if(section==="prices") content=store?<><p>Prices use each displayed product unit: raw kg, NET weight, unit or tray. Every price change preserves its history. Saving affects future pricing only.</p><p className="admin-muted"><strong>Morning stock:</strong> enter what is physically in the shop under <em>In shop</em>. <em>Reserved</em> is today&apos;s open orders not yet dispatched; customers can buy what is <em>Available</em> (In shop − Reserved). Orders for later days don&apos;t reserve stock — see Scheduled orders on the Dashboard.</p><DailyProducts products={await staffRpc<DailyProduct[]>(token,"daily_products",{target_store:store.id})}/></>:<p>No accessible stores.</p>;
  else if(section==="catalogue"&&context.role==="OWNER") {
- const products=await staffRpc<ContentProduct[]>(token,"product_content");
- const photoBase=process.env.SUPABASE_URL?process.env.SUPABASE_URL+"/storage/v1/object/public/product-images/":undefined;
- content=<><p>You can change each product&apos;s photo, local name and description.</p>{products.map(p=><details key={p.id}><summary>{p.name}</summary><ProductContentForm product={p} photoBase={photoBase}/></details>)}{!products.length&&<p>No products yet.</p>}</>;
+ const [products,photos]=await Promise.all([staffRpc<ContentProduct[]>(token,"product_content"),productPhotos(token)]);
+ content=<><p>You can change each product&apos;s photos (up to 5), local name and description.</p>{products.map(p=><details key={p.id}><summary>{p.name}</summary>{photos?<ProductPhotos product={p.id} name={p.name} photos={photos[p.id]??[]}/>:<p className="admin-muted">Photos are unavailable right now.</p>}<ProductContentForm product={p}/></details>)}{!products.length&&<p>No products yet.</p>}</>;
  } else if(section==="catalogue"||section==="categories") {
- const master=await staffRpc<{categories:Category[];products:EditableProduct[]}>(token,"catalogue_master");
+ const [master,photos]=await Promise.all([staffRpc<{categories:Category[];products:EditableProduct[]}>(token,"catalogue_master"),section==="catalogue"?productPhotos(token):Promise.resolve(null)]);
  content=section==="categories"?<>{[null,...master.categories].map(c=><details key={c?.id??"new"}><summary>{c?.name??"Add category"}</summary><MutationForm kind="master"><input type="hidden" name="kind" value="category"/><input type="hidden" name="id" value={c?.id??""}/><label>Name<input name="name" required defaultValue={c?.name}/></label><label>Parent<select name="parent" defaultValue={c?.parent_id??""}><option value="">None</option>{master.categories.filter(x=>x.id!==c?.id).map(x=><option key={x.id} value={x.id}>{x.name}</option>)}</select></label><label>Display order<input name="sort" type="number" min="0" required defaultValue={c?.sort_order??0}/></label><Active value={c?.is_active}/></MutationForm></details>)}</>:
- <>{[null,...master.products].map(p=><details key={p?.id??"new"}><summary>{p?.name??"Add product"}</summary><ProductForm product={p} categories={master.categories}/></details>)}
+ <>{[null,...master.products].map(p=><details key={p?.id??"new"}><summary>{p?.name??"Add product"}</summary>{p&&(photos?<ProductPhotos product={p.id} name={p.name} photos={photos[p.id]??[]}/>:<p className="admin-muted">Photos are unavailable right now.</p>)}<ProductForm product={p} categories={master.categories}/></details>)}
  <details><summary>Add an existing product to a store</summary><MutationForm kind="master"><input type="hidden" name="kind" value="offering"/><label>Product<select name="product">{master.products.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></label><label>Store<select name="store">{context.stores.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></label><p>Starts Sold Out. Set its price and availability on Prices &amp; Availability.</p></MutationForm></details><p>Retire products to remove them from sale while preserving historical records.</p></>;
  } else if(section==="employees") {
  content=<StaffDirectory token={token} context={context}/>;

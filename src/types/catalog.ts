@@ -32,6 +32,8 @@ export interface Product extends SalePricing {
   stockLeft?: number | null;
   image: string;
   imageAlt: string;
+  /** Every photo in display order, main photo first (same as image). Absent or one item = no gallery. */
+  gallery?: readonly { src: string; alt: string }[];
   cut: string;
   preparationOptions: readonly PreparationOption[];
   selectableWeightsGrams: readonly number[];

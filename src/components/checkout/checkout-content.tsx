@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { reviewCheckout, placeCheckout } from "@/app/checkout/actions";
 import { useRouter } from "next/navigation";
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useCart, clearCart, useBuyNow, clearBuyNow } from "@/lib/cart-store";
 import { serializeCart } from "@/lib/cart";
 import { orderTotals, validateCheckout, SERVICE_CITY, SERVICE_STATE } from "@/lib/order";
@@ -16,6 +16,7 @@ import { appliedCoupon, type CartOffer } from "@/lib/cart-offer";
 import { useCoupon } from "@/lib/coupon-store";
 import { quantityOptionText } from "@/lib/pricing";
 import { shopOrderKey, type ShopOrderDetails } from "@/lib/whatsapp";
+import { ADDRESS_LABELS, forgetCustomer, rememberCustomer, sameAddress, useSavedCustomer, type AddressLabel, type SavedAddress } from "@/lib/saved-customer";
 import { slotDate, slotDayName, slotLabel, slotRange, slotTime, type SlotDay } from "@/lib/delivery-slots";
 
 const fields = [
@@ -46,6 +47,17 @@ export function CheckoutContent({ buyNow = false, deliveryFeePaise = null, feeVa
   const [saving, setSaving] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
   const submitting = useRef(false);
+  // Name, mobile and addresses remembered on this device only (never looked up by mobile).
+  const saved = useSavedCustomer();
+  const [remember, setRemember] = useState(true);
+  const [saveAs, setSaveAs] = useState<AddressLabel>();
+  const prefilled = useRef(false);
+  const savedAddresses = saved?.addresses ?? [];
+  const selectedAddress = savedAddresses.find(a => sameAddress(a, draft));
+  const addressKeys = ["address", "locality", "landmark", "pincode"] as const;
+  // A saved address shows as one choice; its fields open again when they need correcting.
+  const showAddressFields = !selectedAddress || addressKeys.some(k => errors[k]);
+  const newLabel = saveAs ?? ADDRESS_LABELS.find(l => !savedAddresses.some(a => a.label === l)) ?? "Other";
   // A saved choice counts only while that slot is still open; the server re-checks cutoff and capacity.
   const slotDay = slotDays.find(d => d.date === draft.slotDate);
   const chosenSlot = slotDay?.slots.find(s => s.id === draft.slotId && s.status === "open");
@@ -65,6 +77,24 @@ export function CheckoutContent({ buyNow = false, deliveryFeePaise = null, feeVa
     const details: ShopOrderDetails = { items: items.map(i => i.productName + " · " + i.preparation.label + " · " + quantityOptionText(i, i.rawWeightGrams ?? i.quantity ?? 0) + (i.specialInstructions ? " (Cutting instructions: " + i.specialInstructions + ")" : "")),
       address: draft.deliveryMethod === "pickup" ? undefined : [draft.address, draft.locality, draft.landmark && "Landmark: " + draft.landmark, draft.city || SERVICE_CITY, draft.pincode].filter(Boolean).join(", ") };
     try { sessionStorage.setItem(shopOrderKey(trackingToken), JSON.stringify(details)); } catch { /* The message then has no items or address. */ }
+  }
+  // Prefill once per visit: only empty fields, and the last-used address only when no address was typed.
+  useEffect(() => {
+    if (!ready || !saved || prefilled.current) return;
+    prefilled.current = true;
+    const last = saved.addresses.find(a => a.label === saved.last) ?? saved.addresses[0];
+    const blank = addressKeys.every(k => !draft[k]);
+    saveCheckoutDraft({ ...draft, name: draft.name || saved.name, mobile: draft.mobile || saved.mobile, ...(last && blank ? { address: last.address, locality: last.locality, landmark: last.landmark, pincode: last.pincode } : {}) });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, saved]);
+  function chooseAddress(address: SavedAddress | null) {
+    saveCheckoutDraft({ ...draft, address: address?.address ?? "", locality: address?.locality ?? "", landmark: address?.landmark ?? "", pincode: address?.pincode ?? "" });
+    setErrors({}); setError(""); setQuote(undefined); setReview(false);
+  }
+  function rememberDetails() {
+    if (!remember) { forgetCustomer(); return; }
+    const delivery = draft.deliveryMethod === "delivery";
+    rememberCustomer({ name: draft.name, mobile: draft.mobile }, delivery ? { label: selectedAddress?.label ?? newLabel, address: draft.address, locality: draft.locality, landmark: draft.landmark, pincode: draft.pincode } : undefined);
   }
   function focusTitle() { requestAnimationFrame(() => title.current?.focus()); }
   function change(key: keyof CheckoutDetails, value: string) {
@@ -106,6 +136,7 @@ export function CheckoutContent({ buyNow = false, deliveryFeePaise = null, feeVa
       if ("error" in order) {if(order.reviewRequired){savePendingCheckout(null);setReview(false);}throw new Error(order.error);}
       savePendingCheckout(null);
       rememberForShop(order.trackingToken);
+      rememberDetails();
       clearItems();
       router.replace("/order-confirmation/" + order.trackingToken);
     } catch (cause) {
@@ -147,7 +178,11 @@ export function CheckoutContent({ buyNow = false, deliveryFeePaise = null, feeVa
           {errors.slotId && <p className="cart-error" id="error-slotId">{errors.slotId}</p>}
         </fieldset>}
         <h2><span className="section-number">{shownDay ? 3 : 2}</span> Your details</h2><p className="field-help">Fields marked * are required.</p>
-        <div className="checkout-fields">{fields.filter(field => draft.deliveryMethod === "delivery" || ["name", "mobile"].includes(field.key)).map(field => field.key === "city" || field.key === "state" ? <div key={field.key}>
+        {draft.deliveryMethod === "delivery" && savedAddresses.length > 0 && <fieldset className="saved-addresses"><legend>Deliver to</legend><div className="saved-address-list">
+          {savedAddresses.map(a => <label className="choice saved-address" key={a.label}><input type="radio" name="savedAddress" checked={selectedAddress?.label === a.label} onChange={() => chooseAddress(a)} /><span><strong>{a.label}</strong><small>{[a.address, a.locality, a.pincode].filter(Boolean).join(", ")}</small></span></label>)}
+          <label className="choice saved-address"><input type="radio" name="savedAddress" checked={!selectedAddress} onChange={() => chooseAddress(null)} /><span><strong>Use a different address</strong></span></label>
+        </div></fieldset>}
+        <div className="checkout-fields">{fields.filter(field => (draft.deliveryMethod === "delivery" && (showAddressFields || !addressKeys.includes(field.key as typeof addressKeys[number]) && field.key !== "city" && field.key !== "state")) || ["name", "mobile"].includes(field.key)).map(field => field.key === "city" || field.key === "state" ? <div key={field.key}>
           <label htmlFor={"checkout-" + field.key}>{field.label}</label>
           <input id={"checkout-" + field.key} name={field.key} type="text" value={field.key === "city" ? SERVICE_CITY : SERVICE_STATE} readOnly aria-readonly="true" className="checkout-fixed" />
         </div> : <div key={field.key} className={field.key === "address" ? "checkout-field-wide" : ""}>
@@ -155,6 +190,12 @@ export function CheckoutContent({ buyNow = false, deliveryFeePaise = null, feeVa
           <input id={"checkout-" + field.key} name={field.key} type={field.key === "mobile" ? "tel" : "text"} inputMode={field.key === "pincode" ? "numeric" : field.key === "mobile" ? "tel" : "text"} autoComplete={field.autoComplete} maxLength={field.max} required={field.key !== "landmark" && !(field.key === "name" && draft.deliveryMethod === "pickup")} value={draft[field.key] ?? ""} onChange={event => change(field.key, event.target.value)} aria-invalid={!!errors[field.key]} aria-describedby={errors[field.key] ? "error-" + field.key : undefined} />
           {errors[field.key] && <p className="cart-error" id={"error-" + field.key}>{errors[field.key]}</p>}
         </div>)}</div>
+        <div className="remember-details">
+          <label className="remember-toggle"><input type="checkbox" checked={remember} onChange={event => setRemember(event.target.checked)} /> Remember my details on this device</label>
+          {remember && draft.deliveryMethod === "delivery" && !selectedAddress && <fieldset className="save-as"><legend>Save this address as</legend>{ADDRESS_LABELS.map(label => <label className="choice" key={label}><input type="radio" name="saveAs" checked={newLabel === label} onChange={() => setSaveAs(label)} />{label}</label>)}</fieldset>}
+          {remember && !selectedAddress && savedAddresses.some(a => a.label === newLabel) && draft.deliveryMethod === "delivery" && <p className="field-help">This replaces your saved {newLabel} address.</p>}
+          <p className="field-help">Saved only in this browser, never on our servers. {saved && <button type="button" className="plain-button" onClick={() => { forgetCustomer(); setRemember(false); }}>Forget saved details</button>}</p>
+        </div>
         {draft.deliveryMethod === "pickup" && <p className="field-help">No delivery address is needed. See our delivery and pickup page for the store location and opening hours.</p>}
         </section><fieldset className="order-panel payment-panel"><legend><span className="section-number">{shownDay ? 4 : 3}</span> Payment method</legend><div className="checkout-options">{([ ["cash", draft.deliveryMethod === "pickup" ? "Cash at pickup" : "Cash on Delivery"], ["upi", "UPI at delivery / pickup"] ] as const).map(([value, label]) => <label className="choice" key={value}><input type="radio" name="paymentMethod" value={value} checked={draft.paymentMethod === value} onChange={() => change("paymentMethod", value)} />{label}</label>)}</div><p className="field-help">Pay by cash or UPI when you receive your order at delivery or pickup.</p></fieldset>
       </>}

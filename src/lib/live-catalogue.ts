@@ -15,12 +15,15 @@ export async function liveShop(): Promise<{products:Product[];categories:Catalog
  return {categories,products:(data?.products??[]).map(p=>{
   let category=data.categories.find(c=>c.id===p.categoryId); const visited=new Set<string>();
   while(category?.parentId&&!visited.has(category.id)){visited.add(category.id);category=data.categories.find(c=>c.id===category!.parentId)??category;}
-  const image=p.images.find(i=>(i.assetPath?.startsWith("/")&&!i.assetPath.startsWith("//"))||(i.bucket==="product-images"&&i.objectPath));
+  // Already in display order: main photo first, then the staff-chosen order.
+  const photos=p.images.filter(i=>(i.assetPath?.startsWith("/")&&!i.assetPath.startsWith("//"))||(i.bucket==="product-images"&&i.objectPath)).slice(0,5);
+  const photoUrl=(i:Row["images"][number])=>i.assetPath ?? process.env.SUPABASE_URL+"/storage/v1/object/public/product-images/"+i.objectPath!.split("/").map(encodeURIComponent).join("/");
+  const image=photos[0];
   const categoryName=(category?.name??"Other").toLowerCase();
   // Products without a verified photo get a neutral placeholder, never another product's image.
   const placeholder=categoryName==="eggs"?"/assets/catalogue/placeholder-eggs.svg":"/assets/catalogue/placeholder-fish.svg";
-  const imageUrl=image?.assetPath ?? (image?.bucket&&image.objectPath ? process.env.SUPABASE_URL+"/storage/v1/object/public/product-images/"+image.objectPath.split("/").map(encodeURIComponent).join("/") : placeholder);
-  return {pricingBasis:p.pricingBasis,pricePaise:Number(p.pricePaise??p.pricePerKgPaise),priceUnitGrams:p.priceUnitGrams,unitsPerPack:p.unitsPerPack,saleQuantities:p.saleQuantities,orderable:p.orderable,id:p.id,name:p.name,localName:p.localName,category:categoryName,pricePerKg:Number(p.pricePerKgPaise)/100,available:p.available,stockLeft:p.stockLeft??null,image:imageUrl,imageAlt:image?(image.alt||p.name):"Photo coming soon: "+p.name,cut:p.description??"",selectableWeightsGrams:p.weightsGrams??[],preparationOptions:p.preparations.map(x=>({id:x.id,label:x.name,removesCleaningWaste:x.cleaningLossPercent!==null,cleaningLossPercent:x.cleaningLossPercent===null?undefined:Number(x.cleaningLossPercent)}))};
+  const imageUrl=image?photoUrl(image):placeholder;
+  return {pricingBasis:p.pricingBasis,pricePaise:Number(p.pricePaise??p.pricePerKgPaise),priceUnitGrams:p.priceUnitGrams,unitsPerPack:p.unitsPerPack,saleQuantities:p.saleQuantities,orderable:p.orderable,id:p.id,name:p.name,localName:p.localName,category:categoryName,pricePerKg:Number(p.pricePerKgPaise)/100,available:p.available,stockLeft:p.stockLeft??null,image:imageUrl,imageAlt:image?(image.alt||p.name):"Photo coming soon: "+p.name,gallery:photos.map((x,n)=>({src:photoUrl(x),alt:(x.alt||p.name)+(photos.length>1?" — photo "+(n+1)+" of "+photos.length:"")})),cut:p.description??"",selectableWeightsGrams:p.weightsGrams??[],preparationOptions:p.preparations.map(x=>({id:x.id,label:x.name,removesCleaningWaste:x.cleaningLossPercent!==null,cleaningLossPercent:x.cleaningLossPercent===null?undefined:Number(x.cleaningLossPercent)}))};
  })};
 }
 /** Each product's category and its ancestors, as checkout's offer rule walks them. */

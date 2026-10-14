@@ -1,6 +1,6 @@
 "use client";
-import {startTransition, useActionState,useState} from "react";
-import {saveMaster,saveProductContent,type ActionState} from "@/app/admin/actions";
+import {startTransition, useActionState,useState,useTransition} from "react";
+import {manageProductPhotos,saveMaster,saveProductContent,type ActionState} from "@/app/admin/actions";
 type Preparation={name:string;cleaning_loss_percent?:number};
 type Basis="RAW_WEIGHT"|"NET_WEIGHT"|"UNIT"|"TRAY";
 export type EditableProduct={pricing_basis?:string;price_unit_grams?:number;units_per_pack?:number;sale_quantities?:number[];catalogue_price_paise?:number;catalogue_published?:boolean;id:string;category_id:string;name:string;local_name:string;description:string;image_path:string;allowed_weights:number[];preparations:Preparation[];is_active:boolean};
@@ -42,7 +42,7 @@ export function ProductForm({product:p,categories}:{product:EditableProduct|null
   <label>Local name<input name="local" maxLength={160} defaultValue={p?.local_name}/></label>
   <label>Category<select name="category" required defaultValue={p?.category_id}>{categories.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
   <label>Description<textarea name="description" maxLength={4000} defaultValue={p?.description}/></label>
-  <label>Photo<input name="photo" type="file" accept="image/jpeg,image/png,image/webp"/><small>JPEG, PNG or WebP. Saved as an 800×800 WebP under 1 MB and becomes the main photo.{p?.image_path?" Current: "+p.image_path:""}</small></label>
+  {!p&&<label>Photo<input name="photo" type="file" accept="image/jpeg,image/png,image/webp"/><small>JPEG, PNG or WebP. Saved as an 800×800 WebP under 1 MB and becomes the main photo. Add more photos after saving.</small></label>}
   {photoError&&<p role="alert">{photoError}</p>}
   <label>Sold by<select name="basis" value={basis} onChange={e=>setBasis(e.target.value as Basis)}>{bases.map(b=><option key={b.value} value={b.value}>{b.label}</option>)}</select><small>A product that already has store prices cannot change how it is sold; retire it and create a new product.</small></label>
   {basis==="NET_WEIGHT"&&<label>Grams per priced pack<input type="number" name="unitGrams" required min="1" max="100000" defaultValue={p?.price_unit_grams&&p.pricing_basis==="NET_WEIGHT"?p.price_unit_grams:500}/></label>}
@@ -58,10 +58,9 @@ export function ProductForm({product:p,categories}:{product:EditableProduct|null
 }
 export type ContentProduct={id:string;name:string;local_name:string;description:string;category:string|null;is_active:boolean;photo:string|null;image_path:string};
 /** OWNER (and ADMIN): photo, local name and description only. Every other product field is ADMIN-only. */
-export function ProductContentForm({product:p,photoBase}:{product:ContentProduct;photoBase?:string}){
+export function ProductContentForm({product:p}:{product:ContentProduct}){
  const [state,dispatch,pending]=useActionState<ActionState,FormData>(saveProductContent,{});
  const [photoError,setPhotoError]=useState("");
- const current=p.photo&&photoBase?photoBase+p.photo:p.image_path||null;
  async function submit(form:FormData){
   setPhotoError("");
   const photo=form.get("photo");
@@ -73,13 +72,54 @@ export function ProductContentForm({product:p,photoBase}:{product:ContentProduct
  return <form action={submit} className="admin-live-form"><fieldset disabled={pending}>
   <input type="hidden" name="id" value={p.id}/><input type="hidden" name="name" value={p.name}/>
   <p><strong>{p.name}</strong>{p.category?" · "+p.category:""}{p.is_active?"":" · Retired"}</p>
-  {/* eslint-disable-next-line @next/next/no-img-element */}
-  {current&&<img src={current} alt={p.name} width={120} height={120}/>}
-  <label>Photo<input name="photo" type="file" accept="image/jpeg,image/png,image/webp"/><small>JPEG, PNG or WebP. Saved as an 800×800 WebP under 1 MB and becomes the main photo.</small></label>
   {photoError&&<p role="alert">{photoError}</p>}
   <label>Local name<input name="local" maxLength={160} defaultValue={p.local_name}/></label>
   <label>Description<textarea name="description" maxLength={4000} defaultValue={p.description}/></label>
   <p className="admin-muted">Name, category, pricing, preparations and status are managed by ADMIN.</p>
   <button className="admin-button">{pending?"Saving…":"Save"}</button>
  </fieldset>{state.error&&<p role="alert">{state.error}</p>}{state.success&&<p role="status">{state.success}</p>}</form>;
+}
+export type GalleryPhoto={id:string;url:string;alt:string};
+export const photoLimitCount=5;
+/** ADMIN and OWNER: up to 5 photos per product. The first is the main photo (cards and link previews use it);
+ *  the rest follow in this order in the product popup. Removing hides a photo; the file is kept. */
+export function ProductPhotos({product,name,photos}:{product:string;name:string;photos:GalleryPhoto[]}){
+ const [pending,start]=useTransition();
+ const [message,setMessage]=useState<ActionState>({});
+ const [confirming,setConfirming]=useState("");
+ function run(fields:Record<string,string|File>){
+  const form=new FormData();form.set("product",product);
+  for(const [k,v] of Object.entries(fields))form.set(k,v);
+  setConfirming("");
+  start(async()=>{setMessage(await manageProductPhotos({},form));});
+ }
+ function arrange(order:GalleryPhoto[]){run({operation:"arrange",photos:order.map(x=>x.id).join(",")});}
+ function move(from:number,to:number){const order=[...photos];const [x]=order.splice(from,1);order.splice(to,0,x);arrange(order);}
+ async function add(files:FileList|null){
+  const list=Array.from(files??[]).slice(0,photoLimitCount-photos.length);
+  setMessage({});
+  for(const file of list){
+   let photo:File;
+   try{photo=await toWebp(file);}catch(error){setMessage({error:error instanceof Error?error.message:"This photo could not be read."});return;}
+   const form=new FormData();form.set("product",product);form.set("operation","add");form.set("alt",name);form.set("photo",photo);
+   const result=await new Promise<ActionState>(resolve=>start(async()=>{resolve(await manageProductPhotos({},form));}));
+   setMessage(result);if(result.error)return;
+  }
+ }
+ return <fieldset className="admin-photos" disabled={pending}><legend>Photos <small>{photos.length}/{photoLimitCount}</small></legend>
+  {photos.length?<ol className="admin-photo-list">{photos.map((photo,i)=><li key={photo.id}>
+   {/* eslint-disable-next-line @next/next/no-img-element */}
+   <img src={photo.url} alt={photo.alt||name} width={120} height={120}/>
+   {i===0?<span className="admin-photo-main">Main photo</span>:<button type="button" className="admin-button secondary" onClick={()=>move(i,0)}>Set as main</button>}
+   <div className="admin-photo-actions">
+    {i>1&&<button type="button" className="admin-button secondary" aria-label={"Move photo "+(i+1)+" earlier"} onClick={()=>move(i,i-1)}>←</button>}
+    {i>0&&i<photos.length-1&&<button type="button" className="admin-button secondary" aria-label={"Move photo "+(i+1)+" later"} onClick={()=>move(i,i+1)}>→</button>}
+    {confirming===photo.id?<button type="button" className="admin-button" onClick={()=>run({operation:"remove",photo:photo.id})}>Confirm remove</button>
+     :<button type="button" className="admin-button secondary" onClick={()=>setConfirming(photo.id)}>Remove<span className="sr-only"> photo {i+1}</span></button>}
+   </div>
+  </li>)}</ol>:<p className="admin-muted">No photos yet. The shop shows a placeholder.</p>}
+  {photos.length<photoLimitCount&&<label>Add photos<input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={e=>{const files=e.currentTarget.files;void add(files).finally(()=>{e.target.value="";});}}/><small>JPEG, PNG or WebP, up to {photoLimitCount-photos.length} more. Each is saved as an 800×800 WebP under 1 MB. The first photo is the main photo on product cards.</small></label>}
+  {pending&&<p role="status">Saving photos…</p>}
+  {message.error&&<p role="alert">{message.error}</p>}{!pending&&message.success&&<p role="status">{message.success}</p>}
+ </fieldset>;
 }
