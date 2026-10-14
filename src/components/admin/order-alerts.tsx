@@ -1,76 +1,110 @@
 "use client";
-import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { pollOrderAlerts, type OrderAlert, type OrderAlertCursor } from "@/app/admin/actions";
 import { formatMoney } from "@/lib/format";
 import { slotDayName, slotRange } from "@/lib/delivery-slots";
 
-const POLL_MS = 15000;
-const STATE_KEY = "trait-order-alerts", SOUND_KEY = "trait-order-sound";
-type Saved = { cursor: OrderAlertCursor; alerts: OrderAlert[] };
+const POLL_MS = 15000, RECENT_MAX = 20;
+const STATE_KEY = "trait-order-alerts-v2", SOUND_KEY = "trait-order-sound";
+type Item = { order: OrderAlert; read: boolean; toast: boolean };
+type Saved = { cursor: OrderAlertCursor; items: Item[] };
+type Sound = "off" | "blocked" | "on";
 
-// Unseen alerts (shared with the Orders tab badge) and whether the beep can play.
-const none: OrderAlert[] = [];
-let shared: OrderAlert[] = none, soundOn = true;
+// One store shared by the toasts, the header bell and the Orders tab badge.
+const none: Item[] = [];
+let items: Item[] = none, sound: Sound = "off", cursor: OrderAlertCursor = null;
 const listeners = new Set<() => void>();
-function publish(next: OrderAlert[]) { shared = next; listeners.forEach(l => l()); }
-function publishSound(on: boolean) { soundOn = on; listeners.forEach(l => l()); }
+const emit = () => listeners.forEach(l => l());
 function subscribe(listener: () => void) { listeners.add(listener); return () => { listeners.delete(listener); }; }
+function setItems(next: Item[]) {
+ items = next; emit();
+ try { sessionStorage.setItem(STATE_KEY, JSON.stringify({ cursor, items } satisfies Saved)); } catch { /* Alerts still work for this page. */ }
+}
+function setSound(next: Sound) { sound = next; emit(); }
+const markRead = (id: string) => setItems(items.map(i => i.order.id === id ? { ...i, read: true, toast: false } : i));
+const closeToast = (id: string) => setItems(items.map(i => i.order.id === id ? { ...i, toast: false } : i));
+const markAllRead = () => setItems(items.map(i => ({ ...i, read: true, toast: false })));
+const unreadCount = () => items.filter(i => !i.read).length;
 
-function load(): Saved | null { try { const v = JSON.parse(sessionStorage.getItem(STATE_KEY) ?? "null"); return v && Array.isArray(v.alerts) ? v : null; } catch { return null; } }
-function save(value: Saved) { try { sessionStorage.setItem(STATE_KEY, JSON.stringify(value)); } catch { /* Alerts still work for this page. */ } }
-function wantsSound() { try { return localStorage.getItem(SOUND_KEY) === "on"; } catch { return false; } }
-
-function summary(o: OrderAlert) {
- const method = o.fulfillment_method === "HOME_DELIVERY" ? "Delivery" : "Pickup";
- const slot = o.slot ? slotDayName(o.slot.date) + " " + o.slot.name + " " + slotRange(o.slot.startsAt, o.slot.endsAt) : "";
- return [o.order_number, formatMoney(Number(o.total_paise)), method, slot].filter(Boolean).join(" · ");
+// Browsers block audio until the person clicks, so the beep needs an AudioContext resumed from a click.
+let audio: AudioContext | null = null;
+function beep(times: number) {
+ if (!audio || audio.state !== "running" || sound !== "on") return;
+ for (let i = 0; i < times; i++) {
+  const at = audio.currentTime + i * 0.45, osc = audio.createOscillator(), gain = audio.createGain();
+  osc.type = "sine"; osc.frequency.value = 880;
+  gain.gain.setValueAtTime(0.0001, at); gain.gain.exponentialRampToValueAtTime(0.4, at + 0.02); gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.3);
+  osc.connect(gain).connect(audio.destination); osc.start(at); osc.stop(at + 0.32);
+ }
+}
+/** Called from a click: turns sound on (and remembers it) or off. */
+async function toggleSound() {
+ if (sound !== "off") { try { localStorage.setItem(SOUND_KEY, "off"); } catch { /* Not remembered. */ } setSound("off"); return; }
+ try { audio ??= new AudioContext(); await audio.resume(); localStorage.setItem(SOUND_KEY, "on"); } catch { /* Sound unavailable here. */ }
+ setSound(audio?.state === "running" ? "on" : "blocked");
+ beep(1);
+ if ("Notification" in window && Notification.permission === "default") void Notification.requestPermission().catch(() => undefined);
 }
 
-/** Count of new orders not yet opened or dismissed; shown on the Orders tab. */
+const orderHref = (base: string, o: OrderAlert) => base + "/orders?store=" + o.store_id + "&order=" + o.id;
+function when(o: OrderAlert) { return o.slot ? slotDayName(o.slot.date) + " " + o.slot.name + " " + slotRange(o.slot.startsAt, o.slot.endsAt) : "ASAP"; }
+function detail(o: OrderAlert) { return [formatMoney(Number(o.total_paise)), o.fulfillment_method === "HOME_DELIVERY" ? "Delivery" : "Pickup", when(o)].join(" · "); }
+function ago(iso: string) { const m = Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 60000)); return m < 1 ? "just now" : m < 60 ? m + " min ago" : Math.floor(m / 60) + " h ago"; }
+
+/** Unread new orders; shown on the Orders tab. */
 export function OrderAlertCount() {
- const count = useSyncExternalStore(subscribe, () => shared.length, () => 0);
- return count ? <span className="order-alert-count" aria-label={count + " new"}>{count}</span> : null;
+ const count = useSyncExternalStore(subscribe, unreadCount, () => 0);
+ return count ? <span className="order-alert-count" aria-label={count + " unread"}>{count}</span> : null;
 }
 
-/** Every staff role (store scope is enforced by the database): polls every 15 s for orders newer than the last seen; each one stays until opened or dismissed. */
-export function OrderAlerts({ base }: { base: string }) {
- const alerts = useSyncExternalStore(subscribe, () => shared, () => none);
- const soundReady = useSyncExternalStore(subscribe, () => soundOn, () => true);
- const cursor = useRef<OrderAlertCursor>(null), started = useRef(false), audio = useRef<AudioContext | null>(null);
-
- const update = useCallback((next: OrderAlert[]) => { publish(next); save({ cursor: cursor.current, alerts: next }); }, []);
-
- const beep = useCallback((times: number) => {
-  const ctx = audio.current;
-  if (!ctx || ctx.state !== "running") return;
-  for (let i = 0; i < times; i++) {
-   const at = ctx.currentTime + i * 0.45, osc = ctx.createOscillator(), gain = ctx.createGain();
-   osc.type = "sine"; osc.frequency.value = 880;
-   gain.gain.setValueAtTime(0.0001, at); gain.gain.exponentialRampToValueAtTime(0.4, at + 0.02); gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.3);
-   osc.connect(gain).connect(ctx.destination); osc.start(at); osc.stop(at + 0.32);
-  }
- }, []);
-
- const enableSound = useCallback(async () => {
-  try {
-   audio.current ??= new AudioContext();
-   await audio.current.resume();
-   localStorage.setItem(SOUND_KEY, "on");
-  } catch { /* Sound unavailable in this browser. */ }
-  publishSound(audio.current?.state === "running");
-  beep(1);
-  if ("Notification" in window && Notification.permission === "default") void Notification.requestPermission().catch(() => undefined);
- }, [beep]);
-
- // Restore this tab's alerts; browsers keep audio blocked until the person interacts, so re-arm on the first tap.
+/** Header bell: unread badge, recent new orders, mark as read and the sound toggle. */
+export function OrderBell({ base }: { base: string }) {
+ const list = useSyncExternalStore(subscribe, () => items, () => none);
+ const soundState = useSyncExternalStore(subscribe, () => sound, () => "off" as Sound);
+ const [open, setOpen] = useState(false);
+ const root = useRef<HTMLDivElement>(null);
+ const unread = list.filter(i => !i.read).length;
  useEffect(() => {
-  const saved = load();
-  if (saved) { cursor.current = saved.cursor; publish(saved.alerts); }
-  if (!wantsSound()) { publishSound(false); return; }
-  try { audio.current = new AudioContext(); } catch { publishSound(false); return; }
-  const ctx = audio.current, sync = () => publishSound(ctx.state === "running");
-  sync(); ctx.addEventListener("statechange", sync);
+  if (!open) return;
+  const outside = (e: PointerEvent) => { if (!root.current?.contains(e.target as Node)) setOpen(false); };
+  const escape = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+  document.addEventListener("pointerdown", outside); document.addEventListener("keydown", escape);
+  return () => { document.removeEventListener("pointerdown", outside); document.removeEventListener("keydown", escape); };
+ }, [open]);
+ return <div className="order-bell" ref={root}>
+  <button type="button" className="order-bell-button" aria-expanded={open} aria-haspopup="true" aria-label={"New orders" + (unread ? ", " + unread + " unread" : "")} onClick={() => setOpen(!open)}>
+   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15zM10 20a2 2 0 0 0 4 0" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round"/></svg>
+   {unread > 0 && <span className="order-alert-count">{unread > 99 ? "99+" : unread}</span>}
+  </button>
+  {open && <div className="order-bell-panel" role="dialog" aria-label="New orders">
+   <div className="order-bell-head"><strong>New orders</strong>{unread > 0 && <button type="button" className="admin-text-button" onClick={markAllRead}>Mark all as read</button>}</div>
+   {list.length ? <ul>{[...list].reverse().map(({ order: o, read }) => <li key={o.id} className={read ? undefined : "is-unread"}>
+    <Link href={orderHref(base, o)} onClick={() => { markRead(o.id); setOpen(false); }}><strong>{o.order_number}</strong> {detail(o)}<small>{o.store_name} · {ago(o.created_at)}</small></Link>
+    {!read && <button type="button" className="order-bell-read" aria-label={"Mark " + o.order_number + " as read"} title="Mark as read" onClick={() => markRead(o.id)}>✓</button>}
+   </li>)}</ul> : <p className="order-bell-empty">No new orders since you opened the workspace.</p>}
+   <button type="button" className="order-bell-sound" role="switch" aria-checked={soundState !== "off"} onClick={() => void toggleSound()}>
+    <span>Order sound</span><span className="order-switch" aria-hidden="true"/>{soundState === "blocked" && <small>Tap anywhere to allow sound</small>}
+   </button>
+  </div>}
+ </div>;
+}
+
+/** Polls every 15 s for orders newer than the last seen (the database limits each role to its stores); shows a toast per new order. */
+export function OrderAlerts({ base }: { base: string }) {
+ const list = useSyncExternalStore(subscribe, () => items, () => none);
+ const soundState = useSyncExternalStore(subscribe, () => sound, () => "off" as Sound);
+ const started = useRef(false);
+
+ // Restore this tab's alerts and the remembered sound choice (re-armed on the first click or key press).
+ useEffect(() => {
+  try { const saved = JSON.parse(sessionStorage.getItem(STATE_KEY) ?? "null") as Saved | null; if (saved && Array.isArray(saved.items)) { cursor = saved.cursor; setItems(saved.items); } } catch { /* Start fresh. */ }
+  let wanted = false; try { wanted = localStorage.getItem(SOUND_KEY) === "on"; } catch { /* Off. */ }
+  if (!wanted) return;
+  try { audio ??= new AudioContext(); } catch { return; }
+  const ctx = audio, sync = () => { if (sound !== "off") setSound(ctx.state === "running" ? "on" : "blocked"); };
+  setSound(ctx.state === "running" ? "on" : "blocked");
+  ctx.addEventListener("statechange", sync);
   const arm = () => void ctx.resume().catch(() => undefined);
   window.addEventListener("pointerdown", arm, { once: true }); window.addEventListener("keydown", arm, { once: true });
   return () => { ctx.removeEventListener("statechange", sync); window.removeEventListener("pointerdown", arm); window.removeEventListener("keydown", arm); };
@@ -81,19 +115,19 @@ export function OrderAlerts({ base }: { base: string }) {
   const poll = async () => {
    if (busy) return; busy = true;
    try {
-    const result = await pollOrderAlerts(cursor.current);
+    const result = await pollOrderAlerts(cursor);
     if (!result || disposed) return;
-    const first = !started.current && !cursor.current; started.current = true;
-    cursor.current = result.cursor;
-    const fresh = first ? [] : result.orders.filter(o => !shared.some(a => a.id === o.id));
-    if (!fresh.length) { save({ cursor: cursor.current, alerts: shared }); return; }
-    update([...shared, ...fresh]);
+    const first = !started.current && !cursor; started.current = true;
+    cursor = result.cursor;
+    const fresh = first ? [] : result.orders.filter(o => !items.some(i => i.order.id === o.id));
+    if (!fresh.length) { setItems(items); return; }
+    setItems([...items, ...fresh.map(order => ({ order, read: false, toast: true }))].slice(-RECENT_MAX));
     beep(fresh.length);
     if (document.visibilityState === "hidden" && "Notification" in window && Notification.permission === "granted") {
      for (const o of fresh) {
       try {
-       const n = new Notification("New order " + o.order_number, { body: summary(o).split(" · ").slice(1).join(" · "), tag: "order-" + o.id });
-       n.onclick = () => { window.focus(); window.location.assign(base + "/orders?store=" + o.store_id + "&order=" + o.id); n.close(); };
+       const n = new Notification("New order " + o.order_number, { body: detail(o), tag: "order-" + o.id });
+       n.onclick = () => { window.focus(); markRead(o.id); window.location.assign(orderHref(base, o)); n.close(); };
       } catch { /* Some mobile browsers only notify from a service worker. */ }
      }
     }
@@ -102,15 +136,15 @@ export function OrderAlerts({ base }: { base: string }) {
   void poll();
   const timer = window.setInterval(() => void poll(), POLL_MS);
   return () => { disposed = true; window.clearInterval(timer); };
- }, [base, beep, update]);
+ }, [base]);
 
- const dismiss = (id: string) => update(shared.filter(a => a.id !== id));
- if (!alerts.length && soundReady) return null;
+ const toasts = list.filter(i => i.toast);
+ if (!toasts.length && soundState !== "blocked") return null;
  return <div className="order-alerts" aria-live="polite">
-  {!soundReady && <button type="button" className="admin-button secondary order-alerts-sound" onClick={() => void enableSound()}>🔔 Enable order sound</button>}
-  {alerts.map(o => <div key={o.id} className="order-alert" role="status">
-   <Link href={base + "/orders?store=" + o.store_id + "&order=" + o.id} onClick={() => dismiss(o.id)}>🔔 New order {summary(o)}</Link>
-   <button type="button" aria-label={"Dismiss " + o.order_number} onClick={() => dismiss(o.id)}>×</button>
+  {soundState === "blocked" && <button type="button" className="admin-button secondary order-alerts-sound" onClick={() => void audio?.resume()}>🔔 Tap to enable order sound</button>}
+  {toasts.map(({ order: o }) => <div key={o.id} className="order-alert" role="status">
+   <Link href={orderHref(base, o)} onClick={() => markRead(o.id)}>🔔 New order {o.order_number}<small>{detail(o)}</small></Link>
+   <button type="button" aria-label={"Close alert for " + o.order_number} onClick={() => closeToast(o.id)}>×</button>
   </div>)}
  </div>;
 }

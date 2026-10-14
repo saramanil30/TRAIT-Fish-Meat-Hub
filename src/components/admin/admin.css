@@ -201,3 +201,27 @@
 .order-alerts-sound { box-shadow:0 8px 28px rgb(18 20 23 / 18%); }
 @keyframes order-alert-in { from { transform:translateY(8px); opacity:0; } }
 @media (prefers-reduced-motion:reduce) { .order-alert { animation:none; } }
+.order-alert a small { display:block; margin-top:2px; color:#c6cdd6; font-size:12px; font-weight:500; }
+/* Header bell: unread badge, recent new orders, mark as read, sound toggle. */
+.admin-live-account { display:flex; align-items:center; gap:10px; margin-left:auto; }
+.order-bell { position:relative; }
+.order-bell-button { position:relative; display:grid; place-items:center; width:48px; height:48px; border:1px solid #dec9c9; border-radius:8px; background:white; color:#9a000d; }
+.order-bell-button:hover { background:#fff3f1; }
+.order-bell-button svg { width:22px; height:22px; }
+.order-bell-button .order-alert-count { position:absolute; top:-6px; right:-6px; margin:0; }
+.order-bell-panel { position:absolute; right:0; top:calc(100% + 8px); z-index:60; width:min(380px,calc(100vw - 32px)); max-height:min(520px,calc(100dvh - 120px)); display:flex; flex-direction:column; background:white; border:1px solid var(--admin-line); border-radius:12px; box-shadow:0 16px 48px rgb(18 20 23 / 18%); overflow:hidden; }
+.order-bell-head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:8px 8px 8px 16px; border-bottom:1px solid var(--admin-line); min-height:56px; }
+.order-bell-panel ul { list-style:none; margin:0; padding:0; overflow:auto; flex:1; }
+.order-bell-panel li { display:flex; align-items:stretch; border-bottom:1px solid #edf0f5; }
+.order-bell-panel li.is-unread { background:#fff6f5; box-shadow:inset 3px 0 #c4121a; }
+.order-bell-panel li a { flex:1; min-width:0; padding:12px 16px; font-size:13px; line-height:1.45; text-decoration:none; overflow-wrap:anywhere; }
+.order-bell-panel li a:hover { background:#f7f8fc; }
+.order-bell-panel li a small { display:block; margin-top:2px; font-size:11px; }
+.order-bell-read { flex-shrink:0; min-width:48px; border:0; background:none; color:#186a3d; font-size:18px; }
+.order-bell-empty { padding:20px 16px; margin:0!important; color:var(--admin-muted); font-size:13px; }
+.order-bell-sound { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:4px 12px; width:100%; min-height:56px; padding:8px 16px; border:0; border-top:1px solid var(--admin-line); background:#f7f8fc; font-size:13px; font-weight:600; text-align:left; color:var(--admin-ink); }
+.order-bell-sound small { flex-basis:100%; font-weight:400; }
+.order-switch { position:relative; width:40px; height:24px; border-radius:12px; background:#cdd3db; transition:background .15s; }
+.order-switch::after { content:""; position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:50%; background:white; transition:transform .15s; }
+.order-bell-sound[aria-checked=true] .order-switch { background:#186a3d; }
+.order-bell-sound[aria-checked=true] .order-switch::after { transform:translateX(16px); }
