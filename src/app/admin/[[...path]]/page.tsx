@@ -6,13 +6,14 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { LiveWorkspace } from "@/components/admin/live-workspace";
+import { OrderTickets } from "@/components/admin/order-tickets";
 import { StaffRecovery } from "@/components/admin/recovery";
 import { StaffLogin } from "@/components/admin/live-forms";
 import { requireStaff, refreshCookie } from "@/lib/admin/server";
 import { canAccessSection, staffSections, type StaffSection } from "@/lib/admin/permissions";
 import "@/components/admin/admin.css";
 export const metadata: Metadata = { title: "Staff workspace", robots: { index: false, follow: false } };
-export default async function AdminPage({ params,searchParams }: { params: Promise<{ path?: string[] }>;searchParams:Promise<{store?:string;order?:string;before?:string;cursor?:string;from?:string;until?:string;period?:string;status?:string;range?:string;tab?:string;day?:string;slot?:string}> }) {
+export default async function AdminPage({ params,searchParams }: { params: Promise<{ path?: string[] }>;searchParams:Promise<{store?:string;order?:string;before?:string;cursor?:string;from?:string;until?:string;period?:string;status?:string;range?:string;tab?:string;day?:string;slot?:string;q?:string;orders?:string}> }) {
  const {path=[]}=await params;
  if(path.length===1&&path[0]==="recovery") return <StaffRecovery/>;
  if(path.length===1&&path[0]==="forgot-password") return <ForgotPassword/>;
@@ -26,9 +27,16 @@ export default async function AdminPage({ params,searchParams }: { params: Promi
  if(path[0]==="preview") notFound();
  let staff;
  try {staff=await requireStaff();} catch {redirect("/admin/login");}
+ const role=staff.context.role.toLowerCase();
+ // Printable packing slips / cut tickets: /admin/{role}/print?orders=id,id&store=id (anyone who handles orders).
+ if(path.length===2&&path[1]==="print"){
+  if(path[0]!==role||!canAccessSection(staff.context.role,"orders")) notFound();
+  const query=await searchParams;
+  return <OrderTickets token={staff.token} ids={(query.orders??"").split(",")} back={"/admin/"+role+"/orders"+(query.store?"?store="+encodeURIComponent(query.store):"")}/>;
+ }
  if(path.length!==2||!staffSections.includes(path[1] as StaffSection)) redirect("/admin/"+staff.context.role.toLowerCase()+"/dashboard");
  const section=path[1] as StaffSection;
  const query=await searchParams;
  if(path[0]!==staff.context.role.toLowerCase()||!canAccessSection(staff.context.role,section)) notFound();
- return <LiveWorkspace context={staff.context} token={staff.token} section={section} storeId={query.store} orderId={query.order} before={query.before} cursor={query.cursor} fromDate={query.from} untilDate={query.until} period={query.period} status={query.status} range={query.range} tab={query.tab} day={query.day} slot={query.slot}/>;
+ return <LiveWorkspace context={staff.context} token={staff.token} section={section} storeId={query.store} orderId={query.order} before={query.before} cursor={query.cursor} fromDate={query.from} untilDate={query.until} period={query.period} status={query.status} range={query.range} tab={query.tab} day={query.day} slot={query.slot} q={query.q}/>;
 }

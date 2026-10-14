@@ -12,7 +12,12 @@ export async function operationalAction(_:ActionState,f:FormData):Promise<Action
  try{
   const kind=text(f,"operation");
   const {token}=await requireStaff(["policy","delivery","slot"].includes(kind)?"settings":["provision","staff-profile","recovery"].includes(kind)?"employees":["refund","cash-refund"].includes(kind)?"payments":"orders");
-  if(kind==="status")await staffRpc(token,"transition_order",{target_order:id(f,"id"),expected_version:number(f,"version"),next_status:text(f,"status"),reason:text(f,"reason")||null});
+  if(kind==="status"){
+   // Cancel dialog: a preset reason, or "Other" with the staff member's own words.
+   const reason=text(f,"reason")==="Other"?text(f,"reasonOther").trim():text(f,"reason");
+   if(text(f,"status")==="CANCELLED"&&!reason)return {error:"Choose a reason, or describe it under Other."};
+   await staffRpc(token,"transition_order",{target_order:id(f,"id"),expected_version:number(f,"version"),next_status:text(f,"status"),reason:reason||null});
+  }
   else if(kind==="cash")await staffRpc(token,"receive_cash",{target_payment:id(f,"id"),expected_version:number(f,"version")});
   else if(kind==="reference")await staffRpc(token,"submit_payment_reference",{target_payment:id(f,"id"),expected_version:number(f,"version"),reference:text(f,"reference")});
   else if(kind==="weight")await staffRpc(token,"record_fulfilled_weight",{target_order:id(f,"id"),target_item:id(f,"item"),expected_version:number(f,"version"),actual_grams:number(f,"grams")});

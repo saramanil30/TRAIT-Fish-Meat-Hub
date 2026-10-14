@@ -4,6 +4,7 @@ import { staffRpc,type StaffContext } from "@/lib/admin/server";
 import { OperationalForm } from "./operational-form";
 import { formatMoney, formatWeight } from "@/lib/format";
 import { ActionDialog } from "./action-dialog";
+import { OrderClock } from "./order-clock";
 import { deliveryAddress } from "@/lib/address";
 import { headers } from "next/headers";
 import { whatsappLink, customerStatusMessage, WHATSAPP_WINDOW } from "@/lib/whatsapp";
@@ -15,6 +16,8 @@ const stockAmount=(m:StockMove,n:number)=>m.measure==="GRAMS"?formatWeight(n):St
 /** "Seer Fish: −1 kg (3 kg → 2 kg)"; restores show "+", skipped restores show the note. */
 function stockText(m:StockMove){return m.productName+": "+(m.change<0?"−":"+")+stockAmount(m,Math.abs(m.change))+(m.before!==null&&m.after!==null?" ("+stockAmount(m,m.before)+" → "+stockAmount(m,m.after)+")":"")+(m.note?" · "+m.note:"");}
 const PAGE_SIZE=25;
+/** Preset cancel reasons (as on delivery partner apps); "Other" takes the staff member's own words. */
+const CANCEL_REASONS=["Out of stock","Outside delivery area","Can't deliver in this slot","Shop closed","Customer asked to cancel","Duplicate order"];
 export const statusText:Record<string,string>={PLACED:"New",CONFIRMED:"Confirmed",PREPARING:"Preparing",READY:"Ready",OUT_FOR_DELIVERY:"Out for delivery",DELIVERED:"Delivered",CANCELLED:"Cancelled"};
 const paymentText:Record<string,string>={PENDING:"Unpaid",VERIFYING:"Checking",PAID:"Paid",FAILED:"Failed",REFUNDED:"Refunded"};
 const methodText:Record<string,string>={CASH:"Cash",UPI:"UPI",ONLINE:"Online"};
@@ -38,14 +41,18 @@ function amountText(i:Item){
  if(i.pricing_basis==="UNIT")return i.sale_quantity+" unit"+(i.sale_quantity===1?"":"s");
  return formatWeight(Number(i.raw_weight_grams??i.sale_quantity??0))+(i.pricing_basis==="NET_WEIGHT"?" NET":" raw");
 }
-export async function Operations({token,context,store,orderId,section,before,cursor,status,day,slot}:{token:string;context:StaffContext;store?:string;orderId?:string;section:string;before?:string;cursor?:string;status?:string;day?:string;slot?:string}){
+export async function Operations({token,context,store,orderId,section,before,cursor,status,day,slot,q}:{token:string;context:StaffContext;store?:string;orderId?:string;section:string;before?:string;cursor?:string;status?:string;day?:string;slot?:string;q?:string}){
  if(!store)return <p>No accessible stores.</p>;
  const validCursor=!!before&&Number.isFinite(Date.parse(before))&&/^[a-f0-9-]{36}$/i.test(cursor??"");
  // Dashboard "Needs action" links filter by status; the argument is only sent when filtering.
  const filter=status&&Object.hasOwn(statusText,status)?status:undefined;
  // Dashboard slot rows and Scheduled orders open the list for one day, optionally one slot.
  const dayFilter=day&&SLOT_DATE.test(day)?day:undefined,slotFilter=slot&&SLOT_ID.test(slot)?slot:undefined;
- const orders=await staffRpc<Order[]>(token,"order_queue_page",{target_store:store,row_limit:PAGE_SIZE,before_time:validCursor?before:null,before_id:validCursor?cursor:null,...(filter&&{status_filter:filter}),...(dayFilter&&{date_filter:dayFilter}),...(slotFilter&&{slot_filter:slotFilter})});
+ // Search by order number, phone or name replaces the filters and paging (newest 25 matches).
+ const search=section==="orders"&&q&&q.trim().length>=2&&q.trim().length<=60?q.trim():undefined;
+ let searchFailed=false;
+ const orders=search?await staffRpc<Order[]>(token,"order_search",{target_store:store,search_text:search}).catch(()=>{searchFailed=true;return [] as Order[];})
+  :await staffRpc<Order[]>(token,"order_queue_page",{target_store:store,row_limit:PAGE_SIZE,before_time:validCursor?before:null,before_id:validCursor?cursor:null,...(filter&&{status_filter:filter}),...(dayFilter&&{date_filter:dayFilter}),...(slotFilter&&{slot_filter:slotFilter})});
  // The queue has no customer, items or payment, so each row reads its detail through the same permission-checked RPC.
  const details=await Promise.all(orders.map(o=>staffRpc<Detail>(token,"order_detail",{target_order:o.id}).catch(()=>null)));
  const all="/admin/"+context.role.toLowerCase()+"/"+section+"?store="+store,base=all+(filter?"&status="+filter:"")+(dayFilter?"&day="+dayFilter:"")+(slotFilter?"&slot="+slotFilter:"");
@@ -56,10 +63,17 @@ export async function Operations({token,context,store,orderId,section,before,cur
  const host=(await headers()).get("host");
  const site=process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/,"")||(host?(/^(localhost|127\.)/.test(host)?"http://":"https://")+host:"");
  const last=orders[orders.length-1];
+ const role=context.role.toLowerCase(),printHref=(ids:string[])=>"/admin/"+role+"/print?store="+store+"&orders="+ids.join(",");
+ const printable=orders.filter(o=>!["DELIVERED","CANCELLED"].includes(o.status)).map(o=>o.id);
  return <div className="ord-list">
+  {section==="orders"&&<div className="ord-tools">
+   <form className="ord-search" action={"/admin/"+role+"/orders"} role="search"><input type="hidden" name="store" value={store}/><label className="sr-only" htmlFor="ord-q">Search orders</label><input id="ord-q" name="q" type="search" defaultValue={search??""} placeholder="Order no., phone or name" minLength={2} maxLength={60} required/><button className="admin-button secondary">Search</button></form>
+   {!search&&printable.length>0&&<a className="admin-button secondary ord-print-all" href={printHref(printable)} target="_blank" rel="noopener">Print open tickets ({printable.length})</a>}
+  </div>}
+  {search&&<p className="ord-filter">{searchFailed?"Search is unavailable right now.":orders.length+" result"+(orders.length===1?"":"s")+" for “"+search+"”"} · <Link href={all}>Show all</Link></p>}
   {filter&&<p className="ord-filter">Showing <span className={badge(filter)}>{statusText[filter]}</span> orders · <Link href={all}>Show all</Link></p>}
   {dayFilter&&<p className="ord-filter">Showing orders for <strong>{slotDayName(dayFilter)}, {slotDate(dayFilter)}{slotFilter&&" · "+(slotName?slotName.name+" "+slotRange(slotName.startsAt,slotName.endsAt):"one slot")}</strong> · <Link href={all}>Show all</Link></p>}
-  <p className="ord-intro">{orders.length?"Tap an order to see items, address and actions.":filter?"No orders with this status.":dayFilter?"No orders for this day and slot.":"No orders yet."}</p>
+  <p className="ord-intro">{orders.length?"Tap an order to see items, address and actions.":search?"No matching orders.":filter?"No orders with this status.":dayFilter?"No orders for this day and slot.":"No orders yet."}</p>
   {orders.map((o,index)=>{
    const d=details[index];
    const order=d?.order??o;
@@ -74,14 +88,15 @@ export async function Operations({token,context,store,orderId,section,before,cur
    const weighing=["PREPARING","READY","OUT_FOR_DELIVERY"].includes(order.status);
    return <details key={o.id} className="ord-row" data-order-id={o.id} open={o.id===orderId}>
     <summary>
-     <span className="ord-line"><strong className="ord-number">{order.order_number}</strong><span className={badge(order.status)}>{status}</span><strong className="ord-total">{formatMoney(Number(order.total_paise))}</strong></span>
+     <span className="ord-line"><strong className="ord-number">{order.order_number}</strong><span className={badge(order.status)}>{status}</span><OrderClock createdAt={order.created_at} status={order.status} pickup={pickup} slot={orderSlot}/><strong className="ord-total">{formatMoney(Number(order.total_paise))}</strong></span>
      <span className="ord-line ord-meta"><span>{customer?.name||"Customer"}</span><span>{d?d.items.length+" item"+(d.items.length===1?"":"s"):"…"}</span><span>{pickup?"Pickup":"Delivery"}</span>{orderSlot&&<span className="ord-slot">{slotDayName(orderSlot.date)} · {orderSlot.name} {slotRange(orderSlot.startsAt,orderSlot.endsAt)}</span>}{payment&&<span className={badge(payment.status)}>{methodText[payment.method]??payment.method} · {paymentText[payment.status]??payment.status}</span>}</span>
     </summary>
     {!d?<p role="alert">Details unavailable. Reload the page.</p>:<div className="ord-body">
-     {(step||canCancel)&&<div className="ord-actions">
+     <div className="ord-actions">
       {step&&<OperationalForm operation="status" id={order.id} version={Number(order.version)} label={step.label} className="ord-form" buttonClassName="admin-button ord-primary"><input type="hidden" name="status" value={step.status}/></OperationalForm>}
-      {canCancel&&<ActionDialog label="Cancel order" title={"Cancel "+order.order_number} triggerClassName="admin-button secondary ord-secondary"><OperationalForm operation="status" id={order.id} version={Number(order.version)} label="Cancel order"><input type="hidden" name="status" value="CANCELLED"/><label>Reason for cancelling<input name="reason" required maxLength={300}/></label></OperationalForm></ActionDialog>}
-     </div>}
+      {canCancel&&<ActionDialog label="Cancel order" title={"Cancel "+order.order_number} triggerClassName="admin-button secondary ord-secondary"><OperationalForm operation="status" id={order.id} version={Number(order.version)} label="Cancel order"><input type="hidden" name="status" value="CANCELLED"/><fieldset className="ord-reasons"><legend>Reason for cancelling</legend>{[...CANCEL_REASONS,"Other"].map(r=><label key={r}><input type="radio" name="reason" value={r} required/>{r}</label>)}<label className="ord-reason-other">If other, describe<input name="reasonOther" maxLength={300}/></label></fieldset></OperationalForm></ActionDialog>}
+      <a className="admin-button secondary ord-secondary" href={printHref([order.id])} target="_blank" rel="noopener">Print ticket</a>
+     </div>
      {d.payments.map(p=><div key={p.id} className="ord-payment">
       <span className={badge(p.status)}>{methodText[p.method]??p.method} · {paymentText[p.status]??p.status}</span><span>{formatMoney(Number(p.amountPaise))}</span>
       {p.method==="CASH"&&p.status==="PENDING"&&order.status!=="CANCELLED"&&<OperationalForm operation="cash" id={p.id} version={Number(p.version)} label="Cash received" className="ord-form" buttonClassName="ord-small"/>}
@@ -106,7 +121,7 @@ export async function Operations({token,context,store,orderId,section,before,cur
     </div>}
    </details>;
   })}
-  <nav aria-label="Order pages" className="ord-pages">{validCursor&&<Link href={base}>Latest orders</Link>}{orders.length===PAGE_SIZE&&last&&<Link href={base+"&before="+encodeURIComponent(last.created_at)+"&cursor="+last.id}>Older orders</Link>}</nav>
+  {!search&&<nav aria-label="Order pages" className="ord-pages">{validCursor&&<Link href={base}>Latest orders</Link>}{orders.length===PAGE_SIZE&&last&&<Link href={base+"&before="+encodeURIComponent(last.created_at)+"&cursor="+last.id}>Older orders</Link>}</nav>}
  </div>;
 }
 export async function BusinessPolicy({token}:{token:string}){

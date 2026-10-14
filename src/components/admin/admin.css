@@ -225,3 +225,43 @@
 .order-switch::after { content:""; position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:50%; background:white; transition:transform .15s; }
 .order-bell-sound[aria-checked=true] .order-switch { background:#186a3d; }
 .order-bell-sound[aria-checked=true] .order-switch::after { transform:translateX(16px); }
+/* Orders: search, print, waiting timer and late flag, preset cancel reasons. */
+.ord-tools { display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin:0 0 8px; }
+.ord-search { display:flex; gap:8px; flex:1 1 320px; max-width:520px; }
+.ord-search input { flex:1; min-width:0; }
+.trait-admin .ord-search .admin-button, .trait-admin .ord-print-all { flex-shrink:0; }
+.ord-wait, .ord-late { display:inline-flex; align-items:center; padding:3px 8px; border-radius:5px; font-size:11px; font-weight:700; white-space:nowrap; background:#eef1ee; color:#4f5b55; }
+.ord-wait.is-slow { background:#fff2db; color:#875200; }
+.ord-wait.is-overdue, .ord-late { background:#ffebe8; color:#a3352a; }
+.ord-row .ord-line:first-child { flex-wrap:wrap; }
+.ord-reasons { display:grid; gap:2px; border:0; padding:0; margin:0 0 12px; }
+.ord-reasons legend { font-weight:600; font-size:12px; margin-bottom:6px; padding:0; }
+.trait-admin .ord-reasons label:not(.ord-reason-other) { flex-direction:row; align-items:center; gap:10px; min-height:44px; font-weight:500; font-size:14px; }
+.trait-admin .ord-reasons input[type=radio] { width:20px; min-height:20px; height:20px; margin:0; flex-shrink:0; accent-color:#c4121a; }
+.ord-reason-other { margin-top:6px; }
+/* Printable tickets: a column of cards on screen, one ticket per page when printed (thermal 80 mm or A4). */
+.order-print { max-width:420px; margin:0 auto; padding:16px; background:white; }
+.order-print-bar { display:flex; flex-wrap:wrap; gap:8px; justify-content:space-between; margin-bottom:16px; }
+.ticket { border:1px dashed #9aa3ad; border-radius:8px; padding:14px; margin-bottom:16px; color:#000; font-size:13px; line-height:1.45; }
+.ticket p { margin:0!important; }
+.ticket header { display:flex; justify-content:space-between; align-items:baseline; gap:8px; border-bottom:2px solid #000; padding-bottom:6px; margin-bottom:6px; }
+.ticket-number { font-size:22px; letter-spacing:.5px; }
+.ticket-mode { font-weight:700; font-size:13px; letter-spacing:1px; }
+.ticket-when { font-size:16px; font-weight:700; }
+.ticket-small { font-size:11px; color:#333; }
+.ticket-items { margin:10px 0; padding-left:20px; display:grid; gap:8px; }
+.ticket-items li > div { display:flex; justify-content:space-between; gap:8px; font-size:14px; }
+.ticket-items li > div span { font-weight:700; white-space:nowrap; }
+.ticket-cut { font-weight:700; border-left:3px solid #000; padding-left:6px; }
+.ticket-fill { color:#333; padding-top:4px; }
+.ticket-total { display:flex; justify-content:space-between; gap:8px; border-top:1px solid #000; padding-top:6px; }
+.ticket-total strong { font-size:16px; }
+.ticket-pay { font-weight:700; }
+.ticket-customer { border-top:1px dashed #000; margin-top:8px; padding-top:6px; overflow-wrap:anywhere; }
+@media print {
+ @page { margin:6mm; }
+ .order-print { max-width:none; padding:0; }
+ .order-print-bar { display:none; }
+ .ticket { border:0; border-radius:0; padding:0; margin:0; break-after:page; }
+ .ticket:last-child { break-after:auto; }
+}
