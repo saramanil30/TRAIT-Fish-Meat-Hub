@@ -139,12 +139,11 @@ export async function saveStoreOperations(_state: ActionState,form: FormData): P
 }
 export type OrderAlert = { id: string; store_id: string; store_name: string; order_number: string; total_paise: number; fulfillment_method: string; created_at: string; slot: { date: string; name: string; startsAt: string; endsAt: string } | null };
 export type OrderAlertCursor = { at: string; id: string } | null;
-/** New-order alerts (ADMIN/OWNER). The cursor is passed back verbatim so its microseconds survive; null starts from the latest order. */
+/** New-order alerts (ADMIN, OWNER, EMPLOYEE; employees see only their stores). The cursor is passed back verbatim so its microseconds survive; null starts from the latest order. */
 export async function pollOrderAlerts(cursor: OrderAlertCursor): Promise<{ cursor: OrderAlertCursor; orders: OrderAlert[] } | null> {
  try {
   if (cursor && (typeof cursor.at !== "string" || !Number.isFinite(Date.parse(cursor.at)))) return null;
-  const {token,context}=await requireStaff();
-  if(context.role!=="ADMIN"&&context.role!=="OWNER") return null;
+  const {token}=await requireStaff();
   return await staffRpc(token,"new_order_alerts",cursor?{after_time:cursor.at,after_id:uuid(cursor.id)}:{});
  } catch { return null; }
 }

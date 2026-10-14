@@ -33,7 +33,7 @@ export function OrderAlertCount() {
  return count ? <span className="order-alert-count" aria-label={count + " new"}>{count}</span> : null;
 }
 
-/** ADMIN/OWNER: polls every 15 s for orders newer than the last seen; each one stays until opened or dismissed. */
+/** Every staff role (store scope is enforced by the database): polls every 15 s for orders newer than the last seen; each one stays until opened or dismissed. */
 export function OrderAlerts({ base }: { base: string }) {
  const alerts = useSyncExternalStore(subscribe, () => shared, () => none);
  const soundReady = useSyncExternalStore(subscribe, () => soundOn, () => true);
