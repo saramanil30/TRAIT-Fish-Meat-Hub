@@ -7,8 +7,7 @@ import { Icon } from "@/components/ui/icon";
 import { isRaw, quantityOptions } from "@/lib/pricing";
 import { setBuyNowItem } from "@/lib/cart-store";
 import { BUY_NOW_CHECKOUT, needsOptions, ProductSelection } from "@/components/product/product-selection";
-/** compact: the homepage specials card, with one "Add to cart" button (cart icon) and no "Buy now". */
-export function AddProductButton({ product, compact = false }: { product: Product; compact?: boolean }) {
+export function AddProductButton({ product }: { product: Product }) {
   const [open, setOpen] = useState(false);
   const [added, setAdded] = useState(false);
   const [error, setError] = useState("");
@@ -23,8 +22,8 @@ export function AddProductButton({ product, compact = false }: { product: Produc
       router.push(BUY_NOW_CHECKOUT);
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not start checkout. Please try again."); }
   }
-  return <div className="product-add"><div className="product-actions"><button className="add-button" type="button" disabled={disabled} onClick={choose} aria-label={product.available ? "Choose " + product.name : product.name + " is sold out"}>{compact && product.orderable !== false && <Icon name="cart" width={17} height={17} />}{product.orderable===false?"Ordering unavailable":"Add to cart"}</button>
-    {!compact && product.orderable !== false && <button className="add-button buy-now-button" type="button" disabled={disabled} onClick={buyNow} aria-label={"Buy " + product.name + " now"}>Buy now</button>}</div>
+  return <div className="product-add"><div className="product-actions"><button className="add-button" type="button" disabled={disabled} onClick={choose} aria-label={product.available ? "Choose " + product.name : product.name + " is sold out"}>{product.orderable !== false && <Icon name="cart" width={16} height={16} />}{product.orderable===false?"Ordering unavailable":"Add to cart"}</button>
+    {product.orderable !== false && <button className="add-button buy-now-button" type="button" disabled={disabled} onClick={buyNow} aria-label={"Buy " + product.name + " now"}>Buy now</button>}</div>
     {added && <span className="added-feedback" role="status">Added. <Link href="/cart">View cart</Link></span>}
     {error && <span className="cart-error" role="alert">{error}</span>}
     {open && <ProductSelection product={product} onClose={() => setOpen(false)} onSaved={() => setAdded(true)} />}
