@@ -21,8 +21,9 @@ for(const [name,basis,grams,count,quantities,price] of [['Raw','RAW_WEIGHT',1000
  const p=await as(20,`select api.save_product(null,$1,$2,'','','','[500,1000]','[{"name":"Whole"}]',true) as value`,[category,name]);
  await as(20,'select api.configure_product_pricing($1,$2,$3,$4,$5,$6,true) as value',[p,basis,grams,count,JSON.stringify(quantities),price]);
  for(const actor of [21,22,23])await assert.rejects(()=>as(actor,'select api.configure_product_pricing($1,$2,$3,$4,$5,$6,true) as value',[p,basis,grams,count,JSON.stringify(quantities),1]),e=>e.code==='42501');
- const o=await as(20,'select api.create_offering($1,$2) as value',[p,id(10)]);
- await as(21,'select api.update_daily_product($1,1,$2,true) as value',[o,price]);
+ // Publishing already created the store offering (20261002020000_publish_creates_offering).
+ const o=await value('select id as value from app.product_store_settings where product_id=$1',[p]).catch(()=>null)??await as(20,'select api.create_offering($1,$2) as value',[p,id(10)]);
+ await as(21,'select api.update_daily_product($1,$2,$3,true) as value',[o,await value('select version as value from app.product_store_settings where id=$1',[o]),price]);
  const prep=await value('select preparation_option_id as value from app.product_preparation_options where product_id=$1',[p]);
  rows.push({p,o,prep,basis,price,quantity:quantities[0]});
 }
@@ -46,7 +47,7 @@ assert.equal(stored[1].unit_price_paise,80000);assert.equal(stored[1].price_per_
 await assert.rejects(()=>query('update app.order_items set sale_quantity=2 where id=$1',[stored[2].id]));
 await assert.rejects(()=>as(20,'select api.configure_product_pricing($1,\'RAW_WEIGHT\',1000,null,\'[500]\',1,true) as value',[rows[2].p]));
 for(const r of rows){await assert.rejects(()=>as(22,'select api.update_daily_product($1,2,1,false) as value',[r.o]),e=>e.code==='42501');}
-await as(21,'select api.update_daily_product($1,2,46000,false) as value',[rows[2].o]);
+await as(21,'select api.update_daily_product($1,$2,46000,false) as value',[rows[2].o,await value('select version as value from app.product_store_settings where id=$1',[rows[2].o])]);
 await assert.rejects(()=>quote(payload));
 assert.equal((await place()).id,order.id);
 const daily=await as(21,'select api.daily_products($1) as value',[id(10)]);assert.equal(daily.find(p=>p.name==='Eggs').pricePaise,46000);

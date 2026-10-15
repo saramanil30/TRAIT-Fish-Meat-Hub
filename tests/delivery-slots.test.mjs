@@ -29,8 +29,9 @@ test('slot days are relative to India today', () => {
 
 test('WhatsApp messages carry the slot', () => {
   const slot = 'Mon, 12 Oct · Morning, 7–11 am';
-  assert.match(whatsapp.orderToShopMessage({ number: 'TFM-000001', items: [], totalPaise: 50000, pickup: false, slot }), /\nDelivery slot: Mon, 12 Oct · Morning, 7–11 am$/);
-  assert.match(whatsapp.orderToShopMessage({ number: 'TFM-000001', items: [], pickup: true, slot }), /\nPickup slot: /);
+  // Labelled "Delivery:" / "Pickup:" since the ASAP change, so the same line can read "Delivery: Now (ASAP)".
+  assert.match(whatsapp.orderToShopMessage({ number: 'TFM-000001', items: [], totalPaise: 50000, pickup: false, slot }), /\nDelivery: Mon, 12 Oct · Morning, 7–11 am$/);
+  assert.match(whatsapp.orderToShopMessage({ number: 'TFM-000001', items: [], pickup: true, slot }), /\nPickup: Mon, 12 Oct/);
   assert.match(whatsapp.customerStatusMessage({ number: 'TFM-000001', totalPaise: 50000, status: 'CONFIRMED', pickup: false, site: 'https://x', slot }), /is confirmed for Mon, 12 Oct · Morning, 7–11 am\./);
   assert.doesNotMatch(whatsapp.orderToShopMessage({ number: 'TFM-000001', items: [], pickup: true }), /slot/);
 });

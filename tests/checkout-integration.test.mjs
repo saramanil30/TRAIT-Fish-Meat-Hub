@@ -8,7 +8,9 @@ const quote={quoteDigest:"a".repeat(64),subtotalPaise:25000,deliveryFeePaise:100
 globalThis.__sql=async(strings,...args)=>{queries.push({sql:strings.join("?"),args});if(strings.join("").includes("pg_roles"))return [{allowed:true}];if(strings.join("").includes("checkout_quote"))return [{result:quote}];return [{result:{id:"private",orderNumber:"TFM-000001"}}];};
 const stub=url("export default function postgres(){return globalThis.__sql;}");
 const h=url("export async function headers(){return new Headers();}");
-const source=readFileSync(new URL("../src/lib/checkout-server.ts",import.meta.url),"utf8").replace('import "server-only";',"").replace('"postgres"',JSON.stringify(stub)).replace('"next/headers"',JSON.stringify(h));
+// The pinned Supabase CA (src/lib/supabase-ca.ts) is loaded as-is, without its server-only marker.
+const ca=url(readFileSync(new URL("../src/lib/supabase-ca.ts",import.meta.url),"utf8").replace('import "server-only";',""));
+const source=readFileSync(new URL("../src/lib/checkout-server.ts",import.meta.url),"utf8").replace('import "server-only";',"").replace('"postgres"',JSON.stringify(stub)).replace('"next/headers"',JSON.stringify(h)).replace('"@/lib/supabase-ca"',JSON.stringify(ca));
 const server=await import(url(source));
 process.env.TRAIT_CHECKOUT_ENVELOPE_KEY="1".repeat(64);
 process.env.TRAIT_CHECKOUT_DATABASE_URL="test-only";

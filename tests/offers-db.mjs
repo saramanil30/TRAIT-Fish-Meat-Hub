@@ -21,16 +21,22 @@ for(const [name,basis,grams,count,quantities,price] of [['Raw','RAW_WEIGHT',1000
  const p=await as(20,`select api.save_product(null,$1,$2,'','','','[500,1000]','[{"name":"Whole"}]',true) as value`,[category,name]);
  await as(20,'select api.configure_product_pricing($1,$2,$3,$4,$5,$6,true) as value',[p,basis,grams,count,JSON.stringify(quantities),price]);
  for(const actor of [21,22,23])await assert.rejects(()=>as(actor,'select api.configure_product_pricing($1,$2,$3,$4,$5,$6,true) as value',[p,basis,grams,count,JSON.stringify(quantities),1]),e=>e.code==='42501');
- const o=await as(20,'select api.create_offering($1,$2) as value',[p,id(10)]);
- await as(21,'select api.update_daily_product($1,1,$2,true) as value',[o,price]);
+ // Publishing already created the store offering (20261002020000_publish_creates_offering).
+ const o=await value('select id as value from app.product_store_settings where product_id=$1',[p]).catch(()=>null)??await as(20,'select api.create_offering($1,$2) as value',[p,id(10)]);
+ await as(21,'select api.update_daily_product($1,$2,$3,true) as value',[o,await value('select version as value from app.product_store_settings where id=$1',[o]),price]);
  const prep=await value('select preparation_option_id as value from app.product_preparation_options where product_id=$1',[p]);
  rows.push({p,o,prep,basis,price,quantity:quantities[0]});
 }
 await query('insert into app.staff_store_assignments(business_id,store_id,staff_profile_id) values($1,$2,$3)',[id(1),id(10),id(22)]);
 const start=new Date(Date.now()-86400000).toISOString(),end=new Date(Date.now()+86400000).toISOString();
-const saveSQL='select api.save_offer($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) as value';
-const offerArgs=(patch={})=>{const o={id:null,store:id(10),version:null,title:'Fresh savings',message:'Fresh offer',kind:'PERCENT',amount:1000,start,end,scope:'STORE',products:[],categories:[],active:true,...patch};return [o.id,o.store,o.version,o.title,o.message,o.kind,o.amount,o.start,o.end,o.scope,o.products,o.categories,o.active];};
-const save=(patch={},actor=21)=>as(actor,saveSQL,offerArgs(patch));
+// Since 20261003010000_offer_coupon_codes every offer has a coupon code and applies only when the customer enters it;
+// since 20261009000000_offer_conditions_images discounts are whole rupees. Each offer keeps its own code across edits.
+const saveSQL='select api.save_offer($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) as value';
+const codes=new Map();let nextCode=0;
+const offerArgs=(patch={})=>{const o={id:null,store:id(10),version:null,title:'Fresh savings',message:'Fresh offer',kind:'PERCENT',amount:1000,start,end,scope:'STORE',products:[],categories:[],active:true,min:0,max:null,image:null,...patch};
+ o.code=patch.code??codes.get(o.id)??'OFFER'+(++nextCode);
+ return [o.id,o.store,o.version,o.title,o.message,o.kind,o.amount,o.start,o.end,o.scope,o.products,o.categories,o.active,o.code,o.min,o.max,o.image];};
+const save=async(patch={},actor=21)=>{const args=offerArgs(patch);const saved=await as(actor,saveSQL,args);codes.set(saved,args[13]);return saved;};
 const offer=await save();
 const fixed=await save({title:'Selected fish',kind:'FIXED',amount:15000,scope:'PRODUCTS',products:[rows[1].p]},20);
 for(const actor of [22,23])await assert.rejects(()=>save({},actor),e=>e.code==='42501');
@@ -50,45 +56,49 @@ assert.equal(employee.current.length,2);assert.equal(employee.offers,undefined);
 await assert.rejects(()=>as(23,'select api.offer_workspace($1) as value',[id(10)]),e=>e.code==='42501');
 console.log('PASS OWNER/ADMIN management, EMPLOYEE read-only, tenant isolation, validation, current-only publication');
 const payload={method:'STORE_PICKUP',mobile:'9876543210',paymentMethod:'CASH',items:rows.map(r=>({productId:r.p,preparationId:r.prep,...(r.basis==='RAW_WEIGHT'?{rawWeightGrams:r.quantity}:{quantity:r.quantity}),instructions:''}))};
-const quote=(p=payload)=>as(null,'select api.checkout_quote($1,$2) as value',[id(10),JSON.stringify(p)],'trait_checkout');
-let q=await quote();assert.equal(q.subtotalPaise,205100);assert.equal(q.discountPaise,20510);assert.equal(q.totalPaise,184590);assert.equal(q.offer.id,offer);
+const quote=(p=payload,offerId)=>as(null,'select api.checkout_quote($1,$2) as value',[id(10),JSON.stringify(offerId?{...p,couponCode:codes.get(offerId)}:p)],'trait_checkout');
+let q=await quote(payload,offer);assert.equal(q.subtotalPaise,205100);assert.equal(q.discountPaise,20500);assert.equal(q.totalPaise,184600);assert.equal(q.offer.id,offer); // 10% = ₹205.10 → ₹205
+assert.equal((await quote()).discountPaise,0); // No code entered, no discount.
 await assert.rejects(()=>quote({...payload,discountPaise:999999}));
 await assert.rejects(()=>quote({...payload,offerId:fixed}));
 const token=randomUUID().replaceAll('-','').repeat(2);
-const placeArgs=[id(10),randomUUID(),JSON.stringify(payload),q.quoteDigest,createHash('sha256').update(token).digest('hex'),end];
+const coupon={...payload,couponCode:codes.get(offer)};
+const placeArgs=[id(10),randomUUID(),JSON.stringify(coupon),q.quoteDigest,createHash('sha256').update(token).digest('hex'),end];
 const place=(args=placeArgs)=>as(null,'select api.place_order($1,$2,$3,$4,$5,$6) as value',args,'trait_checkout');
-const placed=await place();assert.equal(placed.totalPaise,184590);
-assert.equal(await value('select amount_paise as value from app.payments where order_id=$1',[placed.id]),184590);
-assert.equal(await value('select discount_paise as value from app.orders where id=$1',[placed.id]),20510);
-const tracked=await as(null,'select api.track_order($1) as value',[token],'anon');assert.equal(tracked.discountPaise,20510);assert.equal(tracked.totalPaise,184590);
+const placed=await place();assert.equal(placed.totalPaise,184600);
+assert.equal(await value('select amount_paise as value from app.payments where order_id=$1',[placed.id]),184600);
+assert.equal(await value('select discount_paise as value from app.orders where id=$1',[placed.id]),20500);
+const tracked=await as(null,'select api.track_order($1) as value',[token],'anon');assert.equal(tracked.discountPaise,20500);assert.equal(tracked.totalPaise,184600);
 await assert.rejects(()=>query('update app.orders set discount_paise=0 where id=$1',[placed.id]));
 await save({id:offer,version:1,active:false});
 assert.equal((await place()).id,placed.id);
-await assert.rejects(()=>place([...placeArgs.slice(0,1),randomUUID(),...placeArgs.slice(2)]),e=>e.code==='40001');
-q=await quote();assert.equal(q.discountPaise,15000);assert.equal(q.offer.id,fixed);assert.equal(q.totalPaise,190100);
-q=await quote({...payload,items:[payload.items[0]]});assert.equal(q.discountPaise,0);
+// A new order on the old quote is refused: the offer was switched off, so its coupon no longer applies.
+await assert.rejects(()=>place([...placeArgs.slice(0,1),randomUUID(),...placeArgs.slice(2)]),e=>e.code==='40001'||/Coupon not valid/.test(e.message));
+q=await quote(payload,fixed);assert.equal(q.discountPaise,15000);assert.equal(q.offer.id,fixed);assert.equal(q.totalPaise,190100);
+await assert.rejects(()=>quote({...payload,items:[payload.items[0]]},fixed),/Coupon/); // The cart has none of the offer's products.
 await query('update app.stores set delivery_enabled=true where id=$1',[id(10)]);
 await as(21,"select api.save_delivery_area(null,$1,null,'560001','Test area',3000,200000,true) as value",[id(10)]);
-const delivery=await quote({...payload,method:'HOME_DELIVERY',name:'Test',address:{line1:'Test road',city:'Test city',state:'Test state',pincode:'560001'}});
+const delivery=await quote({...payload,method:'HOME_DELIVERY',name:'Test',address:{line1:'Test road',city:'Test city',state:'Test state',pincode:'560001'}},fixed);
 assert.equal(delivery.discountPaise,15000);assert.equal(delivery.deliveryFeePaise,3000);assert.equal(delivery.totalPaise,193100);
-console.log('PASS server-only best discount, product scope, payment amount, immutable snapshots, stale quote and idempotent retry');
+console.log('PASS server-only coupon discount, product scope, payment amount, immutable snapshots, stale quote and idempotent retry');
 await save({id:fixed,version:1,title:'Selected fish',kind:'FIXED',amount:90000,scope:'PRODUCTS',products:[rows[1].p]});
-q=await quote();assert.equal(q.discountPaise,80000); // Never discount unrelated items.
+q=await quote(payload,fixed);assert.equal(q.discountPaise,80000); // Never discount unrelated items.
 const parent=await as(20,"select api.save_category(null,'Parent',null,0,true) as value");
 await as(20,"select api.save_category($1,'Test',$2,0,true) as value",[category,parent]);
 const categoryOffer=await save({kind:'PERCENT',amount:1250,scope:'CATEGORIES',categories:[parent]});
 await save({id:fixed,version:2,active:false});
-q=await quote();assert.equal(q.discountPaise,25637);assert.equal(q.offer.id,categoryOffer); // Floor fractional paise.
+q=await quote(payload,categoryOffer);assert.equal(q.discountPaise,25600);assert.equal(q.offer.id,categoryOffer); // 12.5% = ₹256.37 → ₹256.
 await save({id:categoryOffer,version:1,kind:'FIXED',amount:100000000});
-q=await quote();assert.equal(q.discountPaise,205099);assert.equal(q.totalPaise,1);
+q=await quote(payload,categoryOffer);assert.equal(q.discountPaise,205000);assert.equal(q.totalPaise,100); // Whole rupees, at least ₹1 left to pay.
 await save({id:categoryOffer,version:2,active:false});
+await assert.rejects(()=>quote(payload,categoryOffer),/Coupon/); // An inactive offer's code no longer works.
 q=await quote();assert.equal(q.discountPaise,0);assert.equal(q.totalPaise,205100);
-const expiryOffer=await save({end});q=await quote();
+const expiryOffer=await save({end});q=await quote(payload,expiryOffer);
 await save({id:expiryOffer,version:1,start:new Date(Date.now()-172800000).toISOString(),end:start});
-await assert.rejects(()=>place([id(10),randomUUID(),JSON.stringify(payload),q.quoteDigest,placeArgs[4],end]),e=>e.code==='40001');
+await assert.rejects(()=>place([id(10),randomUUID(),JSON.stringify({...payload,couponCode:codes.get(expiryOffer)}),q.quoteDigest,placeArgs[4],end]),/Coupon not valid/); // The code expired between quote and place.
 for(const role of ['anon','authenticated','service_role','trait_checkout','trait_payment_verifier']){
  assert.equal(await value("select has_table_privilege($1,'app.offers','SELECT,INSERT,UPDATE,DELETE') as value",[role]),false);
- assert.equal(await value("select has_function_privilege($1,'app.offer_discount(uuid,jsonb,timestamptz)','EXECUTE') as value",[role]),false);
+ assert.equal(await value("select has_function_privilege($1,'app.offer_discount(uuid,jsonb,timestamptz,text)','EXECUTE') as value",[role]),false);
 }
 assert.equal(await value("select relrowsecurity and relforcerowsecurity as value from pg_class where oid='app.offers'::regclass"),true);
 console.log('PASS category descendants, integer rounding, fixed cap, expiry, no-offer fallback, forced RLS and RPC-only access');

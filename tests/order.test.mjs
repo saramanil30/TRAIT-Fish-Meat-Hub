@@ -17,7 +17,8 @@ const details = { ...EMPTY_CHECKOUT, name: ' Test Customer ', mobile: '+91 98765
 const identity = { number: 'TFM-000125', trackingToken: '2cac9340-67cd-423c-bc94-36b8dbad02c1', placedAt: '2026-09-22T00:00:00.000Z' };
 
 test('home delivery requires customer and delivery details', () => {
-  assert.deepEqual(Object.keys(validateCheckout(EMPTY_CHECKOUT)), ['name', 'mobile', 'address', 'locality', 'city', 'state', 'pincode']);
+  // City and state are fixed to Hyderabad / Telangana and set by the server (SERVICE_CITY, SERVICE_STATE), so they are not asked for.
+  assert.deepEqual(Object.keys(validateCheckout(EMPTY_CHECKOUT)), ['name', 'mobile', 'address', 'locality', 'pincode']);
   assert.deepEqual(validateCheckout(details), {});
 });
 test('pickup requires mobile and accepts an optional name; hidden delivery details are excluded from the receipt', () => {

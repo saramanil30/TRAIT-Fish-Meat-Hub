@@ -28,7 +28,9 @@ export async function validate({db,as,value,q,id,denied,payload}){
  },"checkout_test");
  const pg=moduleURL('export default function postgres(){return globalThis.__traitFinalSQL;}');
  const headers=moduleURL('export async function headers(){return new Headers();}');
- let source=readFileSync(new URL("../../src/lib/checkout-server.ts",import.meta.url),"utf8").replace('import "server-only";',"").replace('"postgres"',JSON.stringify(pg)).replace('"next/headers"',JSON.stringify(headers));
+ let source=readFileSync(new URL("../../src/lib/checkout-server.ts",import.meta.url),"utf8").replace('import "server-only";',"").replace('"postgres"',JSON.stringify(pg)).replace('"next/headers"',JSON.stringify(headers))
+  // The pinned Supabase CA (src/lib/supabase-ca.ts) is loaded as-is, without its server-only marker.
+  .replace('"@/lib/supabase-ca"',JSON.stringify(moduleURL(readFileSync(new URL("../../src/lib/supabase-ca.ts",import.meta.url),"utf8").replace('import "server-only";',""))));
  const server=await import(moduleURL(source));
  process.env.TRAIT_CHECKOUT_DATABASE_URL="isolated-test";process.env.TRAIT_STORE_ID=id(10);process.env.TRAIT_CHECKOUT_ENVELOPE_KEY="a".repeat(64);process.env.TRAIT_TRACKING_EXPIRY_DAYS="7";
  for(const method of ["HOME_DELIVERY","STORE_PICKUP"]){
