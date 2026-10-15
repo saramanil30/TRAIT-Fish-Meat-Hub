@@ -7,7 +7,7 @@ import { homepageTextFields, type HomepageText } from "@/lib/homepage-text";
 export function HomepageTextForm({store,content,version}:{store:string;content:HomepageText;version:number}) {
  const [state,action,pending]=useActionState<HomepageTextState,FormData>(saveHomepageText,{});
  const [draft,setDraft]=useState<HomepageText>(content);
- return <section className="homepage-text-settings"><h2>Homepage text</h2><p className="admin-muted">The welcome section at the top of the homepage for this store. Plain text only; leave a field blank to use the text shown in grey.</p>
+ return <section className="homepage-text-settings"><h2>Homepage text</h2><p className="admin-muted">The hero slider (three slides), tagline, trust labels and bottom banner on the homepage for this store. Plain text only; leave a field blank to use the text shown in grey.</p>
   <form action={action} className="admin-live-form"><input type="hidden" name="store" value={store}/><input type="hidden" name="version" value={state.version??version}/><fieldset disabled={pending}>
    {homepageTextFields.map(f=>{const value=draft[f.key]??"";return <label key={f.key}>{f.label}{f.key==="subtitle"
     ?<textarea name={f.key} maxLength={f.max} rows={3} placeholder={f.fallback} value={value} onChange={e=>setDraft({...draft,[f.key]:e.target.value.replace(/[<>]/g,"")})}/>

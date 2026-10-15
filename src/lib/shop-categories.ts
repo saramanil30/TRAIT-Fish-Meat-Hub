@@ -1,7 +1,7 @@
 import type { Product } from "@/types/catalog";
 
 /** A top-level category from the live catalogue, in its display order. */
-export type CatalogueCategory = { name: string; sortOrder: number };
+export type CatalogueCategory = { id?: string; name: string; sortOrder: number };
 /** inStoreOnly: a category with no published products yet; its page shows the "coming soon, call us" notice. */
 export type ShopCategory = { slug: string; name: string; description: string; image: string; includes: readonly string[]; inStoreOnly?: boolean };
 
@@ -28,8 +28,9 @@ export function inCategory(product: Product, category: ShopCategory) {
   return category.includes.includes(product.category);
 }
 
-/** Header pills, footer links and category pages, in the catalogue's order. Products carry their top-level category name in lower case. */
-export function shopCategories(products: readonly Product[], categories: readonly CatalogueCategory[]): ShopCategory[] {
+/** Header pills, footer links and category pages, in the catalogue's order. Products carry their top-level category name in lower case.
+ *  photos: category id → uploaded photo URL (Settings → Homepage), used before the built-in tile image. */
+export function shopCategories(products: readonly Product[], categories: readonly CatalogueCategory[], photos: Readonly<Record<string, string>> = {}): ShopCategory[] {
   return [...categories].sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name)).flatMap(c => {
     const slug = categorySlug(c.name);
     if (!slug) return [];
@@ -37,7 +38,7 @@ export function shopCategories(products: readonly Product[], categories: readonl
     const members = products.filter(p => p.category === key);
     const copy = presentation[slug];
     return [{ slug, name: c.name, description: copy?.description ?? "Fresh from TRAIT", includes: [key],
-      image: copy?.image || members.find(p => !p.image.includes("placeholder"))?.image || members[0]?.image || "/assets/catalogue/placeholder-fish.svg",
+      image: (c.id && photos[c.id]) || copy?.image || members.find(p => !p.image.includes("placeholder"))?.image || members[0]?.image || "/assets/catalogue/placeholder-fish.svg",
       ...(members.length ? {} : { inStoreOnly: true }) }];
   });
 }

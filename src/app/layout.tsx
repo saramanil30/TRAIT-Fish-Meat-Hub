@@ -7,7 +7,7 @@ import { currentOffers } from "@/lib/offers";
 import { formatMoney } from "@/lib/format";
 import { storefrontInfo, storeAddress, hoursLines, phoneDigits } from "@/lib/storefront-info";
 import type { FooterStore } from "@/components/layout/footer";
-import { linkPreview } from "@/lib/homepage-text-server";
+import { homepageContent, linkPreview } from "@/lib/homepage-text-server";
 import { defaultLinkPreview, shareImageUrl } from "@/lib/link-preview";
 
 
@@ -30,6 +30,8 @@ const headingFont = localFont({
     { path: "../../public/fonts/oswald-700.ttf", weight: "700" },
   ], variable: "--font-heading", display: "swap",
 });
+// Homepage and header headings (Latin subset, weights 600–800).
+const slabFont = localFont({ src: "../../public/fonts/roboto-slab-latin-600-800.woff2", weight: "600 800", variable: "--font-slab", display: "swap" });
 export const dynamic = "force-dynamic";
 // Shared-link preview: Settings → Link preview (title, description, 1200×630 image), or the built-in preview.
 // The image is always set here, not via an app/opengraph-image file, because file-based metadata would override it.
@@ -56,5 +58,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // Footer contact details; hours are formatted here so server and browser render the same text.
   let store: FooterStore | null = null;
   try { const info = await storefrontInfo(); if (info) store = { name: info.name, address: storeAddress(info.address), phone: info.phone ? phoneDigits(info.phone) : null, whatsapp: info.whatsapp ? phoneDigits(info.whatsapp) : info.phone ? phoneDigits(info.phone) : null, hours: hoursLines(info.hours ?? {}), areas: info.delivery ? (info.areas ?? []).map(a => a.name ? a.name + " " + a.pincode : a.pincode) : [] }; } catch { /* Footer shows the brand line only. */ }
-  return <html lang="en" className={`${bodyFont.variable} ${headingFont.variable}`}><body><a className="skip-link" href="#main-content">Skip to content</a><SiteFrame categories={categories.map(({ slug, name }) => ({ slug, name }))} offers={offers} store={store}>{children}</SiteFrame></body></html>;
+  const { instagram, facebook } = await homepageContent();
+  return <html lang="en" className={`${bodyFont.variable} ${headingFont.variable} ${slabFont.variable}`}><body><a className="skip-link" href="#main-content">Skip to content</a><SiteFrame categories={categories.map(({ slug, name }) => ({ slug, name }))} offers={offers} social={{ instagram, facebook }} store={store}>{children}</SiteFrame></body></html>;
 }

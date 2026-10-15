@@ -11,7 +11,7 @@ export async function liveShop(): Promise<{products:Product[];categories:Catalog
  const business=process.env.TRAIT_BUSINESS_ID;
  if (!store&&!business) return {products:[],categories:[]};
  const data=await publicRpc<{categories:Category[];products:Row[]}>(store?"catalogue":"business_catalogue",store?{target_store:store}:{target_business:business});
- const categories=(data?.categories??[]).filter(c=>!c.parentId).map(c=>({name:c.name,sortOrder:Number(c.sortOrder??0)}));
+ const categories=(data?.categories??[]).filter(c=>!c.parentId).map(c=>({id:c.id,name:c.name,sortOrder:Number(c.sortOrder??0)}));
  return {categories,products:(data?.products??[]).map(p=>{
   let category=data.categories.find(c=>c.id===p.categoryId); const visited=new Set<string>();
   while(category?.parentId&&!visited.has(category.id)){visited.add(category.id);category=data.categories.find(c=>c.id===category!.parentId)??category;}

@@ -30,6 +30,7 @@
     "test:delivery-slots-db": "node tests/delivery-slots-db.mjs",
     "test:offer-conditions-db": "node tests/offer-conditions-db.mjs",
     "test:homepage-settings-db": "node tests/homepage-settings-db.mjs",
+    "test:homepage-storefront-db": "node tests/homepage-storefront-db.mjs",
     "test:owner-content-offer-archive-db": "node tests/owner-content-offer-archive-db.mjs"
   },
   "dependencies": {

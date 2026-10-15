@@ -114,3 +114,15 @@ export async function uploadShareImage(token: string, businessId: string, bytes:
  if (!response.ok && !duplicate) throw new Error("Image upload is not available. Check the share image storage setup.");
  return path;
 }
+/** Category photos for the homepage circles: category-images/{business}/{category}/{sha256}.webp; returns the path.
+ *  Storage policies allow only ADMIN and OWNER, under their own business and an existing category. */
+export async function uploadCategoryImage(token: string, businessId: string, categoryId: string, bytes: Uint8Array) {
+ if (!validProductWebp(bytes)) throw new Error("Upload a JPEG, PNG or WebP photo under 1 MB after conversion.");
+ const {url,key} = config();
+ const path = businessId + "/" + categoryId + "/" + createHash("sha256").update(bytes).digest("hex") + ".webp";
+ const response = await fetch(url + "/storage/v1/object/category-images/" + path, { method: "POST", cache: "no-store", signal: AbortSignal.timeout(30000), headers: { apikey: key, Authorization: "Bearer " + token, "Content-Type": "image/webp", "x-upsert": "false" }, body: Buffer.from(bytes) });
+ // A 409 means identical bytes were already uploaded for this category.
+ const duplicate = response.status === 409 || (!response.ok && String((await response.clone().json().catch(() => ({}))).statusCode) === "409");
+ if (!response.ok && !duplicate) throw new Error("Photo upload is not available. Check the category image storage setup.");
+ return path;
+}

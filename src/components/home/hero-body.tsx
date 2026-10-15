@@ -1,14 +1,17 @@
-import Image from "next/image";
-import Link from "next/link";
-import { Icon } from "@/components/ui/icon";
+import { HeroSlider, type HeroSlide } from "./hero-slider";
 import { resolveHomepageText, type HomepageText } from "@/lib/homepage-text";
-/** The hero's three columns. Also rendered by the admin "Homepage text" live preview, where the button is inert. */
+const images = [
+  { src: "/assets/stitch/hero-fish.jpg", alt: "Illustrative fresh fish steaks on ice with lemon and herbs" },
+  { src: "/assets/stitch/prawns.jpg", alt: "Illustrative platter of fresh prawns on ice" },
+  { src: "/assets/stitch/hero-mutton.jpg", alt: "Illustrative mutton cuts arranged with herbs and spices" },
+];
+/** The hero slider, with every text from Settings → Homepage text. Also rendered by the admin live preview, where it stays on slide 1 and the button is inert. */
 export function HeroBody({ saved, preview = false }: { saved: HomepageText; preview?: boolean }) {
   const t = resolveHomepageText(saved);
-  const Heading = preview ? "p" : "h1";
-  return <div className="container hero-grid">
-    <div className="hero-feature"><Image src="/assets/stitch/hero-fish.jpg" alt="Illustrative kingfish steaks with lemon and herbs" width={480} height={400} sizes="(min-width: 1024px) 23vw, 45vw" preload={!preview} /><div><span>{t.leftLabel}</span><h2>{t.leftTitle}</h2><p>{t.leftSubtitle}</p></div></div>
-    <div className="hero-copy"><p className="eyebrow"><span /> {t.badge}</p><Heading id={preview ? undefined : "hero-title"} className="hero-title">{t.customHeadline ? t.headline : <>Fresh Fish &amp;<br />Tender Meat,</>}<br /><em>{t.highlight}</em></Heading><p className="hero-description">{t.subtitle}</p><div className="hero-actions">{preview ? <span className="button primary">{t.button} <Icon name="arrow" /></span> : <Link href="#fresh-title" className="button primary">{t.button} <Icon name="arrow" /></Link>}</div></div>
-    <div className="hero-feature"><Image src="/assets/stitch/hero-mutton.jpg" alt="Illustrative mutton cuts arranged with herbs and spices" width={480} height={400} sizes="(min-width: 1024px) 23vw, 45vw" /><div><span>{t.rightLabel}</span><h2>{t.rightTitle}</h2><p>{t.rightSubtitle}</p></div></div>
-  </div>;
+  const slides: HeroSlide[] = [
+    { badge: t.badge, headline: t.headline, subtitle: t.subtitle, ...images[0] },
+    { badge: t.leftLabel, headline: t.leftTitle, subtitle: t.leftSubtitle, ...images[1] },
+    { badge: t.rightLabel, headline: t.rightTitle, subtitle: t.rightSubtitle, ...images[2] },
+  ];
+  return <HeroSlider slides={slides} tagline={t.highlight} button={t.button} trust={[t.trust1, t.trust2, t.trust3, t.trust4]} preview={preview} />;
 }
