@@ -97,7 +97,7 @@ export async function saveMaster(_state: ActionState,form: FormData): Promise<Ac
     await staffRpc(token,"configure_product_pricing",{product,...pricing});
    }
    if(bytes){
-    try{await uploadProductImage(token,context.businessId,product,details.product_name.trim(),bytes);}
+    try{await uploadProductImage(token,context.businessId,product,details.product_name.trim(),bytes,"replace");}
     catch{revalidatePath("/admin","layout");return {error:"Product saved, but the photo could not be uploaded. Check the image storage setup and try again."};}
    }
   } else if(kind==="offering") {
@@ -117,7 +117,7 @@ export async function saveProductContent(_state: ActionState,form: FormData): Pr
   if(bytes&&!validProductWebp(bytes)) return {error:"The photo must be a WebP image under 1 MB."};
   await staffRpc(token,"save_product_content",{product,local_name:text(form,"local").slice(0,160),description:text(form,"description").slice(0,4000)});
   if(bytes){
-   try{await uploadProductImage(token,context.businessId,product,text(form,"name").trim(),bytes);}
+   try{await uploadProductImage(token,context.businessId,product,text(form,"name").trim(),bytes,"replace");}
    catch{revalidatePath("/admin","layout");return {error:"Text saved, but the photo could not be uploaded. Try again."};}
   }
   revalidatePath("/","layout"); return {success:"Product saved."};
