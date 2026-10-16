@@ -1,19 +1,22 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useImperativeHandle, useState, type Ref } from "react";
 import type { Product } from "@/types/catalog";
 import { Icon } from "@/components/ui/icon";
 import { isRaw, quantityOptions } from "@/lib/pricing";
 import { setBuyNowItem } from "@/lib/cart-store";
 import { BUY_NOW_CHECKOUT, needsOptions, ProductSelection } from "@/components/product/product-selection";
-export function AddProductButton({ product }: { product: Product }) {
+/** `ref.choose()` opens the same options popup as "Add to cart"; product cards use it so the whole card opens it. */
+export type AddProductHandle = { choose: () => void };
+export function AddProductButton({ product, ref }: { product: Product; ref?: Ref<AddProductHandle> }) {
   const [open, setOpen] = useState(false);
   const [added, setAdded] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
   const disabled = !product.available || product.orderable === false;
   function choose() { setAdded(false); setError(""); setOpen(true); }
+  useImperativeHandle(ref, () => ({ choose }));
   function buyNow() {
     if (needsOptions(product)) return choose();
     try {

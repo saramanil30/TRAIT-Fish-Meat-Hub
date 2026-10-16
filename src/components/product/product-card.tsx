@@ -1,4 +1,4 @@
-import { AddProductButton } from "@/components/product/add-product-button";
+import { ProductCardBody } from "@/components/product/product-card-body";
 import Image from "next/image";
 import type { Product } from "@/types/catalog";
 import { cardPriceLabel, isRaw, stockLeftText } from "@/lib/pricing";
@@ -18,6 +18,7 @@ function CardPrice({ product, wasPaise }: { product: Product; wasPaise?: number 
 }
 
 /** The one product card for the homepage specials, "View All", category pages and search.
+ *  Clicking anywhere on an orderable card opens its options popup (see ProductCardBody).
  *  The image badge shows, in order: Sold out, "Only X left", or the homepage special badge; never a plain "Available". */
 export function ProductCard({ product, badge, wasPaise }: { product: Product; badge?: SpecialBadge; wasPaise?: number }) {
   const low = product.available ? stockLeftText(product) : null;
@@ -25,6 +26,6 @@ export function ProductCard({ product, badge, wasPaise }: { product: Product; ba
   return <article className="item-card">
     <div className="item-card-image"><Image src={product.image} alt={product.imageAlt} width={480} height={360} sizes="(max-width: 767px) 46vw, (max-width: 1199px) 30vw, 20vw" />
       {label && <span className={product.available ? "item-card-badge" : "item-card-badge is-muted"}>{label}</span>}</div>
-    <div className="item-card-body"><h3>{product.name}</h3><CardPrice product={product} wasPaise={wasPaise} /><AddProductButton product={product} /></div>
+    <ProductCardBody product={product}><CardPrice product={product} wasPaise={wasPaise} /></ProductCardBody>
   </article>;
 }

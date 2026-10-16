@@ -1538,7 +1538,12 @@ main.storefront .home-page { --text-primary:#171c23; --text-secondary:#575d67; -
 .item-card-price strong { color:var(--navy); font-weight:800; }
 .item-card-price .is-sale { color:var(--brand-red); }
 .item-card-price s { color:#6b7280; font-size:14px; font-weight:600; }
-.item-card .product-add { margin-top:auto; align-items:stretch; }
+.item-card .product-add { margin-top:auto; align-items:stretch; position:relative; z-index:1; }
+.item-card { position:relative; }
+.item-card-open { all:unset; cursor:pointer; }
+.item-card-open::after { content:""; position:absolute; inset:0; z-index:0; }
+.item-card:has(.item-card-open) { cursor:pointer; }
+.item-card:has(.item-card-open:focus-visible) { outline:3px solid var(--navy); outline-offset:2px; }
 .item-card .product-actions { display:flex; flex-direction:row; gap:8px; }
 .item-card .add-button { flex:1 1 0; display:inline-flex; align-items:center; justify-content:center; gap:6px; width:auto; min-width:0; min-height:40px; padding:0 8px; border-radius:6px; font-family:var(--font-body),Arial,sans-serif; font-size:12px; font-weight:800; letter-spacing:.03em; white-space:nowrap; }
 .item-card .add-button.buy-now-button { background:white; color:var(--brand-red); border:1px solid var(--brand-red); }
