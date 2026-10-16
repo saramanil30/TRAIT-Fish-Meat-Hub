@@ -17,7 +17,15 @@ export interface CheckoutDetails {
   /** Chosen delivery/pickup slot and its India date; absent when the store has no slots. */
   slotId?: string;
   slotDate?: string;
+  /** Delivery to a saved address of this mobile (its id only); the server resolves the full address. */
+  savedAddressId?: string;
+  /** Label a new delivery address is saved under with the order. */
+  addressLabel?: AddressLabel;
 }
+export const ADDRESS_LABELS = ["Home", "Office", "Other"] as const;
+export type AddressLabel = (typeof ADDRESS_LABELS)[number];
+/** A saved address as checkout sees it: masked, e.g. "Flat 4**, ***** Road, Kokapet 500075". */
+export interface SavedAddressOption { id: string; label: string; masked: string }
 export type CheckoutErrors = Partial<Record<keyof CheckoutDetails, string>>;
 export interface OrderTotals {
   discountPaise?: number;

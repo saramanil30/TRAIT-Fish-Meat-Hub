@@ -4,6 +4,7 @@ import { createCipheriv, createDecipheriv, createHash, randomBytes, randomUUID }
 import { headers } from "next/headers";
 import { SUPABASE_ROOT_CA } from "@/lib/supabase-ca";
 import type { SlotDay } from "@/lib/delivery-slots";
+import type { SavedAddressOption } from "@/types/order";
 let pool: ReturnType<typeof postgres> | undefined;
 function db() {
  const url=process.env.TRAIT_CHECKOUT_DATABASE_URL;
@@ -99,6 +100,14 @@ export async function openOrdersByMobile(mobileE164:string):Promise<OpenOrder[]>
  const sql=await checkoutDatabase();
  const rows=await sql`select api.open_orders_by_mobile(${store}::uuid,${mobileE164}::text) as result`;
  return rows[0].result as OpenOrder[];
+}
+/** A normalized +91 mobile's saved delivery addresses, last used first, masked by the database. Call after rate limiting. */
+export async function savedAddressesByMobile(mobileE164:string):Promise<SavedAddressOption[]> {
+ const store=process.env.TRAIT_STORE_ID;
+ if(!store) throw new Error("Store is not configured.");
+ const sql=await checkoutDatabase();
+ const rows=await sql`select api.checkout_saved_addresses(${store}::uuid,${mobileE164}::text) as result`;
+ return rows[0].result as SavedAddressOption[];
 }
 async function checkoutDatabase() {
  const sql=db();

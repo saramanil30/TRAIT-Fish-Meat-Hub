@@ -1,6 +1,6 @@
 export const staffRoles = ["ADMIN", "OWNER", "EMPLOYEE"] as const;
 export type StaffRole = typeof staffRoles[number];
-export const staffSections = ["dashboard", "orders", "catalogue", "categories", "prices", "offers", "employees", "payments", "reports", "settings"] as const;
+export const staffSections = ["dashboard", "orders", "customers", "catalogue", "categories", "prices", "offers", "employees", "payments", "reports", "settings"] as const;
 export type StaffSection = typeof staffSections[number];
 export function canAccessSection(role: StaffRole, section: StaffSection): boolean {
   if (role === "ADMIN") return true;

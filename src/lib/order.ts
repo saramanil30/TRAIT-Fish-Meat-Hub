@@ -1,7 +1,7 @@
 import { cartSubtotalPaise } from "./cart";
 import type { CartItem } from "../types/cart";
 import { SLOT_DATE, SLOT_ID } from "./delivery-slots";
-import type { CheckoutDetails, CheckoutErrors, DeliveryMethod, MockOrder, OrderStatus, OrderTotals } from "../types/order";
+import { ADDRESS_LABELS, type CheckoutDetails, type CheckoutErrors, type DeliveryMethod, type MockOrder, type OrderStatus, type OrderTotals } from "../types/order";
 
 // Preview configuration only. A future server must calculate its own delivery fee,
 // prices and cleaning estimates from validated catalogue choices, never these totals.
@@ -24,7 +24,9 @@ export function validateCheckout(details: CheckoutDetails): CheckoutErrors {
   if ((details.deliveryMethod === "delivery" || details.name.trim()) && (details.name.trim().length < 2 || details.name.trim().length > 80)) errors.name = "Enter your name (2-80 characters).";
   if (!/^[6-9]\d{9}$/.test(normalizeMobile(details.mobile))) errors.mobile = "Enter a valid 10-digit Indian mobile number, optionally with +91.";
   if ((details.slotId || details.slotDate) && !(SLOT_ID.test(details.slotId ?? "") && SLOT_DATE.test(details.slotDate ?? ""))) errors.slotId = "Choose a delivery slot.";
-  if (details.deliveryMethod === "delivery") {
+  if (details.savedAddressId !== undefined && (details.deliveryMethod !== "delivery" || !SLOT_ID.test(details.savedAddressId))) errors.address = "Choose a saved address or enter a new one.";
+  if (details.addressLabel !== undefined && !ADDRESS_LABELS.includes(details.addressLabel)) errors.address = "Choose Home, Office or Other.";
+  if (details.deliveryMethod === "delivery" && details.savedAddressId === undefined) {
     if (details.address.trim().length < 5 || details.address.trim().length > 300) errors.address = "Enter your delivery address (5-300 characters).";
     if (details.locality.trim().length < 2 || details.locality.trim().length > 100) errors.locality = "Enter your area / locality (2-100 characters).";
     if (details.landmark.trim().length > 150) errors.landmark = "Keep the landmark within 150 characters.";

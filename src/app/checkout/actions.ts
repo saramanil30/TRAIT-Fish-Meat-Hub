@@ -1,6 +1,6 @@
 "use server";
-import { quoteOrder,commitOrder,rateLimit,logCheckoutFailure } from "@/lib/checkout-server";
-import type { CheckoutDetails } from "@/types/order";
+import { quoteOrder,commitOrder,rateLimit,logCheckoutFailure,savedAddressesByMobile } from "@/lib/checkout-server";
+import type { CheckoutDetails,SavedAddressOption } from "@/types/order";
 import type { CartItem } from "@/types/cart";
 import { normalizeMobile,validateCheckout,SERVICE_CITY,SERVICE_STATE } from "@/lib/order";
 import { COUPON_PATTERN } from "@/lib/cart-offer";
@@ -12,11 +12,21 @@ export async function reviewCheckout(items:readonly CartItem[], details:Checkout
  try {
   await rateLimit("checkout",20);
   if(!Array.isArray(items)||!items.length||items.length>100||JSON.stringify({items,details}).length>100000||Object.keys(validateCheckout(details)).length||(couponCode!==null&&!COUPON_PATTERN.test(String(couponCode)))) throw new Error("Invalid checkout.");
-  const payload={items:items.map(i=>({productId:i.productId,preparationId:i.preparationId,...(i.quantity!==undefined?{quantity:i.quantity}:{rawWeightGrams:i.rawWeightGrams}),instructions:i.specialInstructions.normalize("NFC").trim()})),method:details.deliveryMethod==="delivery"?"HOME_DELIVERY":"STORE_PICKUP",mobile:normalizeMobile(details.mobile),name:details.name.trim()||null,paymentMethod:details.paymentMethod==="cash"?"CASH":"UPI",address:details.deliveryMethod==="delivery"?{line1:details.address.trim(),...(details.landmark.trim()?{line2:details.landmark.trim()}:{}),locality:details.locality.trim(),/* fixed server-side, never from the browser */city:SERVICE_CITY,state:SERVICE_STATE,pincode:details.pincode.trim(),countryCode:"IN"}:null,...(details.slotId&&details.slotDate?{slot:{id:details.slotId,date:details.slotDate}}:{}),...(couponCode?{couponCode}:{})};
+  const payload={items:items.map(i=>({productId:i.productId,preparationId:i.preparationId,...(i.quantity!==undefined?{quantity:i.quantity}:{rawWeightGrams:i.rawWeightGrams}),instructions:i.specialInstructions.normalize("NFC").trim()})),method:details.deliveryMethod==="delivery"?"HOME_DELIVERY":"STORE_PICKUP",mobile:normalizeMobile(details.mobile),name:details.name.trim()||null,paymentMethod:details.paymentMethod==="cash"?"CASH":"UPI",...(details.deliveryMethod==="delivery"&&details.savedAddressId?{savedAddressId:details.savedAddressId}:{...(details.deliveryMethod==="delivery"&&details.addressLabel?{addressLabel:details.addressLabel}:{}),address:details.deliveryMethod==="delivery"?{line1:details.address.trim(),...(details.landmark.trim()?{line2:details.landmark.trim()}:{}),locality:details.locality.trim(),/* fixed server-side, never from the browser */city:SERVICE_CITY,state:SERVICE_STATE,pincode:details.pincode.trim(),countryCode:"IN"}:null}),...(details.slotId&&details.slotDate?{slot:{id:details.slotId,date:details.slotDate}}:{}),...(couponCode?{couponCode}:{})};
   return {quote:await quoteOrder(payload)};
- } catch (cause) {logCheckoutFailure("quote",cause);const stock=stockError(cause)??slotError(cause);if(stock)return {error:stock};if(couponCode&&cause instanceof Error&&cause.message.includes("Coupon"))return {error:"Coupon "+couponCode+" can’t be applied to this order. Remove it or choose another coupon."};return {error:"Unable to quote this order. Check delivery details and product availability, or contact the store."};}
+ } catch (cause) {logCheckoutFailure("quote",cause);const stock=stockError(cause)??slotError(cause);if(stock)return {error:stock};if(cause instanceof Error&&cause.message==="Saved address unavailable")return {error:"That saved address is no longer available. Choose another or enter a new address."};if(couponCode&&cause instanceof Error&&cause.message.includes("Coupon"))return {error:"Coupon "+couponCode+" can’t be applied to this order. Remove it or choose another coupon."};return {error:"Unable to quote this order. Check delivery details and product availability, or contact the store."};}
 }
 export async function placeCheckout(envelope:string) {
  try {await rateLimit("place",10);return await commitOrder(envelope);}
  catch (cause) {logCheckoutFailure("place",cause);const reviewRequired=!!cause&&typeof cause==="object"&&"code" in cause&&["40001","22023"].includes(String(cause.code));return {reviewRequired,error:stockError(cause)??slotError(cause)??(reviewRequired?"Prices or availability changed. Please review your order again.":"Order could not be confirmed. Retry with the same review.")};}
+}
+/** Saved delivery addresses for a valid mobile, masked. Limited per IP and per number; [] when none or unavailable. */
+export async function lookupSavedAddresses(mobile:string):Promise<{addresses:SavedAddressOption[]}|{error:string}> {
+ const local=typeof mobile==="string"&&mobile.length<=20?normalizeMobile(mobile):"";
+ if(!/^[6-9]\d{9}$/.test(local))return {addresses:[]};
+ try {
+  await rateLimit("saved-addresses",15);
+  await rateLimit("saved-addresses-number",6,"+91"+local);
+  return {addresses:await savedAddressesByMobile("+91"+local)};
+ } catch (cause) {logCheckoutFailure("saved-addresses",cause);return cause instanceof Error&&cause.message.startsWith("Too many")?{error:cause.message}:{addresses:[]};}
 }
