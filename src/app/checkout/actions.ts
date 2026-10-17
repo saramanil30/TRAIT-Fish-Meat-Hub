@@ -5,7 +5,7 @@ import type { CartItem } from "@/types/cart";
 import { normalizeMobile,validateCheckout,SERVICE_CITY,SERVICE_STATE } from "@/lib/order";
 import { COUPON_PATTERN } from "@/lib/cart-offer";
 /** Off until migration 20261020000000_customers_by_mobile is applied: the older quote function rejects addressLabel and savedAddressId. */
-const SAVED_ADDRESSES_LIVE=false;
+const SAVED_ADDRESSES_LIVE=true;
 /** "Delivery slot unavailable: closed | full | date | choose a slot" from the database. */
 function slotError(cause:unknown){const match=cause instanceof Error?/^Delivery slot unavailable: (.+)$/.exec(cause.message):null;if(!match)return null;return match[1]==="choose a slot"?"Choose a delivery slot, then continue.":match[1]==="full"?"That slot just filled up. Choose another slot.":"That slot is no longer available. Choose another slot.";}
 /** The database names the product when stock runs short: "Not enough stock for Seer Fish". */
