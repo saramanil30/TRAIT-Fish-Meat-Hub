@@ -1,6 +1,6 @@
 "use client";
 import {startTransition, useActionState,useState,useTransition} from "react";
-import {manageProductPhotos,saveMaster,saveProductContent,type ActionState} from "@/app/admin/actions";
+import {manageProductPhotos,saveMaster,saveProductContent,saveProductSaleOptions,type ActionState} from "@/app/admin/actions";
 type Preparation={name:string;cleaning_loss_percent?:number};
 type Basis="RAW_WEIGHT"|"NET_WEIGHT"|"UNIT"|"TRAY";
 export type EditableProduct={pricing_basis?:string;price_unit_grams?:number;units_per_pack?:number;sale_quantities?:number[];catalogue_price_paise?:number;catalogue_published?:boolean;id:string;category_id:string;name:string;local_name:string;description:string;image_path:string;allowed_weights:number[];preparations:Preparation[];is_active:boolean};
@@ -56,7 +56,8 @@ export function ProductForm({product:p,categories}:{product:EditableProduct|null
   <button className="admin-button">{pending?"Saving…":"Save product"}</button>
  </fieldset>{state.error&&<p role="alert">{state.error}</p>}{state.success&&<p role="status">{state.success}</p>}</form>;
 }
-export type ContentProduct={id:string;name:string;local_name:string;description:string;category:string|null;is_active:boolean;photo:string|null;image_path:string};
+export type ContentProduct={id:string;name:string;local_name:string;description:string;category:string|null;is_active:boolean;photo:string|null;image_path:string;
+ pricing_basis?:Basis;price_unit_grams?:number|null;units_per_pack?:number|null;quantities?:number[];catalogue_price_paise?:number|null;catalogue_published?:boolean};
 /** OWNER (and ADMIN): photo, local name and description only. Every other product field is ADMIN-only. */
 export function ProductContentForm({product:p}:{product:ContentProduct}){
  const [state,dispatch,pending]=useActionState<ActionState,FormData>(saveProductContent,{});
@@ -75,8 +76,26 @@ export function ProductContentForm({product:p}:{product:ContentProduct}){
   {photoError&&<p role="alert">{photoError}</p>}
   <label>Local name<input name="local" maxLength={160} defaultValue={p.local_name}/></label>
   <label>Description<textarea name="description" maxLength={4000} defaultValue={p.description}/></label>
-  <p className="admin-muted">Name, category, pricing, preparations and status are managed by ADMIN.</p>
+  <p className="admin-muted">Name, category, how it is sold, cuts and status are managed by ADMIN.</p>
   <button className="admin-button">{pending?"Saving…":"Save"}</button>
+ </fieldset>{state.error&&<p role="alert">{state.error}</p>}{state.success&&<p role="status">{state.success}</p>}</form>;
+}
+/** OWNER (and ADMIN): the choices customers pick from, in the product's existing unit, and its catalogue listing.
+ *  How it is sold (basis, grams per pack, items per tray), cuts and category are ADMIN-only. */
+export function ProductSaleOptionsForm({product:p}:{product:ContentProduct}){
+ const [state,dispatch,pending]=useActionState<ActionState,FormData>(saveProductSaleOptions,{});
+ if(!p.pricing_basis||!p.quantities)return null;
+ const basis=p.pricing_basis;
+ const unit=basis==="RAW_WEIGHT"?"kg":basis==="NET_WEIGHT"?(p.price_unit_grams??"")+" g NET pack":basis==="TRAY"?"tray":"item";
+ const label=basis==="RAW_WEIGHT"?"Weights customers can choose (grams, separated by commas)":basis==="NET_WEIGHT"?"NET weights customers can choose (grams, separated by commas)"
+  :"Quantities customers can choose ("+(basis==="TRAY"?"trays":"items")+", separated by commas)";
+ return <form action={dispatch} className="admin-live-form"><fieldset disabled={pending}><legend>Weight options &amp; listing</legend>
+  <input type="hidden" name="id" value={p.id}/>
+  <p className="admin-muted">Sold by: {bases.find(b=>b.value===basis)?.label}{basis==="TRAY"&&p.units_per_pack?" · "+p.units_per_pack+" per tray":""}{basis==="UNIT"&&p.units_per_pack?" · "+p.units_per_pack+" per unit":""}</p>
+  <label>{label}<input name="quantities" required pattern="[0-9, ]+" defaultValue={p.quantities.join(", ")} placeholder={basis==="RAW_WEIGHT"||basis==="NET_WEIGHT"?"500, 1000, 1500":"1, 2, 3"}/></label>
+  <label>Catalogue price (₹ per {unit})<input name="referencePrice" type="number" min="0.01" max="1000000" step="0.01" defaultValue={p.catalogue_price_paise?p.catalogue_price_paise/100:""}/><small>Needed to list the product. A store that does not sell it yet starts at this price; daily store prices stay on Prices &amp; Availability.</small></label>
+  <label>Catalogue listing<select name="published" defaultValue={String(p.catalogue_published??false)}><option value="true">Listed (published)</option><option value="false">Not listed (unpublished)</option></select></label>
+  <button className="admin-button">{pending?"Saving…":"Save weight options"}</button>
  </fieldset>{state.error&&<p role="alert">{state.error}</p>}{state.success&&<p role="status">{state.success}</p>}</form>;
 }
 export type GalleryPhoto={id:string;url:string;alt:string};

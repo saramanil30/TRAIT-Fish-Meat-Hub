@@ -10,14 +10,14 @@ const AUTOPLAY_MS = 6000;
 export function Tagline({ text }: { text: string }) {
   return <>{text.split(/(TRAIT)/).map((part, n) => part === "TRAIT" ? <b key={n}>TRAIT</b> : <Fragment key={n}>{part}</Fragment>)}</>;
 }
-/** Three fading slides with arrows, dots and swipe. Auto-advances unless paused (hover, focus, hidden tab) or the visitor prefers reduced motion. */
+/** Fading slides (one to five) with arrows, dots and swipe. Auto-advances unless paused (hover, focus, hidden tab) or the visitor prefers reduced motion. */
 export function HeroSlider({ slides, tagline, button, trust, preview }: { slides: HeroSlide[]; tagline: string; button: string; trust: string[]; preview: boolean }) {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const touch = useRef<number | null>(null);
   const go = (n: number) => setIndex((n + slides.length) % slides.length);
   useEffect(() => {
-    if (preview || paused || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (preview || paused || slides.length < 2 || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const timer = window.setInterval(() => { if (!document.hidden) setIndex(i => (i + 1) % slides.length); }, AUTOPLAY_MS);
     return () => window.clearInterval(timer);
   }, [preview, paused, slides.length]);
@@ -38,7 +38,7 @@ export function HeroSlider({ slides, tagline, button, trust, preview }: { slides
         </div>
       </div>;
     })}</div>
-    {!preview && <>
+    {!preview && slides.length > 1 && <>
       <button type="button" className="hero-arrow is-prev" onClick={() => go(index - 1)} aria-label="Previous slide"><Icon name="chevronLeft" width={30} height={30} /></button>
       <button type="button" className="hero-arrow is-next" onClick={() => go(index + 1)} aria-label="Next slide"><Icon name="chevronRight" width={30} height={30} /></button>
       <div className="hero-dots">{slides.map((_, n) => <button key={n} type="button" aria-label={"Show slide " + (n + 1)} aria-current={n === index ? "true" : undefined} onClick={() => go(n)} />)}</div>

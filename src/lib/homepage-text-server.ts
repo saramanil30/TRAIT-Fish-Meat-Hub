@@ -23,3 +23,14 @@ export const homepageContent = cache(async (): Promise<HomepageContent> => {
   return { ...emptyHomepageContent, ...saved, specials: Array.isArray(saved?.specials) ? saved.specials : [], categoryPhotos: saved?.categoryPhotos ?? {} };
  } catch { return emptyHomepageContent; }
 });
+/** The published store's hero slides (public paths and alt text, in order); [] (built-in photos) when none are saved,
+ *  the migration is not applied yet, or the store service is unavailable. */
+export const heroSlides = cache(async (): Promise<{ path: string; alt: string }[]> => {
+ if (!process.env.TRAIT_STORE_ID) return [];
+ try {
+  const saved = await publicRpc<{ path?: unknown; alt?: unknown }[] | null>("hero_slides", { target_store: process.env.TRAIT_STORE_ID });
+  if (!Array.isArray(saved)) return [];
+  return saved.flatMap(s => typeof s?.path === "string" && /^[0-9a-f-]{36}\/[0-9a-f-]{36}\/[0-9a-f]{64}\.webp$/.test(s.path)
+   ? [{ path: s.path, alt: typeof s.alt === "string" ? s.alt : "" }] : []).slice(0, 5);
+ } catch { return []; }
+});

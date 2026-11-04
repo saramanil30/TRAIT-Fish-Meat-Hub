@@ -1,6 +1,7 @@
 "use server";
 import { revalidatePath } from "next/cache";
-import { requireStaff, staffRpc, uploadCategoryImage, uploadShareImage, validProductWebp } from "@/lib/admin/server";
+import { requireStaff, staffRpc, uploadCategoryImage, uploadHeroImage, uploadShareImage, validProductWebp } from "@/lib/admin/server";
+import { maxHeroSlides, validHeroWebp } from "@/lib/hero-image";
 import { rupeesToPaise } from "@/lib/admin/permissions";
 import { maxSpecials, specialBadges, validSocialUrl, type SpecialBadge } from "@/lib/homepage-content";
 import { validShareJpeg } from "@/lib/share-image";
@@ -131,4 +132,33 @@ export async function saveCategoryPhoto(_: HomepageTextState, form: FormData): P
   revalidatePath("/","layout");
   return {success:path?"Category photo saved.":"Category photo removed; the built-in image shows again.",version};
  } catch (cause) { return failure(cause,"the category photo"); }
+}
+/** Homepage banner slides: add (WebP, >= 1600 px wide, <= 1 MB, checked here from the file header and again in the
+ *  database), reorder (the full list), or remove (soft: hidden from the homepage, file kept). ADMIN/OWNER, own store. */
+export async function manageHeroSlides(_: ActionState, form: FormData): Promise<ActionState> {
+ const operation=String(form.get("operation")??"");
+ try {
+  const {token,context,store}=await homepageEditor(form,"the homepage banner");
+  const slideId=(value:string)=>{if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value))throw new Error("Invalid record.");return value;};
+  if(operation==="add"){
+   const file=form.get("photo");
+   if(!(file instanceof File)||!file.size) return {error:"Choose a photo to upload."};
+   const bytes=new Uint8Array(await file.arrayBuffer());
+   if(!validHeroWebp(bytes)) return {error:"The banner photo must be a WebP image at least 1600 pixels wide and at most 1 MB."};
+   const alt=String(form.get("alt")??"").replace(/\s+/g," ").trim();
+   if(alt.length>160||/[<>]/.test(alt)) return {error:"The description must be plain text of at most 160 characters."};
+   await uploadHeroImage(token,context.businessId,store,alt,bytes);
+  } else if(operation==="arrange"){
+   const slides=String(form.get("slides")??"").split(",").map(slideId);
+   if(!slides.length||slides.length>maxHeroSlides) throw new Error("Invalid record.");
+   await staffRpc(token,"arrange_hero_slides",{target_store:store,slides});
+  } else if(operation==="remove"){
+   await staffRpc(token,"remove_hero_slide",{target_store:store,slide:slideId(String(form.get("slide")??""))});
+  } else return {error:"Unknown action."};
+  revalidatePath("/");revalidatePath("/admin","layout");
+  return {success:operation==="add"?"Slide added to the homepage banner.":operation==="remove"?"Slide removed from the homepage banner.":"Slide order saved."};
+ } catch (cause) {
+  if(cause instanceof Error&&/^(The banner photo|The homepage banner can|This photo is already|Photo upload is not)/.test(cause.message)) return {error:cause.message};
+  return failure(cause,"the homepage banner");
+ }
 }

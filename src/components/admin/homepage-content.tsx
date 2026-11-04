@@ -1,6 +1,8 @@
 "use client";
-import { startTransition, useActionState, useState } from "react";
-import { saveCategoryPhoto, saveHomepageLinks, saveHomepageSpecials, type HomepageTextState } from "@/app/admin/homepage-actions";
+import { startTransition, useActionState, useState, useTransition } from "react";
+import { manageHeroSlides, saveCategoryPhoto, saveHomepageLinks, saveHomepageSpecials, type HomepageTextState } from "@/app/admin/homepage-actions";
+import { heroImageLimitBytes, heroImageMinWidth, maxHeroSlides } from "@/lib/hero-image";
+import type { ActionState } from "@/app/admin/actions";
 import { maxSpecials, specialBadges, type SpecialBadge } from "@/lib/homepage-content";
 const photoLimit=1048576;
 /** Square 600×600 WebP under 1 MB, centre-cropped to fill the circle. */
@@ -71,4 +73,70 @@ export function CategoryPhotoForm({category,imageUrl}:{category:CategoryPhotoRec
    <label>New photo<input name="photo" type="file" accept="image/jpeg,image/png,image/webp"/><span className="admin-muted">Cropped to a square and saved as WebP.</span></label>
    <div className="admin-special-actions"><button className="admin-button" name="remove" value="false">{pending?"Saving…":"Upload photo"}</button>{category.photo&&<button className="admin-button secondary" name="remove" value="true">Remove photo</button>}</div>
   </fieldset>{error&&<p role="alert">{error}</p>}<Result state={state}/></form>;
+}
+
+/** A banner photo as WebP: at least 1600 px wide (smaller photos are refused, never enlarged), at most 2400 px wide,
+ *  under 1 MB. A WebP that already fits is sent unchanged. The server checks the result again. */
+async function toHeroWebp(file:File){
+ const bitmap=await createImageBitmap(file);
+ try{
+  if(bitmap.width<heroImageMinWidth)throw new Error("This photo is "+bitmap.width+" pixels wide. Banner photos must be at least "+heroImageMinWidth+" pixels wide.");
+  if(file.type==="image/webp"&&file.size<=heroImageLimitBytes&&bitmap.width<=2400)return file;
+  for(const width of [Math.min(bitmap.width,2400),heroImageMinWidth]){
+   const height=Math.round(bitmap.height*width/bitmap.width);
+   const canvas=document.createElement("canvas");canvas.width=width;canvas.height=height;
+   canvas.getContext("2d")!.drawImage(bitmap,0,0,width,height);
+   for(const quality of [0.85,0.75,0.6,0.5]){
+    const blob=await new Promise<Blob|null>(r=>canvas.toBlob(r,"image/webp",quality));
+    if(blob?.type==="image/webp"&&blob.size<=heroImageLimitBytes)return new File([blob],"hero.webp",{type:"image/webp"});
+   }
+  }
+  throw new Error("This photo could not be saved as a WebP under 1 MB.");
+ } finally { bitmap.close(); }
+}
+export type HeroSlideRecord={id:string;url:string;alt:string;width:number};
+/** Settings → Homepage banner: up to 5 slides in order. Removing hides a slide; the file is kept. With no slides
+ *  the homepage shows its built-in photos. */
+export function HeroSlidesForm({store,slides}:{store:string;slides:HeroSlideRecord[]}){
+ const [pending,start]=useTransition();
+ const [message,setMessage]=useState<ActionState>({});
+ const [confirming,setConfirming]=useState("");
+ const [alt,setAlt]=useState("");
+ const send=(fields:Record<string,string|File>)=>{
+  const form=new FormData();form.set("store",store);for(const [k,v] of Object.entries(fields))form.set(k,v);
+  setConfirming("");
+  return new Promise<ActionState>(resolve=>start(async()=>{const result=await manageHeroSlides({},form);setMessage(result);resolve(result);}));
+ };
+ const move=(from:number,to:number)=>{const order=[...slides];const [x]=order.splice(from,1);order.splice(to,0,x);void send({operation:"arrange",slides:order.map(s=>s.id).join(",")});};
+ async function add(files:FileList|null){
+  setMessage({});
+  for(const file of Array.from(files??[]).slice(0,maxHeroSlides-slides.length)){
+   let photo:File;
+   try{photo=await toHeroWebp(file);}catch(error){setMessage({error:error instanceof Error?error.message:"This photo could not be read."});return;}
+   const result=await send({operation:"add",alt,photo});
+   if(result.error)return;
+  }
+  setAlt("");
+ }
+ return <section><h2>Homepage banner</h2>
+  <p className="admin-muted">The large sliding photos at the top of the homepage, in this order (up to {maxHeroSlides}). Each slide shows the next hero text from Homepage text. WebP at least {heroImageMinWidth} pixels wide and at most 1 MB; JPEG and PNG are converted. With no slides, the built-in photos show.</p>
+  <fieldset className="admin-photos" disabled={pending}><legend>Slides <small>{slides.length}/{maxHeroSlides}</small></legend>
+   {slides.length?<ol className="admin-photo-list">{slides.map((slide,i)=><li key={slide.id}>
+    {/* eslint-disable-next-line @next/next/no-img-element -- public Storage preview */}
+    <img src={slide.url} alt={slide.alt} width={192} height={80} style={{objectFit:"cover"}}/>
+    <small>Slide {i+1} · {slide.width} px{slide.alt?" · "+slide.alt:""}</small>
+    <div className="admin-photo-actions">
+     {i>0&&<button type="button" className="admin-button secondary" aria-label={"Move slide "+(i+1)+" earlier"} onClick={()=>move(i,i-1)}>←</button>}
+     {i<slides.length-1&&<button type="button" className="admin-button secondary" aria-label={"Move slide "+(i+1)+" later"} onClick={()=>move(i,i+1)}>→</button>}
+     {confirming===slide.id?<button type="button" className="admin-button" onClick={()=>void send({operation:"remove",slide:slide.id})}>Confirm remove</button>
+      :<button type="button" className="admin-button secondary" onClick={()=>setConfirming(slide.id)}>Remove<span className="sr-only"> slide {i+1}</span></button>}
+    </div>
+   </li>)}</ol>:<p className="admin-muted">No slides yet. The homepage shows the built-in photos.</p>}
+   {slides.length<maxHeroSlides&&<>
+    <label>Photo description (optional, for screen readers)<input value={alt} maxLength={160} onChange={e=>setAlt(e.target.value)} placeholder="e.g. Fresh seer fish steaks on ice"/></label>
+    <label>Add slides<input type="file" accept="image/webp,image/jpeg,image/png" multiple onChange={e=>{const input=e.currentTarget;void add(input.files).finally(()=>{input.value="";});}}/><small>Up to {maxHeroSlides-slides.length} more.</small></label>
+   </>}
+   {pending&&<p role="status">Saving…</p>}
+   {message.error&&<p role="alert">{message.error}</p>}{!pending&&message.success&&<p role="status">{message.success}</p>}
+  </fieldset></section>;
 }

@@ -123,6 +123,27 @@ export async function saveProductContent(_state: ActionState,form: FormData): Pr
   revalidatePath("/","layout"); return {success:"Product saved."};
  } catch { return {error:"Unable to save. Check the fields and your access."}; }
 }
+/** ADMIN and OWNER: a product's weight options (in its existing unit) and its catalogue listing at the reference price.
+ *  How it is sold, its cuts, category, name and status stay ADMIN-only (saveMaster). */
+export async function saveProductSaleOptions(_state: ActionState,form: FormData): Promise<ActionState> {
+ try {
+  const {token,context}=await requireStaff("catalogue");
+  if(!canEditProductContent(context.role)) throw new Error("Access denied.");
+  const product=uuid(text(form,"id"));
+  const raw=text(form,"quantities").split(",").map(v=>v.trim()).filter(Boolean);
+  if(!raw.length||raw.length>50||raw.some(v=>!/^\d{1,6}$/.test(v))) return {error:"Enter whole numbers separated by commas, for example 500, 1000."};
+  const quantities=raw.map(Number);
+  if(quantities.some(v=>v<1||v>100000)) return {error:"Each option must be between 1 and 100000."};
+  if(new Set(quantities).size!==quantities.length) return {error:"Each option can appear only once."};
+  const published=boolean(form,"published");
+  const priceText=text(form,"referencePrice").trim();
+  let price:number|null=null;
+  if(priceText){try{price=parseDailyPrice(priceText);}catch(cause){return {error:cause instanceof Error?cause.message:"Enter a valid price."};}}
+  if(published&&price===null) return {error:"Enter the catalogue price before listing the product."};
+  await staffRpc(token,"save_product_sale_options",{product,quantities,reference_price:price,published});
+  revalidatePath("/","layout"); return {success:published?"Saved and listed. Stores without this product now sell it at this price.":"Saved. The product is not listed in the catalogue."};
+ } catch { return {error:"Unable to save. Check the options and your access."}; }
+}
 /** ADMIN and OWNER: a product's photo gallery (up to 5; the first is the main photo). Removing is soft. */
 export async function manageProductPhotos(_state: ActionState,form: FormData): Promise<ActionState> {
  try {

@@ -2,6 +2,7 @@ import "server-only";
 import { cookies } from "next/headers";
 import { createHash } from "node:crypto";
 import { validShareJpeg } from "../share-image";
+import { validHeroWebp } from "../hero-image";
 import { staffRoles, type StaffRole, type StaffSection, canAccessSection } from "./permissions";
 export type StaffContext = { id: string; businessId: string; role: StaffRole; name: string; stores: { id: string; name: string }[] };
 export const sessionCookie = "trait_staff_access";
@@ -28,6 +29,7 @@ export async function staffRpc<T>(token: string, name: string, args: Record<stri
   if (failure.code === "23505" && name === "save_offer") throw new Error("That code is already used by another offer. Choose a different code.");
  // Photo gallery limits are written for staff in the migration; show them as-is.
  if (failure.code === "22023" && /^(add_product_photo|set_product_photo|arrange_product_photos|remove_product_photo)$/.test(name) && /^(A product can have at most 5 photos|This photo is already in the gallery)$/.test(failure.message ?? "")) throw new Error(failure.message + ".");
+ if (failure.code === "22023" && name === "add_hero_slide" && /^(The homepage banner can have at most 5 slides|This photo is already a slide)$/.test(failure.message ?? "")) throw new Error(failure.message + ".");
   throw new Error("Operation unavailable or not permitted.");
  }
  const text = await response.text();
@@ -125,4 +127,18 @@ export async function uploadCategoryImage(token: string, businessId: string, cat
  const duplicate = response.status === 409 || (!response.ok && String((await response.clone().json().catch(() => ({}))).statusCode) === "409");
  if (!response.ok && !duplicate) throw new Error("Photo upload is not available. Check the category image storage setup.");
  return path;
+}
+/** Homepage hero slides: hero-images/{business}/{store}/{sha256}.webp, then api.add_hero_slide with the width read from
+ *  the WebP header and the byte size (the database checks both again, and the Storage object's size and type).
+ *  Storage policies allow only ADMIN and OWNER, under their own business and a store they can access. */
+export async function uploadHeroImage(token: string, businessId: string, storeId: string, alt: string, bytes: Uint8Array) {
+ const width = validHeroWebp(bytes);
+ if (!width) throw new Error("The banner photo must be a WebP image at least 1600 pixels wide and at most 1 MB.");
+ const {url,key} = config();
+ const path = businessId + "/" + storeId + "/" + createHash("sha256").update(bytes).digest("hex") + ".webp";
+ const response = await fetch(url + "/storage/v1/object/hero-images/" + path, { method: "POST", cache: "no-store", signal: AbortSignal.timeout(30000), headers: { apikey: key, Authorization: "Bearer " + token, "Content-Type": "image/webp", "x-upsert": "false" }, body: Buffer.from(bytes) });
+ // A 409 means identical bytes were already uploaded for this store.
+ const duplicate = response.status === 409 || (!response.ok && String((await response.clone().json().catch(() => ({}))).statusCode) === "409");
+ if (!response.ok && !duplicate) throw new Error("Photo upload is not available. Check the hero image storage setup.");
+ return staffRpc<string>(token, "add_hero_slide", { target_store: storeId, object_path: path, width, size_bytes: bytes.length, alternate_text: alt });
 }

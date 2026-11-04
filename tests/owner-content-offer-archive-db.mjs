@@ -49,7 +49,7 @@ await assert.rejects(()=>as(21,'select api.configure_product_pricing($1,$2,$3,$4
 await assert.rejects(()=>as(21,"select api.save_product_image(null,$1,null,'product-images',$2,'',true,true,0) as value",[fish,`${id(1)}/${fish}/${'a'.repeat(64)}.webp`]),deny);
 await assert.rejects(()=>as(21,'select api.catalogue_master() as value'),deny);
 const list=await as(21,'select api.product_content() as value');
-assert.equal(list.length,2);assert.deepEqual(Object.keys(list[0]).sort(),['category','description','id','image_path','is_active','local_name','name','photo']);
+assert.equal(list.length,2);assert.deepEqual(Object.keys(list[0]).sort(),['catalogue_price_paise','catalogue_published','category','description','id','image_path','is_active','local_name','name','photo','price_unit_grams','pricing_basis','quantities','units_per_pack']);
 await assert.rejects(()=>as(22,'select api.product_content() as value'),deny);
 assert.equal((await as(23,'select api.product_content() as value')).length,0);
 console.log('PASS OWNER edits local name and description (audited from/to); other product fields, images and master stay ADMIN-only; EMPLOYEE refused');

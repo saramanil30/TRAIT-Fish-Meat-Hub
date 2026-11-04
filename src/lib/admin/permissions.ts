@@ -4,7 +4,7 @@ export const staffSections = ["dashboard", "orders", "customers", "catalogue", "
 export type StaffSection = typeof staffSections[number];
 export function canAccessSection(role: StaffRole, section: StaffSection): boolean {
   if (role === "ADMIN") return true;
-  // OWNER sees Catalogue only to change product photos, local names and descriptions.
+  // OWNER sees Catalogue to change product photos, local names, descriptions, weight options and catalogue listing.
   if (role === "OWNER") return section !== "categories";
   return role === "EMPLOYEE" && (section === "dashboard" || section === "orders");
 }
