@@ -6,17 +6,21 @@ type Basis="RAW_WEIGHT"|"NET_WEIGHT"|"UNIT"|"TRAY";
 export type EditableProduct={pricing_basis?:string;price_unit_grams?:number;units_per_pack?:number;sale_quantities?:number[];catalogue_price_paise?:number;catalogue_published?:boolean;id:string;category_id:string;name:string;local_name:string;description:string;image_path:string;allowed_weights:number[];preparations:Preparation[];is_active:boolean};
 const bases:{value:Basis;label:string}[]=[{value:"RAW_WEIGHT",label:"Raw weight — price per kg"},{value:"NET_WEIGHT",label:"NET weight — price per pack of grams"},{value:"TRAY",label:"Tray — price per tray"},{value:"UNIT",label:"Unit — price per item"}];
 const photoLimit=1048576;
-/** Converts any browser-readable photo to an 800×800 WebP (letterboxed on white) under 1 MB. */
+/** Converts any browser-readable photo to WebP under 1 MB, keeping the whole photo (no crop): the longest side is
+ *  at most 1600 px (smaller photos are never enlarged). If quality alone cannot reach 1 MB, the size steps down. */
 async function toWebp(file:File){
  const bitmap=await createImageBitmap(file);
- const canvas=document.createElement("canvas");canvas.width=800;canvas.height=800;
- const g=canvas.getContext("2d")!;g.fillStyle="#fff";g.fillRect(0,0,800,800);
- const scale=Math.min(800/bitmap.width,800/bitmap.height),w=bitmap.width*scale,h=bitmap.height*scale;
- g.drawImage(bitmap,(800-w)/2,(800-h)/2,w,h);bitmap.close();
- for(const quality of [0.85,0.75,0.6]){
-  const blob=await new Promise<Blob|null>(r=>canvas.toBlob(r,"image/webp",quality));
-  if(blob?.type==="image/webp"&&blob.size<=photoLimit)return new File([blob],"photo.webp",{type:"image/webp"});
- }
+ try{
+  for(const longest of [1600,1280,1024]){
+   const scale=Math.min(1,longest/Math.max(bitmap.width,bitmap.height));
+   const canvas=document.createElement("canvas");canvas.width=Math.max(1,Math.round(bitmap.width*scale));canvas.height=Math.max(1,Math.round(bitmap.height*scale));
+   const g=canvas.getContext("2d")!;g.imageSmoothingQuality="high";g.drawImage(bitmap,0,0,canvas.width,canvas.height);
+   for(const quality of [0.85,0.75,0.6]){
+    const blob=await new Promise<Blob|null>(r=>canvas.toBlob(r,"image/webp",quality));
+    if(blob?.type==="image/webp"&&blob.size<=photoLimit)return new File([blob],"photo.webp",{type:"image/webp"});
+   }
+  }
+ }finally{bitmap.close();}
  throw new Error("This photo could not be converted to WebP under 1 MB.");
 }
 export function ProductForm({product:p,categories}:{product:EditableProduct|null;categories:{id:string;name:string}[]}){
@@ -42,7 +46,7 @@ export function ProductForm({product:p,categories}:{product:EditableProduct|null
   <label>Local name<input name="local" maxLength={160} defaultValue={p?.local_name}/></label>
   <label>Category<select name="category" required defaultValue={p?.category_id}>{categories.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
   <label>Description<textarea name="description" maxLength={4000} defaultValue={p?.description}/></label>
-  {!p&&<label>Photo<input name="photo" type="file" accept="image/jpeg,image/png,image/webp"/><small>JPEG, PNG or WebP. Saved as an 800×800 WebP under 1 MB and becomes the main photo. Add more photos after saving.</small></label>}
+  {!p&&<label>Photo<input name="photo" type="file" accept="image/jpeg,image/png,image/webp"/><small>JPEG, PNG or WebP. Saved whole (no cropping) as a WebP up to 1600 px, under 1 MB, and becomes the main photo. Add more photos after saving.</small></label>}
   {photoError&&<p role="alert">{photoError}</p>}
   <label>Sold by<select name="basis" value={basis} onChange={e=>setBasis(e.target.value as Basis)}>{bases.map(b=><option key={b.value} value={b.value}>{b.label}</option>)}</select><small>A product that already has store prices cannot change how it is sold; retire it and create a new product.</small></label>
   {basis==="NET_WEIGHT"&&<label>Grams per priced pack<input type="number" name="unitGrams" required min="1" max="100000" defaultValue={p?.price_unit_grams&&p.pricing_basis==="NET_WEIGHT"?p.price_unit_grams:500}/></label>}
@@ -137,7 +141,7 @@ export function ProductPhotos({product,name,photos}:{product:string;name:string;
      :<button type="button" className="admin-button secondary" onClick={()=>setConfirming(photo.id)}>Remove<span className="sr-only"> photo {i+1}</span></button>}
    </div>
   </li>)}</ol>:<p className="admin-muted">No photos yet. The shop shows a placeholder.</p>}
-  {photos.length<photoLimitCount&&<label>Add photos<input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={e=>{const files=e.currentTarget.files;void add(files).finally(()=>{e.target.value="";});}}/><small>JPEG, PNG or WebP, up to {photoLimitCount-photos.length} more. Each is saved as an 800×800 WebP under 1 MB. The first photo is the main photo on product cards.</small></label>}
+  {photos.length<photoLimitCount&&<label>Add photos<input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={e=>{const files=e.currentTarget.files;void add(files).finally(()=>{e.target.value="";});}}/><small>JPEG, PNG or WebP, up to {photoLimitCount-photos.length} more. Each is saved whole (no cropping) as a WebP up to 1600 px, under 1 MB. The first photo is the main photo on product cards.</small></label>}
   {pending&&<p role="status">Saving photos…</p>}
   {message.error&&<p role="alert">{message.error}</p>}{!pending&&message.success&&<p role="status">{message.success}</p>}
  </fieldset>;

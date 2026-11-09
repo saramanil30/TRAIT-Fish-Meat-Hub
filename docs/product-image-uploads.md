@@ -1,6 +1,6 @@
 # Product photo uploads — storage setup
 
-The ADMIN product form and the OWNER product content form (photo, local name, description) upload photos straight to Supabase Storage. The browser converts each photo to an 800×800 WebP under 1 MB. The server checks the WebP signature and size, then uploads it with the signed-in staff session to `product-images/{business}/{product}/{sha256}.webp`. Finally it records the photo as the product's primary image through `api.set_product_photo` (ADMIN or OWNER, own business and product only).
+The ADMIN product form and the OWNER product content form (photo, local name, description) upload photos straight to Supabase Storage. The browser converts each photo to WebP under 1 MB, keeping the whole photo (no crop) with the longest side at most 1600 px; storefront cards crop it to fill, while the options popup shows it whole. The server checks the WebP signature and size, then uploads it with the signed-in staff session to `product-images/{business}/{product}/{sha256}.webp`. Finally it records the photo as the product's primary image through `api.set_product_photo` (ADMIN or OWNER, own business and product only).
 
 This is the same bucket, path and limits that `scripts/resume-verified-images.mjs` uses.
 
