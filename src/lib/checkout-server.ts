@@ -109,6 +109,23 @@ export async function savedAddressesByMobile(mobileE164:string):Promise<SavedAdd
  const rows=await sql`select api.checkout_saved_addresses(${store}::uuid,${mobileE164}::text) as result`;
  return rows[0].result as SavedAddressOption[];
 }
+/** "Notify me when available" for a sold-out product; "AVAILABLE" when it can be bought now. Call after rate limiting. */
+export async function requestRestockAlert(productId:string,mobileE164:string,push:{endpoint:string;p256dh:string;auth:string}|null):Promise<"WAITING"|"AVAILABLE"> {
+ const store=process.env.TRAIT_STORE_ID;
+ if(!store) throw new Error("Store is not configured.");
+ const sql=await checkoutDatabase();
+ const rows=await sql`select api.request_restock_alert(${store}::uuid,${productId}::uuid,${mobileE164}::text,${push?JSON.stringify(push):null}::text::jsonb) as result`;
+ return (rows[0].result as {status:"WAITING"|"AVAILABLE"}).status;
+}
+export type DuePush={productId:string;productName:string;subscription:{endpoint:string;p256dh:string;auth:string}};
+/** Browser pushes now due for products available again, each claimed at most once. */
+export async function claimRestockPushes():Promise<DuePush[]> {
+ const store=process.env.TRAIT_STORE_ID;
+ if(!store) return [];
+ const sql=await checkoutDatabase();
+ const rows=await sql`select api.restock_push_due(${store}::uuid) as result`;
+ return rows[0].result as DuePush[];
+}
 async function checkoutDatabase() {
  const sql=db();
  const rows=await sql`select (not r.rolsuper and not r.rolbypassrls and not r.rolcreaterole

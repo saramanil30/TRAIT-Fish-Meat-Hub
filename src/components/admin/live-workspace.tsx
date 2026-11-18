@@ -10,6 +10,7 @@ import { BusinessReport } from "./report";
 import { StaffDashboard } from "./dashboard";
 import { StaffDirectory } from "./staff-directory";
 import { CustomerList } from "./customers";
+import { RestockWaiting } from "./restock-waiting";
 import { OperationalForm } from "./operational-form";
 import { OrderAlerts, OrderAlertCount, OrderBell } from "./order-alerts";
 import { signOut } from "@/app/admin/actions";
@@ -39,7 +40,7 @@ export async function LiveWorkspace({context,token,section,storeId,orderId,befor
  else if(section==="customers") content=<CustomerList token={token} store={store?.id}/>;
  else if(section==="offers") content=<OffersWorkspace token={token} role={context.role} store={store?.id}/>;
  else if(section==="reports") content=<BusinessReport token={token} store={store?.id} base={base+"/reports"} range={range} fromDate={fromDate} untilDate={untilDate} tab={tab}/>;
- else if(section==="prices") content=store?<><p>Prices use each displayed product unit: raw kg, NET weight, unit or tray. Every price change preserves its history. Saving affects future pricing only.</p><p className="admin-muted"><strong>Morning stock:</strong> enter what is physically in the shop under <em>In shop</em>. <em>Reserved</em> is today&apos;s open orders not yet dispatched; customers can buy what is <em>Available</em> (In shop − Reserved). Orders for later days don&apos;t reserve stock — see Scheduled orders on the Dashboard.</p><DailyProducts products={await staffRpc<DailyProduct[]>(token,"daily_products",{target_store:store.id})}/></>:<p>No accessible stores.</p>;
+ else if(section==="prices") content=store?<><p>Prices use each displayed product unit: raw kg, NET weight, unit or tray. Every price change preserves its history. Saving affects future pricing only.</p><p className="admin-muted"><strong>Morning stock:</strong> enter what is physically in the shop under <em>In shop</em>. <em>Reserved</em> is today&apos;s open orders not yet dispatched; customers can buy what is <em>Available</em> (In shop − Reserved). Orders for later days don&apos;t reserve stock — see Scheduled orders on the Dashboard.</p><RestockWaiting token={token} store={store.id}/><DailyProducts products={await staffRpc<DailyProduct[]>(token,"daily_products",{target_store:store.id})}/></>:<p>No accessible stores.</p>;
  else if(section==="catalogue"&&context.role==="OWNER") {
  const [products,photos]=await Promise.all([staffRpc<ContentProduct[]>(token,"product_content"),productPhotos(token)]);
  content=<><p>You can change each product&apos;s photos (up to 5), local name, description, weight options and catalogue listing.</p>{products.map(p=><details key={p.id}><summary>{p.name}{p.catalogue_published===false?" · Not listed":""}</summary>{photos?<ProductPhotos product={p.id} name={p.name} photos={photos[p.id]??[]}/>:<p className="admin-muted">Photos are unavailable right now.</p>}<ProductContentForm product={p}/><ProductSaleOptionsForm key={p.id+":"+(p.quantities??[]).join(",")+":"+p.catalogue_price_paise+":"+p.catalogue_published} product={p}/></details>)}{!products.length&&<p>No products yet.</p>}</>;

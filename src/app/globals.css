@@ -1588,3 +1588,25 @@ main.storefront .home-page { --text-primary:#171c23; --text-secondary:#575d67; -
   .item-card .add-button { font-size:11px; }
   .special-grid > li { scroll-snap-align:start; min-width:0; }
 }
+/* "Notify me when available" on sold-out products. */
+.add-button.notify-button { background:var(--brand-red); color:#000; border:1px solid var(--brand-red); font-weight:700; min-height:44px; display:inline-flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 2px 6px rgb(0 0 0 / 18%); cursor:pointer; }
+.add-button.notify-button:enabled:hover { background:var(--brand-red-dark); color:#000; border-color:var(--brand-red-dark); }
+.restock-dialog { width:min(440px, calc(100% - 32px)); }
+@media (max-width:767px) { .restock-dialog { width:100%; max-width:100%; } }
+.restock-body { padding:4px 20px 20px; overflow:auto; }
+.restock-product-name { margin:0 0 14px; color:var(--text-secondary); }
+.restock-form { display:flex; flex-direction:column; gap:10px; }
+.restock-form>label { font-weight:600; font-size:14px; }
+.restock-mobile { display:flex; align-items:stretch; border:1px solid var(--border); border-radius:10px; overflow:hidden; background:var(--background); }
+.restock-mobile:focus-within { outline:2px solid var(--brand-red); outline-offset:1px; }
+.restock-mobile span { display:flex; align-items:center; padding:0 12px; background:var(--surface-warm); color:var(--text-secondary); font-weight:600; }
+.restock-mobile input { flex:1; min-width:0; min-height:48px; border:0; padding:10px 12px; font-size:16px; background:transparent; color:var(--text-primary); outline:none; }
+.restock-browser { display:flex; align-items:center; gap:10px; min-height:44px; font-size:14px; cursor:pointer; }
+.restock-browser input { width:20px; height:20px; accent-color:var(--brand-red); }
+.restock-consent { margin:0; font-size:12px; line-height:1.5; color:var(--text-secondary); }
+.restock-submit { width:100%; }
+.restock-success { margin:0; padding:12px 14px; border-radius:10px; background:#e6f4ec; color:#186a3d; font-weight:600; line-height:1.5; }
+.selection-restock { display:flex; flex-direction:column; gap:10px; }
+.selection-restock>p { margin:0; }
+.button.notify-button { background:var(--brand-red); color:#000; border-color:var(--brand-red); font-weight:700; }
+.button.notify-button:enabled:hover { background:var(--brand-red-dark); color:#000; }

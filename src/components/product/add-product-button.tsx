@@ -7,6 +7,7 @@ import { Icon } from "@/components/ui/icon";
 import { isRaw, quantityOptions } from "@/lib/pricing";
 import { setBuyNowItem } from "@/lib/cart-store";
 import { BUY_NOW_CHECKOUT, needsOptions, ProductSelection } from "@/components/product/product-selection";
+import { RestockNotifyDialog } from "@/components/product/restock-notify";
 /** `ref.choose()` opens the same options popup as "Add to cart"; product cards use it so the whole card opens it. */
 export type AddProductHandle = { choose: () => void };
 export function AddProductButton({ product, ref }: { product: Product; ref?: Ref<AddProductHandle> }) {
@@ -14,8 +15,11 @@ export function AddProductButton({ product, ref }: { product: Product; ref?: Ref
   const [added, setAdded] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
+  const [notifying, setNotifying] = useState(false);
   const disabled = !product.available || product.orderable === false;
-  function choose() { setAdded(false); setError(""); setOpen(true); }
+  // Sold out (but sold online): "Notify me" replaces Add to cart and Buy now, and the card opens it.
+  const soldOut = !product.available && product.orderable !== false;
+  function choose() { if (soldOut) return setNotifying(true); setAdded(false); setError(""); setOpen(true); }
   useImperativeHandle(ref, () => ({ choose }));
   function buyNow() {
     if (needsOptions(product)) return choose();
@@ -25,6 +29,8 @@ export function AddProductButton({ product, ref }: { product: Product; ref?: Ref
       router.push(BUY_NOW_CHECKOUT);
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not start checkout. Please try again."); }
   }
+  if (soldOut) return <div className="product-add"><div className="product-actions"><button className="add-button notify-button" type="button" onClick={choose} aria-label={"Notify me when " + product.name + " is available"}><Icon name="bell" width={16} height={16} />Notify me</button></div>
+    {notifying && <RestockNotifyDialog product={product} onClose={() => setNotifying(false)} />}</div>;
   return <div className="product-add"><div className="product-actions"><button className="add-button" type="button" disabled={disabled} onClick={choose} aria-label={product.available ? "Choose " + product.name : product.name + " is sold out"}>{product.orderable !== false && <Icon name="cart" width={16} height={16} />}{product.orderable===false?"Ordering unavailable":"Add to cart"}</button>
     {product.orderable !== false && <button className="add-button buy-now-button" type="button" disabled={disabled} onClick={buyNow} aria-label={"Buy " + product.name + " now"}>Buy now</button>}</div>
     {added && <span className="added-feedback" role="status">Added. <Link href="/cart">View cart</Link></span>}

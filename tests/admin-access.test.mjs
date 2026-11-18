@@ -31,6 +31,7 @@ const navUrl=moduleUrl('export function redirect(path){throw new Error("REDIRECT
 const cacheUrl=moduleUrl('export function revalidatePath(){}');
 const actions=await import(moduleUrl(readFileSync(new URL("../src/app/admin/actions.ts",import.meta.url),"utf8")
  .replace('"next/headers"',JSON.stringify(cookieUrl)).replace('"next/navigation"',JSON.stringify(navUrl)).replace('"next/cache"',JSON.stringify(cacheUrl))
+ .replace('"next/server"',JSON.stringify(moduleUrl('export function after(){}'))).replace('"@/lib/restock-server"',JSON.stringify(moduleUrl('export async function dispatchRestockPushes(){}')))
  .replace('"@/lib/checkout-server"',JSON.stringify(moduleUrl('export async function rateLimit(){}'))).replace('"@/lib/admin/server"',JSON.stringify(serverUrl)).replace('"@/lib/admin/permissions"',JSON.stringify(permissionsUrl))));
 const offerActions=await import(moduleUrl(readFileSync(new URL("../src/app/admin/offer-actions.ts",import.meta.url),"utf8").replace('"next/cache"',JSON.stringify(cacheUrl)).replace('"@/lib/admin/server"',JSON.stringify(serverUrl))));
 const originalFetch=globalThis.fetch;

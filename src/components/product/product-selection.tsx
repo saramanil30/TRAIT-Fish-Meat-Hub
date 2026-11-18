@@ -3,6 +3,7 @@ import {inStockOptions, isRaw, priceLabel, quantityLabel, quantityOptionText, qu
 
 
 import { ProductGallery } from "./product-gallery";
+import { RestockNotifyForm } from "./restock-notify";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
@@ -37,6 +38,8 @@ export function ProductSelection({ product, item, onClose, onSaved }: { product:
   const loss = applicableCleaningLoss(product, preparation);
   const estimated = estimateCleanedWeightGrams(rawWeightGrams, loss);
   const price = saleTotal(product, rawWeightGrams);
+  // Sold out while open (e.g. editing a cart line): offer "Notify me" instead of saving.
+  const soldOut = !product.available && product.orderable !== false;
 
   useEffect(() => {
     const element = dialog.current;
@@ -110,7 +113,8 @@ export function ProductSelection({ product, item, onClose, onSaved }: { product:
           {error && <p role="alert" className="cart-error">{error}</p>}
         </div>
       </div>
-      <div className="selection-footer"><div className="selection-actions"><button type="submit" className="button primary" disabled={saving || !product.available}>{saving ? "Saving..." : item ? "Save changes" : "Add to Cart"}</button>{!item && <button type="submit" data-buy-now className="button secondary" disabled={saving || !product.available}>Buy now</button>}</div></div>
+      {!soldOut && <div className="selection-footer"><div className="selection-actions"><button type="submit" className="button primary" disabled={saving || !product.available}>{saving ? "Saving..." : item ? "Save changes" : "Add to Cart"}</button>{!item && <button type="submit" data-buy-now className="button secondary" disabled={saving || !product.available}>Buy now</button>}</div></div>}
     </form>
+    {soldOut && <div className="selection-footer selection-restock"><p><strong>Sold out right now.</strong> Get notified when it&apos;s back:</p><RestockNotifyForm product={product} /></div>}
   </dialog>, document.body);
 }

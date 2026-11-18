@@ -1,6 +1,7 @@
 import type { SVGProps } from "react";
-export type IconName = "search" | "bag" | "home" | "orders" | "arrow" | "leaf" | "cut" | "truck" | "fish" | "cart" | "box" | "instagram" | "facebook" | "pin" | "shield" | "card" | "drop" | "medal" | "clock" | "chevronLeft" | "chevronRight";
+export type IconName = "bell" | "search" | "bag" | "home" | "orders" | "arrow" | "leaf" | "cut" | "truck" | "fish" | "cart" | "box" | "instagram" | "facebook" | "pin" | "shield" | "card" | "drop" | "medal" | "clock" | "chevronLeft" | "chevronRight";
 const paths: Record<IconName, string> = {
+    bell: "M6 9a6 6 0 0 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9 M10 20a2 2 0 0 0 4 0",
     search: "m21 21-5-5 M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0",
     bag: "M5 7h14l1 14H4L5 7Z M9 8V5a3 3 0 0 1 6 0v3",
     home: "m3 10 9-7 9 7 M5 9v12h5v-7h4v7h5V9",

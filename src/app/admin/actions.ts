@@ -2,6 +2,8 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
+import { dispatchRestockPushes } from "@/lib/restock-server";
 import { authRequest, requireStaff, resolveStaff, sessionCookie, refreshCookie, saveStaffSession, clearStaffSession, staffRpc, uploadProductImage, validProductWebp } from "@/lib/admin/server";
 import { canEditProductContent, parseDailyPrice, parseStock } from "@/lib/admin/permissions";
 export type ActionState = { error?: string; success?: string };
@@ -62,6 +64,8 @@ export async function saveDailyProduct(_state: ActionState,form: FormData): Prom
   if (!Number.isSafeInteger(stockVersion)||stockVersion<0) throw new Error("Reload the product.");
   // One transaction: price and availability, then stock: the physical count in the shop (blank = unlimited).
   await staffRpc(token,"save_daily_product",{offering:uuid(text(form,"id")),expected_version:version,price_paise:parseDailyPrice(text(form,"price")),is_available:boolean(form,"available"),expected_stock_version:stockVersion,stock:parseStock(text(form,"stock"),text(form,"weighed")==="true")});
+  // Back in stock: browser pushes go out after the response, so saving stays fast.
+  after(dispatchRestockPushes);
   revalidatePath("/admin","layout"); return {success:"Saved. Available = in shop − reserved."};
  } catch(error) { return {error:error instanceof Error ? error.message : "Unable to save."}; }
 }
@@ -96,6 +100,8 @@ export async function saveMaster(_state: ActionState,form: FormData): Promise<Ac
     product=await staffRpc<string>(token,"save_product",{target_id:null,...details,weights:quantities});
     await staffRpc(token,"configure_product_pricing",{product,...pricing});
    }
+   // New options, basis or status can make a sold-out product buyable again.
+   after(dispatchRestockPushes);
    if(bytes){
     try{await uploadProductImage(token,context.businessId,product,details.product_name.trim(),bytes,"replace");}
     catch{revalidatePath("/admin","layout");return {error:"Product saved, but the photo could not be uploaded. Check the image storage setup and try again."};}
@@ -141,6 +147,8 @@ export async function saveProductSaleOptions(_state: ActionState,form: FormData)
   if(priceText){try{price=parseDailyPrice(priceText);}catch(cause){return {error:cause instanceof Error?cause.message:"Enter a valid price."};}}
   if(published&&price===null) return {error:"Enter the catalogue price before listing the product."};
   await staffRpc(token,"save_product_sale_options",{product,quantities,reference_price:price,published});
+  // Smaller options or relisting can make a sold-out product buyable again.
+  after(dispatchRestockPushes);
   revalidatePath("/","layout"); return {success:published?"Saved and listed. Stores without this product now sell it at this price.":"Saved. The product is not listed in the catalogue."};
  } catch { return {error:"Unable to save. Check the options and your access."}; }
 }

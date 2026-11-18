@@ -11,3 +11,7 @@ TRAIT_RATE_LIMIT_REST_TOKEN=
 TRAIT_TRUSTED_IP_HEADER=
 SUPABASE_AUTH_ADMIN_KEY=
 TRAIT_AUTH_RECOVERY_URL=
+# Browser push for "Notify me when available" (free; generate with node scripts/generate-vapid-keys.mjs).
+NEXT_PUBLIC_TRAIT_WEB_PUSH_PUBLIC_KEY=
+TRAIT_WEB_PUSH_PRIVATE_KEY=
+TRAIT_WEB_PUSH_SUBJECT=

@@ -1,6 +1,8 @@
 "use server";
 import { requireStaff, staffRpc, authRequest } from "@/lib/admin/server";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
+import { dispatchRestockPushes } from "@/lib/restock-server";
 import { rateLimit } from "@/lib/checkout-server";
 import { rupeesToPaise } from "@/lib/admin/permissions";
 import type { ActionState } from "./actions";
@@ -17,6 +19,8 @@ export async function operationalAction(_:ActionState,f:FormData):Promise<Action
    const reason=text(f,"reason")==="Other"?text(f,"reasonOther").trim():text(f,"reason");
    if(text(f,"status")==="CANCELLED"&&!reason)return {error:"Choose a reason, or describe it under Other."};
    await staffRpc(token,"transition_order",{target_order:id(f,"id"),expected_version:number(f,"version"),next_status:text(f,"status"),reason:reason||null});
+   // A cancellation can return stock and make a sold-out product available again.
+   if(text(f,"status")==="CANCELLED")after(dispatchRestockPushes);
   }
   else if(kind==="cash")await staffRpc(token,"receive_cash",{target_payment:id(f,"id"),expected_version:number(f,"version")});
   else if(kind==="reference")await staffRpc(token,"submit_payment_reference",{target_payment:id(f,"id"),expected_version:number(f,"version"),reference:text(f,"reference")});
