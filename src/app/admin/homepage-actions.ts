@@ -1,6 +1,7 @@
 "use server";
 import { revalidatePath } from "next/cache";
-import { requireStaff, staffRpc, uploadCategoryImage, uploadHeroImage, uploadShareImage, validProductWebp } from "@/lib/admin/server";
+import { requireStaff, staffRpc, uploadBrandImage, uploadCategoryImage, uploadHeroImage, uploadShareImage, validProductWebp } from "@/lib/admin/server";
+import { validDesktopLogo, validIconPng, validMobileLogo } from "@/lib/brand-image";
 import { maxHeroSlides, validHeroWebp } from "@/lib/hero-image";
 import { rupeesToPaise } from "@/lib/admin/permissions";
 import { maxSpecials, specialBadges, validSocialUrl, type SpecialBadge } from "@/lib/homepage-content";
@@ -161,4 +162,43 @@ export async function manageHeroSlides(_: ActionState, form: FormData): Promise<
   if(cause instanceof Error&&/^(The banner photo|The homepage banner can|This photo is already|Photo upload is not)/.test(cause.message)) return {error:cause.message};
   return failure(cause,"the homepage banner");
  }
+}
+type BrandingSettings={desktopLogo:string|null;desktopWidth:number|null;desktopHeight:number|null;mobileLogo:string|null;mobileSize:number|null;favicon:string|null;touchIcon:string|null;version:number};
+/** Header logo: upload or remove the wide desktop logo, or the square mobile logo with its generated 32×32 favicon and
+ *  180×180 home-screen icon. ADMIN/OWNER, own store; every file is checked here from its header before upload and the
+ *  database checks paths, stored type and size again (api.save_store_branding, audited). The other logo is kept as saved. */
+export async function saveStoreBranding(_: HomepageTextState, form: FormData): Promise<HomepageTextState> {
+ const part=String(form.get("part")??""),remove=form.get("remove")==="true";
+ if(part!=="desktop"&&part!=="mobile") return {error:"Unknown action."};
+ try {
+  const {token,context,store}=await homepageEditor(form,"the header logo");
+  const current=await staffRpc<BrandingSettings>(token,"store_branding_settings",{target_store:store});
+  if(Number(form.get("version"))!==Number(current.version??0)) return {error:"Someone else saved the header logo since you opened this page. Reload and try again."};
+  const next={desktop_logo:current.desktopLogo,desktop_width:current.desktopWidth,desktop_height:current.desktopHeight,
+   mobile_logo:current.mobileLogo,mobile_size:current.mobileSize,favicon:current.favicon,touch_icon:current.touchIcon};
+  const bytesOf=async(name:string)=>{const file=form.get(name);return file instanceof File&&file.size?new Uint8Array(await file.arrayBuffer()):null;};
+  const upload=async(bytes:Uint8Array,type:"png"|"webp")=>{try{return await uploadBrandImage(token,context.businessId,store,bytes,type);}catch{throw new Error("Upload failed");}};
+  try{
+   if(part==="desktop"){
+    if(remove){next.desktop_logo=null;next.desktop_width=null;next.desktop_height=null;}
+    else{
+     const bytes=await bytesOf("logo");if(!bytes) return {error:"Choose a logo to upload."};
+     const image=validDesktopLogo(bytes);
+     if(!image) return {error:"The desktop logo must be a PNG or WebP, 40–600 pixels tall, at least 1.5× as wide as tall, at most 2400 pixels wide and 512 KB."};
+     next.desktop_logo=await upload(bytes,image.type);next.desktop_width=image.width;next.desktop_height=image.height;
+    }
+   } else if(remove){next.mobile_logo=null;next.mobile_size=null;next.favicon=null;next.touch_icon=null;}
+   else{
+    const [logo,favicon,touch]=await Promise.all([bytesOf("logo"),bytesOf("favicon"),bytesOf("touchIcon")]);
+    if(!logo) return {error:"Choose a logo to upload."};
+    const image=validMobileLogo(logo);
+    if(!image) return {error:"The mobile logo must be a square PNG or WebP, 192–1024 pixels and at most 512 KB."};
+    if(!favicon||!touch||!validIconPng(favicon,32)||!validIconPng(touch,180)) return {error:"The favicon could not be generated from this logo. Try a different file."};
+    next.mobile_logo=await upload(logo,image.type);next.mobile_size=image.width;next.favicon=await upload(favicon,"png");next.touch_icon=await upload(touch,"png");
+   }
+  }catch(cause){if(cause instanceof Error&&cause.message==="Upload failed") return {error:"The logo could not be uploaded, so nothing was saved. Check the brand image storage setup and try again."};throw cause;}
+  const version=await staffRpc<number>(token,"save_store_branding",{target_store:store,expected_version:Number(current.version??0),...next});
+  revalidatePath("/","layout");
+  return {success:remove?"Logo removed; the built-in logo shows again.":part==="desktop"?"Desktop logo saved.":"Mobile logo and favicon saved. Browsers may keep the old tab icon until the page is reloaded.",version};
+ } catch (cause) { return failure(cause,"the header logo"); }
 }

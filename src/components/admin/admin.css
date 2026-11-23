@@ -286,3 +286,14 @@
 .restock-requests{list-style:none;padding:0;margin:0 0 10px}.restock-requests li{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 16px;padding:10px 0;border-bottom:1px solid #edf0f5}.restock-requests li:last-child{border-bottom:0}
 .restock-requests li>div{display:flex;flex-direction:column;gap:2px;min-width:0}.restock-requests a[href^="tel:"]{font-weight:700;font-size:13px}.restock-action{display:flex;flex-direction:column;align-items:flex-end;gap:4px}.restock-done{font-size:12px;color:#186a3d;font-weight:600}
 @media(max-width:767px){.restock-waiting{padding:16px}.restock-requests li{align-items:stretch}.restock-action,.restock-action .admin-button{width:100%;align-items:stretch}}
+/* Settings → Header logo */
+.admin-brand-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr)); gap:20px; }
+.admin-brand-part { min-width:0; }
+.admin-brand-preview { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:88px; padding:12px 16px; margin-block:10px; border:1px dashed #c9c9c9; border-radius:8px; background:#fff; }
+.admin-brand-preview img { display:block; object-fit:contain; min-width:0; }
+.admin-brand-preview.is-desktop img { height:64px; width:auto; max-width:calc(100% - 70px); }
+.admin-brand-preview.is-mobile { max-width:390px; }
+.admin-brand-preview.is-mobile img { width:56px; height:56px; }
+.admin-brand-cart { flex-shrink:0; padding:6px 10px; border-radius:6px; background:#d90000; color:#fff; font-size:12px; font-weight:700; }
+.admin-brand-favicon { display:flex; align-items:center; gap:8px; font-size:13px; }
+.admin-brand-favicon img { image-rendering:auto; border:1px solid #ddd; }

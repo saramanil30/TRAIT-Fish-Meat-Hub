@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
-    "test": "node --test tests/cart.test.mjs tests/order.test.mjs tests/admin-access.test.mjs tests/checkout-integration.test.mjs tests/share-image.test.mjs tests/sales-report.test.mjs tests/delivery-slots.test.mjs tests/hero-image.test.mjs tests/web-push.test.mjs",
+    "test": "node --test tests/cart.test.mjs tests/order.test.mjs tests/admin-access.test.mjs tests/checkout-integration.test.mjs tests/share-image.test.mjs tests/sales-report.test.mjs tests/delivery-slots.test.mjs tests/hero-image.test.mjs tests/web-push.test.mjs tests/brand-image.test.mjs",
     "test:checkout-browser": "node tests/checkout-browser.mjs",
     "test:cart": "node --test tests/cart.test.mjs",
     "test:cart-browser": "node tests/cart-browser.mjs",
@@ -34,7 +34,8 @@
     "test:product-photo-replace-db": "node tests/product-photo-replace-db.mjs",
     "test:owner-content-offer-archive-db": "node tests/owner-content-offer-archive-db.mjs",
     "test:owner-sale-options-hero-db": "node tests/owner-sale-options-hero-db.mjs",
-    "test:restock-db": "node tests/restock-alerts-db.mjs"
+    "test:restock-db": "node tests/restock-alerts-db.mjs",
+    "test:branding-db": "node tests/store-branding-db.mjs"
   },
   "dependencies": {
     "next": "16.3.5",

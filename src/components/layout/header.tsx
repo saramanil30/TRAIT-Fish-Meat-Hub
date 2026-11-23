@@ -9,8 +9,12 @@ import { WhatsAppGlyph } from "./whatsapp-button";
 import { SHOP_WHATSAPP, WHATSAPP_WINDOW, whatsappLink } from "@/lib/whatsapp";
 import { formatPhone } from "@/lib/format";
 import type { NavCategory, SocialLinks, StripOffer } from "./site-frame";
+import type { HeaderBrand } from "@/lib/brand-image";
 
-export function Header({ categories, offers, social, scrolls, showCategories = true }: { categories: NavCategory[]; offers: StripOffer[]; social: SocialLinks; scrolls: boolean; showCategories?: boolean }) {
+export function Header({ categories, offers, social, brand = {}, scrolls, showCategories = true }: { categories: NavCategory[]; offers: StripOffer[]; social: SocialLinks; brand?: HeaderBrand; scrolls: boolean; showCategories?: boolean }) {
+  // Built-in logo and wordmark; used wherever no custom logo is saved (Settings → Header logo).
+  const builtIn = <><Image className="brand-logo" src="/trait-logo.jpeg" alt="TRAIT Fish & Meat Hub official logo" width={1254} height={1254} unoptimized preload /><span className="brand-copy"><strong>TRAIT</strong><small>FISH &amp; MEAT HUB</small><em>Quality is Our <b>TRAIT.</b></em></span></>;
+  const custom = brand.desktop || brand.mobile;
   // Desktop: the whole block sticks. Mobile: the wrapper drops out of layout, so only the <header> row sticks.
   // Cart and checkout (`scrolls`): nothing sticks; the whole header scrolls away with the page.
   return <div className={scrolls ? "site-top is-static" : "site-top"}>
@@ -24,7 +28,11 @@ export function Header({ categories, offers, social, scrolls, showCategories = t
       </nav>
     </div></div>
     <header className="site-header"><div className="container header-main">
-      <Link href="/" className="brand" aria-label="TRAIT Fish and Meat Hub home"><Image className="brand-logo" src="/trait-logo.jpeg" alt="TRAIT Fish & Meat Hub official logo" width={1254} height={1254} unoptimized preload /><span className="brand-copy"><strong>TRAIT</strong><small>FISH &amp; MEAT HUB</small><em>Quality is Our <b>TRAIT.</b></em></span></Link>
+      <Link href="/" className="brand" aria-label="TRAIT Fish and Meat Hub home">{custom ? <>
+        {/* Desktop (over 700 px) and mobile each show their own logo, or the built-in one when that logo isn't set. */}
+        <span className="brand-desktop">{brand.desktop ? <Image className="brand-logo-wide" src={brand.desktop.url} alt="TRAIT Fish & Meat Hub" width={brand.desktop.width} height={brand.desktop.height} unoptimized preload /> : builtIn}</span>
+        <span className="brand-mobile">{brand.mobile ? <Image className="brand-logo-icon" src={brand.mobile} alt="TRAIT Fish & Meat Hub" width={512} height={512} unoptimized /> : builtIn}</span>
+      </> : builtIn}</Link>
       <div className="header-search"><SearchForm id="header-search" /></div>
       <nav aria-label="Customer navigation" className="header-actions"><CartLink /></nav>
     </div><div className="collection-strip" role="region" aria-label="The TRAIT collection"><div className="container"><strong>The TRAIT collection</strong>{offers.length ? <OfferRotator className="strip-offers" label="Current offers">{offers.map(o => <span key={o.id} className="strip-offer"><span className="strip-offer-text">{o.text}<span className="strip-offer-ends"> · {o.ends}</span></span>{o.code && <span className="strip-code">Code <b>{o.code}</b></span>}</span>)}</OfferRotator> : <span>Fresh fish, chicken & mutton · Cleaned and cut your way</span>}</div></div></header>

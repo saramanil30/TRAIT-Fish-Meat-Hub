@@ -142,3 +142,15 @@ export async function uploadHeroImage(token: string, businessId: string, storeId
  if (!response.ok && !duplicate) throw new Error("Photo upload is not available. Check the hero image storage setup.");
  return staffRpc<string>(token, "add_hero_slide", { target_store: storeId, object_path: path, width, size_bytes: bytes.length, alternate_text: alt });
 }
+/** Header logos and generated icons: brand-images/{business}/{store}/{sha256}.png|webp; returns the path. The caller
+ *  checks the image first (src/lib/brand-image.ts); the database checks the stored object's type and size again.
+ *  Storage policies allow only ADMIN and OWNER, under their own business and a store they can access. */
+export async function uploadBrandImage(token: string, businessId: string, storeId: string, bytes: Uint8Array, type: "png" | "webp") {
+ const {url,key} = config();
+ const path = businessId + "/" + storeId + "/" + createHash("sha256").update(bytes).digest("hex") + "." + type;
+ const response = await fetch(url + "/storage/v1/object/brand-images/" + path, { method: "POST", cache: "no-store", signal: AbortSignal.timeout(30000), headers: { apikey: key, Authorization: "Bearer " + token, "Content-Type": "image/" + type, "x-upsert": "false" }, body: Buffer.from(bytes) });
+ // A 409 means identical bytes were already uploaded for this store.
+ const duplicate = response.status === 409 || (!response.ok && String((await response.clone().json().catch(() => ({}))).statusCode) === "409");
+ if (!response.ok && !duplicate) throw new Error("Logo upload is not available. Check the brand image storage setup.");
+ return path;
+}

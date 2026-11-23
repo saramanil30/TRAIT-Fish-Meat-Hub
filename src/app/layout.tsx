@@ -7,7 +7,7 @@ import { currentOffers } from "@/lib/offers";
 import { formatMoney } from "@/lib/format";
 import { storefrontInfo, storeAddress, hoursLines, phoneDigits } from "@/lib/storefront-info";
 import type { FooterStore } from "@/components/layout/footer";
-import { homepageContent, linkPreview } from "@/lib/homepage-text-server";
+import { homepageContent, linkPreview, storeBranding } from "@/lib/homepage-text-server";
 import { defaultLinkPreview, shareImageUrl } from "@/lib/link-preview";
 
 
@@ -36,7 +36,7 @@ export const dynamic = "force-dynamic";
 // Shared-link preview: Settings → Link preview (title, description, 1200×630 image), or the built-in preview.
 // The image is always set here, not via an app/opengraph-image file, because file-based metadata would override it.
 export async function generateMetadata(): Promise<Metadata> {
-  const saved = await linkPreview();
+  const [saved, brand] = await Promise.all([linkPreview(), storeBranding()]);
   const title = saved.title ?? defaultLinkPreview.title, description = saved.description ?? defaultLinkPreview.description;
   const custom = saved.imagePath ? shareImageUrl(saved.imagePath, saved.version) : null;
   const image = custom ? { url: custom, width: 1200, height: 630, alt: title, type: "image/jpeg" } : defaultLinkPreview.image;
@@ -45,8 +45,14 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: process.env.NEXT_PUBLIC_SITE_URL ? new URL(process.env.NEXT_PUBLIC_SITE_URL) : undefined,
     title: { default: "TRAIT Fish & Meat Hub | Fresh, Your Way", template: "%s | TRAIT Fish & Meat Hub" },
     description: "Fresh fish, seafood, chicken, mutton and eggs from TRAIT Fish & Meat Hub, Kokapet, Hyderabad. Choose your weight and cut; home delivery or store pickup.",
-    openGraph: { type: "website", siteName: "TRAIT Fish & Meat Hub", locale: "en_IN", title, description, images: [image] },
+    // og:url is the homepage (absolute, from NEXT_PUBLIC_SITE_URL), so tapping a shared preview opens the homepage.
+    openGraph: { type: "website", siteName: "TRAIT Fish & Meat Hub", locale: "en_IN", ...(process.env.NEXT_PUBLIC_SITE_URL ? { url: "/" } : {}), title, description, images: [image] },
     twitter: { card: "summary_large_image", title, description, images: [image] },
+    // Settings → Header logo: favicon and home-screen icon made from the square logo; otherwise the built-in icons in /public
+    // (not app/icon.* files, because file-based icons would override these).
+    icons: brand.icons
+      ? { icon: [{ url: brand.icons.favicon, sizes: "32x32", type: "image/png" }], apple: [{ url: brand.icons.touch, sizes: "180x180", type: "image/png" }] }
+      : { icon: [{ url: "/favicon.ico", sizes: "any" }, { url: "/icon.svg", type: "image/svg+xml" }] },
   };
 }
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -58,6 +64,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // Footer contact details; hours are formatted here so server and browser render the same text.
   let store: FooterStore | null = null;
   try { const info = await storefrontInfo(); if (info) store = { name: info.name, address: storeAddress(info.address), phone: info.phone ? phoneDigits(info.phone) : null, whatsapp: info.whatsapp ? phoneDigits(info.whatsapp) : info.phone ? phoneDigits(info.phone) : null, hours: hoursLines(info.hours ?? {}), areas: info.delivery ? (info.areas ?? []).map(a => a.name ? a.name + " " + a.pincode : a.pincode) : [] }; } catch { /* Footer shows the brand line only. */ }
-  const { instagram, facebook } = await homepageContent();
-  return <html lang="en" className={`${bodyFont.variable} ${headingFont.variable} ${slabFont.variable}`}><body><a className="skip-link" href="#main-content">Skip to content</a><SiteFrame categories={categories.map(({ slug, name }) => ({ slug, name }))} offers={offers} social={{ instagram, facebook }} store={store}>{children}</SiteFrame></body></html>;
+  const [{ instagram, facebook }, brand] = await Promise.all([homepageContent(), storeBranding()]);
+  return <html lang="en" className={`${bodyFont.variable} ${headingFont.variable} ${slabFont.variable}`}><body><a className="skip-link" href="#main-content">Skip to content</a><SiteFrame categories={categories.map(({ slug, name }) => ({ slug, name }))} offers={offers} social={{ instagram, facebook }} brand={{ desktop: brand.desktop, mobile: brand.mobile }} store={store}>{children}</SiteFrame></body></html>;
 }

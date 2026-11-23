@@ -4,6 +4,7 @@ import { publicRpc } from "./supabase";
 import type { HomepageText } from "./homepage-text";
 import type { LinkPreview } from "./link-preview";
 import { emptyHomepageContent, type HomepageContent } from "./homepage-content";
+import { brandImageUrl, validBrandPath, type HeaderBrand, type StoreBranding } from "./brand-image";
 /** The published store's custom hero text; {} (built-in text) when none is saved or the store service is unavailable. */
 export const homepageText = cache(async (): Promise<HomepageText> => {
  if (!process.env.TRAIT_STORE_ID) return {};
@@ -33,4 +34,19 @@ export const heroSlides = cache(async (): Promise<{ path: string; alt: string }[
   return saved.flatMap(s => typeof s?.path === "string" && /^[0-9a-f-]{36}\/[0-9a-f-]{36}\/[0-9a-f]{64}\.webp$/.test(s.path)
    ? [{ path: s.path, alt: typeof s.alt === "string" ? s.alt : "" }] : []).slice(0, 5);
  } catch { return []; }
+});
+/** The published store's header logos and favicon as public URLs; {} (built-in logo and icons) when none are saved,
+ *  the migration is not applied yet, or the store service is unavailable. Shared by the layout's metadata and header. */
+export const storeBranding = cache(async (): Promise<HeaderBrand> => {
+ if (!process.env.TRAIT_STORE_ID) return {};
+ try {
+  const saved = await publicRpc<StoreBranding | null>("store_branding", { target_store: process.env.TRAIT_STORE_ID });
+  if (!saved) return {};
+  const url = (path: string) => brandImageUrl(process.env.SUPABASE_URL, path, saved.version);
+  const d = saved.desktopLogo, brand: HeaderBrand = {};
+  if (d && validBrandPath(d.path) && Number(d.width) > 0 && Number(d.height) > 0) brand.desktop = { url: url(d.path), width: Number(d.width), height: Number(d.height) };
+  if (validBrandPath(saved.mobileLogo)) brand.mobile = url(saved.mobileLogo);
+  if (validBrandPath(saved.favicon) && validBrandPath(saved.touchIcon)) brand.icons = { favicon: url(saved.favicon), touch: url(saved.touchIcon) };
+  return brand;
+ } catch { return {}; }
 });

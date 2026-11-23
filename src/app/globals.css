@@ -1610,3 +1610,9 @@ main.storefront .home-page { --text-primary:#171c23; --text-secondary:#575d67; -
 .selection-restock>p { margin:0; }
 .button.notify-button { background:var(--brand-red); color:#000; border-color:var(--brand-red); font-weight:700; }
 .button.notify-button:enabled:hover { background:var(--brand-red-dark); color:#000; }
+/* Settings → Header logo: wide logo above 700 px, square icon below; each falls back to the built-in logo. */
+.brand-desktop,.brand-mobile { display:flex; align-items:center; gap:12px; }
+.brand-mobile { display:none; }
+.brand-logo-wide { display:block; width:auto; height:64px; max-width:min(280px,30vw); object-fit:contain; }
+.brand-logo-icon { display:block; width:56px; height:56px; object-fit:contain; }
+@media(max-width:700px) { .brand-desktop { display:none; } .brand-mobile { display:flex; } }

@@ -6,18 +6,22 @@ import { HomepageTextForm } from "./homepage-text";
 import { LinkPreviewForm, ShareToWhatsApp } from "./link-preview";
 import { CategoryPhotoForm, HeroSlidesForm, SocialLinksForm, SpecialsForm, type CategoryPhotoRecord, type SpecialChoice } from "./homepage-content";
 import { heroImageUrl } from "@/lib/hero-image";
+import { BrandingForm } from "./branding";
+import { brandImageUrl, validBrandPath } from "@/lib/brand-image";
 import { categoryPhotoUrl, type SpecialBadge } from "@/lib/homepage-content";
 type ContentSettings={instagram:string|null;facebook:string|null;linksVersion:number;specialsVersion:number;
  specials:{productId:string;badge:SpecialBadge|null;wasPaise:number|null}[];categories:CategoryPhotoRecord[]};
-/** Settings for ADMIN and OWNER: homepage banner slides, hero text, social links, Today's Specials, category photos, link preview and the WhatsApp share sheet. */
+/** Settings for ADMIN and OWNER: header logo, homepage banner slides, hero text, social links, Today's Specials, category photos, link preview and the WhatsApp share sheet. */
 export async function HomepageTextSettings({token,store}:{token:string;store?:string}){
  if(!store)return null;
- const [text,preview,content,products,slides]=await Promise.all([
+ const [text,preview,content,products,slides,branding]=await Promise.all([
   staffRpc<{content:HomepageText;version:number}>(token,"homepage_text_settings",{target_store:store}).catch(()=>null),
   staffRpc<LinkPreview>(token,"link_preview_settings",{target_store:store}).catch(()=>null),
   staffRpc<ContentSettings>(token,"homepage_content_settings",{target_store:store}).catch(()=>null),
   staffRpc<{id:string;name:string;is_active:boolean}[]>(token,"product_content").catch(()=>[]),
-  staffRpc<{id:string;path:string;alt:string;width:number}[]>(token,"hero_slide_settings",{target_store:store}).catch(()=>null)]);
+  staffRpc<{id:string;path:string;alt:string;width:number}[]>(token,"hero_slide_settings",{target_store:store}).catch(()=>null),
+  staffRpc<{desktopLogo?:string|null;mobileLogo?:string|null;version:number}>(token,"store_branding_settings",{target_store:store}).catch(()=>null)]);
+ const brandUrl=(path?:string|null)=>validBrandPath(path)?brandImageUrl(process.env.SUPABASE_URL,path,branding?.version):null;
  const choices:SpecialChoice[]=products.map(p=>({id:p.id,name:p.name,active:p.is_active}));
  // The customer site address shared in links; the request's own host when NEXT_PUBLIC_SITE_URL is unset.
  const host=(await headers()).get("host");
@@ -25,6 +29,8 @@ export async function HomepageTextSettings({token,store}:{token:string;store?:st
  const missing=<p>Unavailable. Apply the homepage and link preview database migration, then reload.</p>;
  const missingContent=<p>Unavailable. Apply the homepage storefront database migration (20261018000000_homepage_storefront.sql), then reload.</p>;
  return <>
+  {branding?<BrandingForm key={store} store={store} version={Number(branding.version??0)} desktopUrl={brandUrl(branding.desktopLogo)} mobileUrl={brandUrl(branding.mobileLogo)}/>
+   :<section><h2>Header logo</h2><p>Unavailable. Apply the database migration 20261124000000_store_branding.sql, then reload.</p></section>}
   {slides?<HeroSlidesForm key={store} store={store} slides={slides.map(s=>({id:s.id,alt:s.alt,width:s.width,url:heroImageUrl(process.env.SUPABASE_URL,s.path)}))}/>
    :<section><h2>Homepage banner</h2><p>Unavailable. Apply the database migration 20261105000000_owner_sale_options_hero_slides.sql, then reload.</p></section>}
   {text?<HomepageTextForm key={store+":"+text.version} store={store} content={text.content??{}} version={Number(text.version)}/>:<section><h2>Homepage text</h2>{missing}</section>}
