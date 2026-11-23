@@ -1616,3 +1616,8 @@ main.storefront .home-page { --text-primary:#171c23; --text-secondary:#575d67; -
 .brand-logo-wide { display:block; width:auto; height:64px; max-width:min(280px,30vw); object-fit:contain; }
 .brand-logo-icon { display:block; width:56px; height:56px; object-fit:contain; }
 @media(max-width:700px) { .brand-desktop { display:none; } .brand-mobile { display:flex; } }
+/* Uploaded logos in the checkout header and footer (sized to match the built-in logo there). */
+.checkout-header .brand-logo-wide { height:48px; max-width:min(220px,40vw); }
+.checkout-header .brand-logo-icon { width:44px; height:44px; }
+.footer-brand .brand-logo-wide { height:56px; max-width:240px; }
+.footer-brand .brand-logo-icon { width:62px; height:62px; }
