@@ -1621,3 +1621,11 @@ main.storefront .home-page { --text-primary:#171c23; --text-secondary:#575d67; -
 .checkout-header .brand-logo-icon { width:44px; height:44px; }
 .footer-brand .brand-logo-wide { height:56px; max-width:240px; }
 .footer-brand .brand-logo-icon { width:62px; height:62px; }
+
+/* Policy pages and online payment */
+.policy-body h2 { margin-top: 1.25rem; font-size: 1.1rem; }
+.policy-body h2:first-child { margin-top: 0; }
+.policy-body p { line-height: 1.6; }
+.policy-page .order-panel + .order-panel, .info-page > .policy-body { margin-top: 1.25rem; }
+.order-pay-box { margin: 1rem 0; padding: 1rem; border: 1px solid currentColor; border-radius: 12px; }
+.pay-online { display: grid; gap: .5rem; margin-top: .75rem; justify-items: start; }

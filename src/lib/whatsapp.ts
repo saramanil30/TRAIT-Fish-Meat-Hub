@@ -10,12 +10,14 @@ export function whatsappLink(e164: string, text?: string): string {
   return "https://wa.me/" + e164.replace(/\D/g, "") + (text ? "?text=" + encodeURIComponent(text) : "");
 }
 
-type StatusOrder = { name?: string; number: string; totalPaise: number; status: string; pickup: boolean; site: string; slot?: string };
+type StatusOrder = { name?: string; number: string; totalPaise: number; status: string; pickup: boolean; site: string; slot?: string; payLink?: string };
 /** Staff → customer: a message for the order's current status. */
 export function customerStatusMessage(o: StatusOrder): string {
   const hi = "Hi" + (o.name ? " " + o.name : "") + ", your TRAIT order " + o.number + " (" + formatMoney(o.totalPaise) + ")";
   const track = " Track with your mobile: " + o.site + "/track-order";
   const when = o.slot ? " for " + o.slot : "";
+  // Unpaid online order: a signed link that reopens Razorpay Checkout ("Retry payment").
+  if (o.payLink && o.status !== "CANCELLED") return hi + " is waiting for online payment. Retry payment here: " + o.site + o.payLink + " (unpaid orders are cancelled 30 minutes after placing).";
   switch (o.status) {
     case "CONFIRMED": return hi + " is confirmed" + when + ". We are preparing it fresh for you." + track;
     case "OUT_FOR_DELIVERY": return hi + " is out for delivery. Please keep your phone handy." + track;

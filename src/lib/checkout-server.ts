@@ -57,6 +57,7 @@ export async function quoteOrder(payload:Record<string,unknown>) {
  const store=process.env.TRAIT_STORE_ID;
  const days=Number(process.env.TRAIT_TRACKING_EXPIRY_DAYS);
  if(!store||!Number.isInteger(days)||days<1||days>365) throw new Error("Ordering policy is not configured.");
+ await sweepUnpaidOnline();
  const sql=await checkoutDatabase();
  // ::text first: with prepare:false, postgres.js sends a bare ::jsonb string parameter as a JSON string, not an object.
  const rows=await sql`select api.checkout_quote(${store}::uuid,${JSON.stringify(payload)}::text::jsonb) as result`;
@@ -125,6 +126,13 @@ export async function claimRestockPushes():Promise<DuePush[]> {
  const sql=await checkoutDatabase();
  const rows=await sql`select api.restock_push_due(${store}::uuid) as result`;
  return rows[0].result as DuePush[];
+}
+/** Cancels this store's online orders still unpaid after 30 minutes (stock and slot come back). Never throws. */
+export async function sweepUnpaidOnline() {
+ const store=process.env.TRAIT_STORE_ID;
+ if(!store) return;
+ try {const sql=await checkoutDatabase();await sql`select api.cancel_unpaid_online_orders(${store}::uuid)`;}
+ catch (cause) {logCheckoutFailure("unpaid-sweep",cause);}
 }
 async function checkoutDatabase() {
  const sql=db();

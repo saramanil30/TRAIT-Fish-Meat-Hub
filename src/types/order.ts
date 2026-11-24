@@ -1,7 +1,7 @@
 import type { CartItem } from "./cart";
 
 export type DeliveryMethod = "delivery" | "pickup";
-export type PaymentMethod = "cash" | "upi";
+export type PaymentMethod = "cash" | "upi" | "online";
 export type OrderStatus = "PLACED" | "CONFIRMED" | "PREPARING" | "READY" | "OUT_FOR_DELIVERY" | "DELIVERED" | "CANCELLED";
 export interface CheckoutDetails {
   deliveryMethod: DeliveryMethod;

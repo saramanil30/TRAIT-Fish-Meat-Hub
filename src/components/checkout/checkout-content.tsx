@@ -29,7 +29,7 @@ const fields = [
   { key: "state", label: "State", autoComplete: "address-level1", max: 120 },
   { key: "pincode", label: "Pincode", autoComplete: "postal-code", max: 6 },
 ] as const;
-export function CheckoutContent({ buyNow = false, deliveryFeePaise = null, feeVaries = false, offers = [], slotDays = [], asapOpen = false }: { buyNow?: boolean; deliveryFeePaise?: number | null; feeVaries?: boolean; offers?: readonly CartOffer[]; slotDays?: readonly SlotDay[]; asapOpen?: boolean }) {
+export function CheckoutContent({ buyNow = false, deliveryFeePaise = null, feeVaries = false, offers = [], slotDays = [], asapOpen = false, onlinePay = false }: { onlinePay?: boolean; buyNow?: boolean; deliveryFeePaise?: number | null; feeVaries?: boolean; offers?: readonly CartOffer[]; slotDays?: readonly SlotDay[]; asapOpen?: boolean }) {
   const cart = useCart();
   const buyNowItems = useBuyNow();
   // Buy now checks out only its own item; the cart is left as it was.
@@ -142,7 +142,7 @@ export function CheckoutContent({ buyNow = false, deliveryFeePaise = null, feeVa
       rememberForShop(order.trackingToken);
       rememberCustomer({ name: draft.name, mobile: draft.mobile });
       clearItems();
-      router.replace("/order-confirmation/" + order.trackingToken);
+      router.replace("/order-confirmation/" + order.trackingToken + (draft.paymentMethod === "online" ? "?pay=1" : ""));
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not place your order. Please try again.");
       submitting.current = false; setSaving(false);
@@ -151,7 +151,7 @@ export function CheckoutContent({ buyNow = false, deliveryFeePaise = null, feeVa
   async function retryPending() {
     if(!pending||submitting.current)return;
     submitting.current=true;setSaving(true);
-    try {const result=await placeCheckout(pending);if("trackingToken" in result){savePendingCheckout(null);rememberForShop(result.trackingToken);clearItems();router.replace("/order-confirmation/"+result.trackingToken);}else{if(result.reviewRequired){savePendingCheckout(null);setReview(false);}setError(result.error);}}
+    try {const result=await placeCheckout(pending);if("trackingToken" in result){savePendingCheckout(null);rememberForShop(result.trackingToken);clearItems();router.replace("/order-confirmation/"+result.trackingToken+(draft.paymentMethod==="online"?"?pay=1":""));}else{if(result.reviewRequired){savePendingCheckout(null);setReview(false);}setError(result.error);}}
     catch {setError("Connection interrupted. Retry this same pending order to check confirmation.");}
     finally {submitting.current=false;setSaving(false);}
   }
@@ -204,7 +204,7 @@ export function CheckoutContent({ buyNow = false, deliveryFeePaise = null, feeVa
           <p className="field-help">We save your details to process and deliver your orders.</p>
         </div>
         {draft.deliveryMethod === "pickup" && <p className="field-help">No delivery address is needed. See our delivery and pickup page for the store location and opening hours.</p>}
-        </section><fieldset className="order-panel payment-panel"><legend><span className="section-number">{shownDay ? 4 : 3}</span> Payment method</legend><div className="checkout-options">{([ ["cash", draft.deliveryMethod === "pickup" ? "Cash at pickup" : "Cash on Delivery"], ["upi", "UPI at delivery / pickup"] ] as const).map(([value, label]) => <label className="choice" key={value}><input type="radio" name="paymentMethod" value={value} checked={draft.paymentMethod === value} onChange={() => change("paymentMethod", value)} />{label}</label>)}</div><p className="field-help">Pay by cash or UPI when you receive your order at delivery or pickup.</p></fieldset>
+        </section><fieldset className="order-panel payment-panel"><legend><span className="section-number">{shownDay ? 4 : 3}</span> Payment method</legend><div className="checkout-options">{([ ...(onlinePay ? [["online", "Pay online now (UPI, card, netbanking)"] as const] : []), ["cash", draft.deliveryMethod === "pickup" ? "Cash at pickup" : "Cash on Delivery"], ["upi", "UPI at delivery / pickup"] ] as const).map(([value, label]) => <label className="choice" key={value}><input type="radio" name="paymentMethod" value={value} checked={draft.paymentMethod === value} onChange={() => change("paymentMethod", value)} />{label}</label>)}</div><p className="field-help">{draft.paymentMethod === "online" ? "You pay securely with Razorpay right after placing the order. Unpaid online orders are cancelled after 30 minutes." : "Pay by cash or UPI when you receive your order at delivery or pickup."}</p></fieldset>
       </>}
     </fieldset></form><OrderSummary id="checkout-summary" deliveryConfirmed={!!quote && review} pickup={draft.deliveryMethod === "pickup"} feeVaries={feeVaries} editable={!buyNow} items={quote && review ? items.map((item,i)=>({...item,...quote.lines[i]})) : items} totals={totals} coupon={<CouponPicker offers={offers} items={items} applied={applied} onChange={() => { setError(""); setQuote(undefined); setReview(false); }} />}
       action={<><button type="submit" form="checkout-form" className="button primary checkout-submit" disabled={saving || !items.length}>{actionLabel}</button>{error && <p className="cart-error checkout-action-error">{error}</p>}</>} /></div>

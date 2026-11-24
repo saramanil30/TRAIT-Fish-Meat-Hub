@@ -20,7 +20,7 @@ export const SERVICE_STATE = "Telangana";
 export function validateCheckout(details: CheckoutDetails): CheckoutErrors {
   const errors: CheckoutErrors = {};
   if (!["delivery", "pickup"].includes(details.deliveryMethod)) errors.deliveryMethod = "Choose a delivery method.";
-  if (!["cash", "upi"].includes(details.paymentMethod)) errors.paymentMethod = "Choose a payment method.";
+  if (!["cash", "upi", "online"].includes(details.paymentMethod)) errors.paymentMethod = "Choose a payment method.";
   if ((details.deliveryMethod === "delivery" || details.name.trim()) && (details.name.trim().length < 2 || details.name.trim().length > 80)) errors.name = "Enter your name (2-80 characters).";
   if (!/^[6-9]\d{9}$/.test(normalizeMobile(details.mobile))) errors.mobile = "Enter a valid 10-digit Indian mobile number, optionally with +91.";
   if ((details.slotId || details.slotDate) && !(SLOT_ID.test(details.slotId ?? "") && SLOT_DATE.test(details.slotDate ?? ""))) errors.slotId = "Choose a delivery slot.";

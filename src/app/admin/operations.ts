@@ -5,6 +5,7 @@ import { after } from "next/server";
 import { dispatchRestockPushes } from "@/lib/restock-server";
 import { rateLimit } from "@/lib/checkout-server";
 import { rupeesToPaise } from "@/lib/admin/permissions";
+import { sendRefundToRazorpay } from "@/lib/razorpay";
 import type { ActionState } from "./actions";
 const text=(f:FormData,k:string)=>String(f.get(k)??"");
 const id=(f:FormData,k:string)=>{const s=text(f,k);if(!/^[a-f0-9-]{36}$/i.test(s))throw new Error("Invalid identity");return s;};
@@ -13,7 +14,7 @@ const rupees=(f:FormData,k:string)=>rupeesToPaise(text(f,k));
 export async function operationalAction(_:ActionState,f:FormData):Promise<ActionState>{
  try{
   const kind=text(f,"operation");
-  const {token}=await requireStaff(["policy","delivery","slot"].includes(kind)?"settings":["provision","staff-profile","recovery"].includes(kind)?"employees":["refund","cash-refund"].includes(kind)?"payments":"orders");
+  const {token}=await requireStaff(["policy","delivery","slot"].includes(kind)?"settings":["provision","staff-profile","recovery"].includes(kind)?"employees":["refund","cash-refund","online-refund"].includes(kind)?"payments":"orders");
   if(kind==="status"){
    // Cancel dialog: a preset reason, or "Other" with the staff member's own words.
    const reason=text(f,"reason")==="Other"?text(f,"reasonOther").trim():text(f,"reason");
@@ -26,6 +27,15 @@ export async function operationalAction(_:ActionState,f:FormData):Promise<Action
   else if(kind==="reference")await staffRpc(token,"submit_payment_reference",{target_payment:id(f,"id"),expected_version:number(f,"version"),reference:text(f,"reference")});
   else if(kind==="weight")await staffRpc(token,"record_fulfilled_weight",{target_order:id(f,"id"),target_item:id(f,"item"),expected_version:number(f,"version"),actual_grams:number(f,"grams")});
   else if(kind==="refund")await staffRpc(token,"request_refund",{target_payment:id(f,"id"),expected_version:number(f,"version"),request_key:id(f,"request"),reason:text(f,"reason"),allocations:[{itemId:text(f,"item")||null,amountPaise:text(f,"amountRupees")?rupees(f,"amountRupees"):number(f,"amount")}]});
+  else if(kind==="online-refund"){
+   // One click, ADMIN/OWNER only (checked and audited by the database), full remaining amount back via Razorpay.
+   const reason=text(f,"reason").trim()||"Refunded by store";
+   const refund=await staffRpc<{refundId:string;amountPaise:number;chargeReference:string;razorpayOrder:string;providerRefundReference:string|null}>(token,"request_full_online_refund",{target_payment:id(f,"id"),expected_version:number(f,"version"),request_key:id(f,"request"),reason});
+   try{await sendRefundToRazorpay(refund);}
+   catch(cause){console.error("[admin] razorpay refund failed:",cause instanceof Error?cause.message:cause);revalidatePath("/admin","layout");return {error:"The refund was recorded but Razorpay did not accept it yet. Reload and press Refund again to retry; it will not refund twice."};}
+   revalidatePath("/admin","layout");
+   return {success:"Refund sent to Razorpay. It shows as completed when Razorpay confirms it (usually within minutes)."};
+  }
   else if(kind==="cash-refund")await staffRpc(token,"complete_cash_refund",{target_refund:id(f,"id"),expected_version:number(f,"version")});
   else if(kind==="delivery"){
    // "Add" with a pincode that already has a rule updates that rule; pincodes are unique per store.

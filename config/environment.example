@@ -15,3 +15,10 @@ TRAIT_AUTH_RECOVERY_URL=
 NEXT_PUBLIC_TRAIT_WEB_PUSH_PUBLIC_KEY=
 TRAIT_WEB_PUSH_PRIVATE_KEY=
 TRAIT_WEB_PUSH_SUBJECT=
+# Razorpay online payments (test keys first: rzp_test_...). Webhook URL: https://<your-domain>/api/razorpay/webhook
+# Events: payment.captured, payment.failed, refund.processed, refund.failed.
+RAZORPAY_KEY_ID=
+RAZORPAY_KEY_SECRET=
+RAZORPAY_WEBHOOK_SECRET=
+# Separate TLS LOGIN that is a member of trait_payment_verifier only (never the checkout login).
+TRAIT_PAYMENT_VERIFIER_DATABASE_URL=
