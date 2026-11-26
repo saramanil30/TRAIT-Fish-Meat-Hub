@@ -1629,3 +1629,35 @@ main.storefront .home-page { --text-primary:#171c23; --text-secondary:#575d67; -
 .policy-page .order-panel + .order-panel, .info-page > .policy-body { margin-top: 1.25rem; }
 .order-pay-box { margin: 1rem 0; padding: 1rem; border: 1px solid currentColor; border-radius: 12px; }
 .pay-online { display: grid; gap: .5rem; margin-top: .75rem; justify-items: start; }
+
+/* Header brand row (owner's reference): logo | TRAIT  FISH & MEAT HUB / —— Quality is Our TRAIT —— | cart over "Cart". */
+.site-header .brand-copy { gap:6px; padding-left:18px; border-left:2px solid var(--navy); }
+.site-header .brand-name { display:flex; align-items:baseline; gap:16px; white-space:nowrap; }
+.site-header .brand-copy strong { font-size:46px; line-height:.95; }
+.site-header .brand-copy small { font-family:var(--font-body); font-weight:800; font-size:24px; letter-spacing:0; color:var(--navy); line-height:1; }
+.site-header .brand-copy em { display:flex; align-items:center; gap:12px; font-style:italic; font-size:18px; color:var(--navy); white-space:nowrap; }
+.site-header .brand-copy em::before, .site-header .brand-copy em::after { content:""; flex:1; min-width:16px; height:2px; background:var(--navy); }
+.site-header .brand-copy em b { font-size:1.4em; font-weight:800; color:var(--brand-red); }
+.site-header .header-actions { align-self:stretch; display:flex; align-items:center; padding-left:22px; border-left:2px solid var(--navy); margin-block:18px; }
+.site-header .header-actions .cart-link { flex-direction:column; gap:4px; padding:4px 6px; font-size:16px; font-weight:700; color:var(--navy); }
+.site-header .cart-link .cart-icon svg { width:36px; height:36px; }
+@media(max-width:1199px) {
+  .site-header .brand-copy strong { font-size:36px; }
+  .site-header .brand-copy small { font-size:18px; }
+  .site-header .brand-copy em { font-size:14px; }
+}
+@media(max-width:767px) {
+  .site-header .brand-copy { padding-left:10px; gap:3px; }
+  .site-header .brand-name { gap:8px; }
+  .site-header .brand-copy strong { font-size:26px; }
+  .site-header .brand-copy small { font-size:12px; }
+  .site-header .brand-copy em { font-size:10px; gap:6px; }
+  .site-header .header-actions { padding-left:12px; margin-block:8px; }
+  .site-header .header-actions .cart-link>.cart-label { display:inline; font-size:12px; }
+  .site-header .cart-link .cart-icon svg { width:28px; height:28px; }
+}
+@media(max-width:400px) {
+  .site-header .brand-copy strong { font-size:22px; }
+  .site-header .brand-copy small { font-size:10px; }
+  .site-header .brand-copy em { font-size:9px; }
+}

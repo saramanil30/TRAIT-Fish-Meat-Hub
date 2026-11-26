@@ -14,7 +14,7 @@ import { BrandLogos } from "./brand-logos";
 
 export function Header({ categories, offers, social, brand = {}, scrolls, showCategories = true }: { categories: NavCategory[]; offers: StripOffer[]; social: SocialLinks; brand?: HeaderBrand; scrolls: boolean; showCategories?: boolean }) {
   // Built-in logo and wordmark; used wherever no custom logo is saved (Settings → Header logo).
-  const builtIn = <><Image className="brand-logo" src="/trait-logo.jpeg" alt="TRAIT Fish & Meat Hub official logo" width={1254} height={1254} unoptimized preload /><span className="brand-copy"><strong>TRAIT</strong><small>FISH &amp; MEAT HUB</small><em>Quality is Our <b>TRAIT.</b></em></span></>;
+  const builtIn = <><Image className="brand-logo" src="/trait-logo.jpeg" alt="TRAIT Fish & Meat Hub official logo" width={1254} height={1254} unoptimized preload /><span className="brand-copy"><span className="brand-name"><strong>TRAIT</strong><small>FISH &amp; MEAT HUB</small></span><em><span>Quality is Our <b>TRAIT</b></span></em></span></>;
   // Desktop: the whole block sticks. Mobile: the wrapper drops out of layout, so only the <header> row sticks.
   // Cart and checkout (`scrolls`): nothing sticks; the whole header scrolls away with the page.
   return <div className={scrolls ? "site-top is-static" : "site-top"}>
