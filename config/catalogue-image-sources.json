@@ -274,5 +274,140 @@
     "productId": "13da957b-38fe-45a7-9c95-b9004cdd94a3",
     "visualReviewDate": "2026-10-02",
     "edits": "Cropped to 4:3 and converted to WebP."
+  },
+  "chicken-curry-cut": {
+    "assetPath": "/assets/catalogue/chicken-curry-cut.webp",
+    "sourcePage": "Shop photo: product images/Chicken curry cuts.jpg",
+    "license": "Owner supplied",
+    "note": "Cropped to remove a third-party Fresh Pik card",
+    "width": 800,
+    "height": 800,
+    "bytes": 33928,
+    "verifiedDate": "2026-11-26",
+    "visualReviewDate": "2026-11-26"
+  },
+  "chicken-full-legs": {
+    "assetPath": "/assets/catalogue/chicken-full-legs.webp",
+    "sourcePage": "Shop photo: product images/Chicken curry cuts.jpg",
+    "license": "Owner supplied",
+    "note": "Crop of the leg pieces",
+    "width": 800,
+    "height": 800,
+    "bytes": 24468,
+    "verifiedDate": "2026-11-26",
+    "visualReviewDate": "2026-11-26"
+  },
+  "chicken-wings": {
+    "assetPath": "/assets/catalogue/chicken-wings.webp",
+    "sourcePage": "https://pixabay.com/photos/chicken-wings-chicken-meat-meat-5245794/",
+    "author": "Ekoanug",
+    "license": "Pixabay Content License",
+    "licenseUrl": "https://pixabay.com/service/license-summary/",
+    "width": 800,
+    "height": 800,
+    "bytes": 33816,
+    "verifiedDate": "2026-11-26",
+    "visualReviewDate": "2026-11-26"
+  },
+  "chicken-breast-boneless": {
+    "assetPath": "/assets/catalogue/chicken-breast-boneless.webp",
+    "sourcePage": "https://unsplash.com/photos/9ZrWR8R961U",
+    "author": "Philippe Zuber",
+    "license": "Unsplash License",
+    "licenseUrl": "https://unsplash.com/license",
+    "width": 800,
+    "height": 800,
+    "bytes": 58834,
+    "verifiedDate": "2026-11-26",
+    "visualReviewDate": "2026-11-26"
+  },
+  "chicken-drumsticks": {
+    "assetPath": "/assets/catalogue/chicken-drumsticks.webp",
+    "sourcePage": "https://www.pexels.com/photo/fresh-chicken-legs-with-spices-covered-with-grill-grate-7140306/",
+    "license": "Pexels License",
+    "licenseUrl": "https://www.pexels.com/license/",
+    "width": 800,
+    "height": 800,
+    "bytes": 104274,
+    "verifiedDate": "2026-11-26",
+    "visualReviewDate": "2026-11-26"
+  },
+  "chicken-whole": {
+    "assetPath": "/assets/catalogue/chicken-whole.webp",
+    "sourcePage": "https://www.pexels.com/photo/overhead-shot-of-a-dressed-chicken-10842248/",
+    "license": "Pexels License",
+    "licenseUrl": "https://www.pexels.com/license/",
+    "width": 800,
+    "height": 800,
+    "bytes": 47280,
+    "verifiedDate": "2026-11-26",
+    "visualReviewDate": "2026-11-26"
+  },
+  "chicken-smoked": {
+    "assetPath": "/assets/catalogue/chicken-smoked.webp",
+    "sourcePage": "https://www.pexels.com/photo/a-person-cooking-chicken-11316470/",
+    "license": "Pexels License",
+    "licenseUrl": "https://www.pexels.com/license/",
+    "width": 800,
+    "height": 800,
+    "bytes": 62450,
+    "verifiedDate": "2026-11-26",
+    "visualReviewDate": "2026-11-26"
+  },
+  "chicken-lollipop": {
+    "assetPath": "/assets/catalogue/chicken-lollipop.webp",
+    "sourcePage": "https://www.pexels.com/photo/crispy-chicken-lollipops-with-spicy-dip-29631422/",
+    "license": "Pexels License",
+    "licenseUrl": "https://www.pexels.com/license/",
+    "note": "Cooked; no free raw photo found",
+    "width": 800,
+    "height": 800,
+    "bytes": 34336,
+    "verifiedDate": "2026-11-26",
+    "visualReviewDate": "2026-11-26"
+  },
+  "chicken-marinated": {
+    "assetPath": "/assets/catalogue/chicken-marinated.webp",
+    "sourcePage": "https://www.pexels.com/photo/a-food-preparation-photo-8477053/",
+    "license": "Pexels License",
+    "licenseUrl": "https://www.pexels.com/license/",
+    "width": 800,
+    "height": 800,
+    "bytes": 25126,
+    "verifiedDate": "2026-11-26",
+    "visualReviewDate": "2026-11-26"
+  },
+  "chicken-liver": {
+    "assetPath": "/assets/catalogue/chicken-liver.webp",
+    "sourcePage": "Illustration drawn for TRAIT",
+    "license": "Original",
+    "note": "Replace with a shop photo",
+    "width": 800,
+    "height": 800,
+    "bytes": 15266,
+    "verifiedDate": "2026-11-26",
+    "visualReviewDate": "2026-11-26"
+  },
+  "chicken-keema": {
+    "assetPath": "/assets/catalogue/chicken-keema.webp",
+    "sourcePage": "Illustration drawn for TRAIT",
+    "license": "Original",
+    "note": "Replace with a shop photo",
+    "width": 800,
+    "height": 800,
+    "bytes": 21312,
+    "verifiedDate": "2026-11-26",
+    "visualReviewDate": "2026-11-26"
+  },
+  "chicken-leg-boneless": {
+    "assetPath": "/assets/catalogue/chicken-leg-boneless.webp",
+    "sourcePage": "Illustration drawn for TRAIT",
+    "license": "Original",
+    "note": "Replace with a shop photo",
+    "width": 800,
+    "height": 800,
+    "bytes": 15216,
+    "verifiedDate": "2026-11-26",
+    "visualReviewDate": "2026-11-26"
   }
 }

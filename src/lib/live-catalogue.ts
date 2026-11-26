@@ -21,7 +21,7 @@ export async function liveShop(): Promise<{products:Product[];categories:Catalog
   const image=photos[0];
   const categoryName=(category?.name??"Other").toLowerCase();
   // Products without a verified photo get a neutral placeholder, never another product's image.
-  const placeholder=categoryName==="eggs"?"/assets/catalogue/placeholder-eggs.svg":"/assets/catalogue/placeholder-fish.svg";
+  const placeholder="/assets/catalogue/placeholder-"+(categoryName==="eggs"?"eggs":categoryName==="chicken"?"chicken":categoryName==="mutton"?"meat":"fish")+".svg";
   const imageUrl=image?photoUrl(image):placeholder;
   return {pricingBasis:p.pricingBasis,pricePaise:Number(p.pricePaise??p.pricePerKgPaise),priceUnitGrams:p.priceUnitGrams,unitsPerPack:p.unitsPerPack,saleQuantities:p.saleQuantities,orderable:p.orderable,id:p.id,name:p.name,localName:p.localName,category:categoryName,pricePerKg:Number(p.pricePerKgPaise)/100,available:p.available,stockLeft:p.stockLeft??null,image:imageUrl,imageAlt:image?(image.alt||p.name):"Photo coming soon: "+p.name,gallery:photos.map((x,n)=>({src:photoUrl(x),alt:(x.alt||p.name)+(photos.length>1?" — photo "+(n+1)+" of "+photos.length:"")})),cut:p.description??"",selectableWeightsGrams:p.weightsGrams??[],preparationOptions:p.preparations.map(x=>({id:x.id,label:x.name,removesCleaningWaste:x.cleaningLossPercent!==null,cleaningLossPercent:x.cleaningLossPercent===null?undefined:Number(x.cleaningLossPercent)}))};
  })};
