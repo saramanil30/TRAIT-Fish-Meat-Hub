@@ -48,11 +48,22 @@ const hash="b".repeat(64);
 const savePreview=(actor,version,title,description,image)=>as(actor,"select api.save_link_preview($1,$2,$3,$4,$5) as value",[id(10),version,title,description,image]);
 const preview=()=>as(null,"select api.link_preview($1) as value",[id(10)],"anon");
 assert.deepEqual(await preview(),{});
-assert.deepEqual(await as(21,"select api.link_preview_settings($1) as value",[id(10)]),{version:0});
+assert.deepEqual(await as(21,"select api.link_preview_settings($1) as value",[id(10)]),{version:0,style:"COMPACT"});
 assert.equal(await savePreview(21,0,"Fresh fish today","Cleaned and cut your way",id(1)+"/"+hash+".jpg"),1);
-assert.deepEqual(await preview(),{title:"Fresh fish today",description:"Cleaned and cut your way",imagePath:id(1)+"/"+hash+".jpg",version:1});
+assert.deepEqual(await preview(),{title:"Fresh fish today",description:"Cleaned and cut your way",imagePath:id(1)+"/"+hash+".jpg",version:1,style:"COMPACT"});
 assert.equal(await savePreview(20,1,null,null,null),2);
-assert.deepEqual(await preview(),{version:2});
+assert.deepEqual(await preview(),{version:2,style:"COMPACT"});
+// Style: Compact keeps a square image (400-1200 px) of the caller's business; Large banner keeps the 1200x630 one; both are kept.
+const styled=(actor,version,style,image,square,size)=>as(actor,"select api.save_link_preview($1,$2,null,null,$3,$4,$5,$6) as value",[id(10),version,image,style,square,size]);
+const sq=id(1)+"/"+"c".repeat(64)+".jpg";
+assert.equal(await styled(21,2,"COMPACT",id(1)+"/"+hash+".jpg",sq,512),3);
+assert.deepEqual(await preview(),{imagePath:id(1)+"/"+hash+".jpg",squareImagePath:sq,squareImageSize:512,style:"COMPACT",version:3});
+assert.equal(await styled(20,3,"LARGE",id(1)+"/"+hash+".jpg",sq,512),4);
+assert.equal((await preview()).style,"LARGE");
+for(const [style,square,size] of [["SMALL",null,null],["COMPACT",sq,399],["COMPACT",sq,1201],["COMPACT",sq,null],["COMPACT",null,500],["COMPACT",id(2)+"/"+"c".repeat(64)+".jpg",500]])
+ await assert.rejects(()=>styled(21,4,style,null,square,size),e=>e.code==="22023");
+await assert.rejects(()=>styled(22,4,"COMPACT",null,null,null),e=>e.code==="42501");
+assert.equal(await savePreview(20,4,null,null,null),5);
 await assert.rejects(()=>savePreview(21,1,"Stale",null,null),e=>e.code==="40001");
 for(const [t,d,img] of [["<b>",null,null],["x".repeat(71),null,null],[null,"y".repeat(201),null],[" pad",null,null],[null,null,id(2)+"/"+hash+".jpg"],[null,null,id(1)+"/"+hash+".webp"],[null,null,id(1)+"/../x.jpg"]])
  await assert.rejects(()=>savePreview(21,2,t,d,img),e=>e.code==="22023");
@@ -61,7 +72,7 @@ await assert.rejects(()=>as(null,"select api.save_link_preview($1,$2,$3,$4,$5) a
 const can=(actor,name)=>as(actor,"select api.can_upload_share_image($1) as value",[name]);
 assert.equal(await can(20,id(1)+"/"+hash+".jpg"),true);assert.equal(await can(21,id(1)+"/"+hash+".jpg"),true);
 assert.equal(await can(22,id(1)+"/"+hash+".jpg"),false);assert.equal(await can(23,id(1)+"/"+hash+".jpg"),false);assert.equal(await can(21,id(1)+"/"+hash+".png"),false);
-assert.equal((await query("select count(*)::int as n from app.audit_logs where action='LINK_PREVIEW_SAVED'")).rows[0].n,2);
+assert.equal((await query("select count(*)::int as n from app.audit_logs where action='LINK_PREVIEW_SAVED'")).rows[0].n,5);
 for(const role of ["anon","authenticated","service_role","trait_checkout"])assert.equal(await value("select has_table_privilege($1,'app.store_link_preview','SELECT,INSERT,UPDATE,DELETE') as value",[role]),false);
 assert.equal(await value("select relrowsecurity and relforcerowsecurity as value from pg_class where oid='app.store_link_preview'::regclass"),true);
 console.log("PASS link preview: ADMIN/OWNER audited saves, plain text limits, own-business JPEG only, upload check, closed table");

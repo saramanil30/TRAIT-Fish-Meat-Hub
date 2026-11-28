@@ -38,8 +38,13 @@ export const dynamic = "force-dynamic";
 export async function generateMetadata(): Promise<Metadata> {
   const [saved, brand] = await Promise.all([linkPreview(), storeBranding()]);
   const title = saved.title ?? defaultLinkPreview.title, description = saved.description ?? defaultLinkPreview.description;
-  const custom = saved.imagePath ? shareImageUrl(saved.imagePath, saved.version) : null;
-  const image = custom ? { url: custom, width: 1200, height: 630, alt: title, type: "image/jpeg" } : defaultLinkPreview.image;
+  // Compact (default): the square image (made from the header icon) in a small card; Large banner: the 1200×630 image in a big card.
+  // Older saved previews without a style keep their banner. Without a saved image, the built-in square logo is used.
+  const large = saved.style ? saved.style === "LARGE" : !!saved.imagePath;
+  const banner = large && saved.imagePath ? shareImageUrl(saved.imagePath, saved.version) : null;
+  const square = !large && saved.squareImagePath && saved.squareImageSize ? shareImageUrl(saved.squareImagePath, saved.version) : null;
+  const image = banner ? { url: banner, width: 1200, height: 630, alt: title, type: "image/jpeg" }
+    : square ? { url: square, width: Number(saved.squareImageSize), height: Number(saved.squareImageSize), alt: title, type: "image/jpeg" } : defaultLinkPreview.image;
   return {
     // Absolute URLs for shared links (Open Graph image); set NEXT_PUBLIC_SITE_URL to the live site address.
     metadataBase: process.env.NEXT_PUBLIC_SITE_URL ? new URL(process.env.NEXT_PUBLIC_SITE_URL) : undefined,
@@ -47,7 +52,7 @@ export async function generateMetadata(): Promise<Metadata> {
     description: "Fresh fish, seafood, chicken, mutton and eggs from TRAIT Fish & Meat Hub, Kokapet, Hyderabad. Choose your weight and cut; home delivery or store pickup.",
     // og:url is the homepage (absolute, from NEXT_PUBLIC_SITE_URL), so tapping a shared preview opens the homepage.
     openGraph: { type: "website", siteName: "TRAIT Fish & Meat Hub", locale: "en_IN", ...(process.env.NEXT_PUBLIC_SITE_URL ? { url: "/" } : {}), title, description, images: [image] },
-    twitter: { card: "summary_large_image", title, description, images: [image] },
+    twitter: { card: banner ? "summary_large_image" : "summary", title, description, images: [image] },
     // Settings → Header logo: favicon and home-screen icon made from the square logo; otherwise the built-in icons in /public
     // (not app/icon.* files, because file-based icons would override these).
     icons: brand.icons

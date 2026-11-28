@@ -19,3 +19,9 @@ export function validShareJpeg(bytes: Uint8Array) {
  const size = bytes.length <= shareImageLimitBytes ? jpegSize(bytes) : null;
  return size?.width === 1200 && size.height === 630;
 }
+/** Compact link preview image: a square JPEG of 400–1200 px, at most 300 KB. Returns its side, or null. */
+export const squareShareBounds = { min: 400, max: 1200 } as const;
+export function validSquareShareJpeg(bytes: Uint8Array): number | null {
+ const size = bytes.length <= shareImageLimitBytes ? jpegSize(bytes) : null;
+ return size && size.width === size.height && size.width >= squareShareBounds.min && size.width <= squareShareBounds.max ? size.width : null;
+}

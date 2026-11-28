@@ -1,7 +1,7 @@
 import "server-only";
 import { cookies } from "next/headers";
 import { createHash } from "node:crypto";
-import { validShareJpeg } from "../share-image";
+import { validShareJpeg, validSquareShareJpeg } from "../share-image";
 import { validHeroWebp } from "../hero-image";
 import { staffRoles, type StaffRole, type StaffSection, canAccessSection } from "./permissions";
 export type StaffContext = { id: string; businessId: string; role: StaffRole; name: string; stores: { id: string; name: string }[] };
@@ -107,7 +107,7 @@ export async function uploadProductImage(token: string, businessId: string, prod
 }
 /** Stores at share-images/{business}/{sha256}.jpg and returns the path. Storage policies allow only ADMIN and OWNER, under their own business. */
 export async function uploadShareImage(token: string, businessId: string, bytes: Uint8Array) {
- if (!validShareJpeg(bytes)) throw new Error("The share image must be a 1200×630 JPEG of at most 300 KB.");
+ if (!validShareJpeg(bytes) && !validSquareShareJpeg(bytes)) throw new Error("The share image must be a 1200×630 or square (400–1200 px) JPEG of at most 300 KB.");
  const {url,key} = config();
  const path = businessId + "/" + createHash("sha256").update(bytes).digest("hex") + ".jpg";
  const response = await fetch(url + "/storage/v1/object/share-images/" + path, { method: "POST", cache: "no-store", signal: AbortSignal.timeout(30000), headers: { apikey: key, Authorization: "Bearer " + token, "Content-Type": "image/jpeg", "x-upsert": "false" }, body: Buffer.from(bytes) });

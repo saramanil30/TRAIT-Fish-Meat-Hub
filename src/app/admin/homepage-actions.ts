@@ -5,7 +5,7 @@ import { validDesktopLogo, validIconPng, validMobileLogo } from "@/lib/brand-ima
 import { maxHeroSlides, validHeroWebp } from "@/lib/hero-image";
 import { rupeesToPaise } from "@/lib/admin/permissions";
 import { maxSpecials, specialBadges, validSocialUrl, type SpecialBadge } from "@/lib/homepage-content";
-import { validShareJpeg } from "@/lib/share-image";
+import { validShareJpeg, validSquareShareJpeg } from "@/lib/share-image";
 import { linkPreviewLimits } from "@/lib/link-preview";
 import { homepageTextFields, homepageTextPattern, type HomepageText } from "@/lib/homepage-text";
 import type { ActionState } from "./actions";
@@ -57,7 +57,19 @@ export async function saveLinkPreview(_: HomepageTextState, form: FormData): Pro
    try{image=await uploadShareImage(token,context.businessId,bytes);}
    catch{return {error:"The share image could not be uploaded, so nothing was saved. Check the share image storage setup and try again."};}
   }
-  const version=await staffRpc<number>(token,"save_link_preview",{target_store:store,expected_version:Number(form.get("version"))||0,share_title:values.title,share_description:values.description,image});
+  // Compact (default): a square JPG, normally made from the header icon; both images are kept so switching style loses neither.
+  const style=form.get("style")==="LARGE"?"LARGE":"COMPACT";
+  const currentSquare=String(form.get("squareImage")??""),currentSide=Number(form.get("squareSize"));
+  let square:{path:string;side:number}|null=/^[0-9a-f-]{36}\/[0-9a-f]{64}\.jpg$/.test(currentSquare)&&Number.isInteger(currentSide)?{path:currentSquare,side:currentSide}:null;
+  const squareFile=form.get("squareFile");
+  if(squareFile instanceof File&&squareFile.size>0){
+   const bytes=new Uint8Array(await squareFile.arrayBuffer()),side=validSquareShareJpeg(bytes);
+   if(!side) return {error:"The compact image must be a square JPG of 400–1200 pixels and at most 300 KB."};
+   try{square={path:await uploadShareImage(token,context.businessId,bytes),side};}
+   catch{return {error:"The compact image could not be uploaded, so nothing was saved. Check the share image storage setup and try again."};}
+  }
+  const version=await staffRpc<number>(token,"save_link_preview",{target_store:store,expected_version:Number(form.get("version"))||0,share_title:values.title,share_description:values.description,image,
+   preview_style:style,square_image:square?.path??null,square_size:square?.side??null});
   revalidatePath("/","layout");
   return {success:"Link preview saved. Apps that already cached your link may take a while to show the new preview.",version};
  } catch (cause) {

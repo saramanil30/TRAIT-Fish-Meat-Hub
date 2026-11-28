@@ -298,3 +298,6 @@
 .admin-brand-favicon { display:flex; align-items:center; gap:8px; font-size:13px; }
 .admin-brand-favicon img { image-rendering:auto; border:1px solid #ddd; }
 .ord-rapido{margin-top:8px}
+.share-card-compact { flex-direction:row; align-items:stretch; }
+.share-card-compact img { width:96px; min-width:96px; aspect-ratio:1; }
+.link-style-options { display:flex; flex-wrap:wrap; gap:8px 16px; border:0; padding:0; margin:0 0 8px; }

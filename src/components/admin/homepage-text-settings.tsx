@@ -42,7 +42,9 @@ export async function HomepageTextSettings({token,store}:{token:string;store?:st
     {!content.categories.length&&<p>No categories yet.</p>}</section>
   </>:<section><h2>Social links, Today&apos;s Specials and category photos</h2>{missingContent}</section>}
   {preview?<LinkPreviewForm key={store+":"+preview.version} store={store} title={preview.title??undefined} description={preview.description??undefined} imagePath={preview.imagePath??undefined}
-   imageUrl={preview.imagePath?shareImageUrl(preview.imagePath,preview.version):null} version={Number(preview.version??0)} site={site}/>:<section><h2>Link preview</h2>{missing}</section>}
+   imageUrl={preview.imagePath?shareImageUrl(preview.imagePath,preview.version):null} version={Number(preview.version??0)} site={site}
+   style={preview.style??(preview.version&&preview.imagePath?"LARGE":"COMPACT")} squarePath={preview.squareImagePath??undefined} squareSize={preview.squareImageSize??undefined}
+   squareUrl={preview.squareImagePath?shareImageUrl(preview.squareImagePath,preview.version):null} headerIconUrl={brandUrl(branding?.mobileLogo)}/>:<section><h2>Link preview</h2>{missing}</section>}
   <ShareToWhatsApp site={site} title={preview?.title??undefined}/>
  </>;
 }
