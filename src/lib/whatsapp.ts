@@ -10,9 +10,15 @@ export function whatsappLink(e164: string, text?: string): string {
   return "https://wa.me/" + e164.replace(/\D/g, "") + (text ? "?text=" + encodeURIComponent(text) : "");
 }
 
-type StatusOrder = { name?: string; number: string; totalPaise: number; status: string; pickup: boolean; site: string; slot?: string; payLink?: string };
+/** rapido: the order's Rapido note ("Via Rapido: approx ₹60–150, paid separately. …"); rapidoLink: Rapido tracking link set by staff. */
+type StatusOrder = { name?: string; number: string; totalPaise: number; status: string; pickup: boolean; site: string; slot?: string; payLink?: string; rapido?: string; rapidoLink?: string };
 /** Staff → customer: a message for the order's current status. */
 export function customerStatusMessage(o: StatusOrder): string {
+  const message = statusMessage(o);
+  if (o.pickup || !o.rapido || ["DELIVERED", "CANCELLED"].includes(o.status) || o.payLink) return message;
+  return message + "\n\n" + o.rapido + (o.rapidoLink ? "\nTrack your Rapido delivery: " + o.rapidoLink : "");
+}
+function statusMessage(o: StatusOrder): string {
   const hi = "Hi" + (o.name ? " " + o.name : "") + ", your TRAIT order " + o.number + " (" + formatMoney(o.totalPaise) + ")";
   const track = " Track with your mobile: " + o.site + "/track-order";
   const when = o.slot ? " for " + o.slot : "";
@@ -33,7 +39,7 @@ export function customerStatusMessage(o: StatusOrder): string {
 export type ShopOrderDetails = { items: string[]; address?: string };
 /** sessionStorage key: checkout saves the details here just before opening the confirmation page. */
 export const shopOrderKey = (trackingToken: string) => "trait-wa-order:" + trackingToken;
-type ShopOrder = ShopOrderDetails & { number: string; totalPaise?: number; pickup: boolean; slot?: string };
+type ShopOrder = ShopOrderDetails & { number: string; totalPaise?: number; pickup: boolean; slot?: string; rapido?: string };
 /** Customer → shop: the placed order, so the shop has it in WhatsApp. */
 export function orderToShopMessage(o: ShopOrder): string {
   return ["Hi TRAIT, I just placed order " + o.number + ".",
@@ -42,5 +48,6 @@ export function orderToShopMessage(o: ShopOrder): string {
     ...(o.totalPaise !== undefined ? ["Total: " + formatMoney(o.totalPaise)] : []),
     o.pickup ? "Store pickup" : "Home delivery" + (o.address ? " to: " + o.address : ""),
     ...(o.slot ? [(o.pickup ? "Pickup" : "Delivery") + ": " + o.slot] : []),
+    ...(!o.pickup && o.rapido ? [o.rapido] : []),
   ].join("\n");
 }

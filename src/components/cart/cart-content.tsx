@@ -12,10 +12,12 @@ import { ProductSelection } from "@/components/product/product-selection";
 import { appliedCoupon, offerTag, type CartOffer } from "@/lib/cart-offer";
 import { useCoupon } from "@/lib/coupon-store";
 import { CouponPicker } from "./coupon-picker";
+import { useOrderState } from "@/lib/order-store";
+import { areaForPincode, rapidoNote, rapidoOf, type DeliveryArea } from "@/lib/delivery-mode";
 
 
 /** deliveryFeePaise comes from the store's delivery areas (lowest fee when they differ); null when delivery is off. */
-export function CartContent({ deliveryFeePaise, feeVaries = false, offers = [] }: { deliveryFeePaise: number | null; feeVaries?: boolean; offers?: readonly CartOffer[] }) {
+export function CartContent({ deliveryFeePaise, feeVaries = false, areas = [], offers = [] }: { deliveryFeePaise: number | null; feeVaries?: boolean; areas?: readonly DeliveryArea[]; offers?: readonly CartOffer[] }) {
   const items = useCart();
   const products = useCatalogue();
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -28,6 +30,12 @@ export function CartContent({ deliveryFeePaise, feeVaries = false, offers = [] }
   const coupon = useCoupon();
   const applied = appliedCoupon(offers, coupon, items);
   const discountPaise = applied?.discountPaise ?? 0;
+  // The pincode from the checkout draft, when known, picks its area; Rapido areas add ₹0 here and are paid to Rapido separately.
+  const { draft } = useOrderState();
+  const known = areaForPincode(areas, draft.deliveryMethod === "delivery" ? draft.pincode : "");
+  const rapido = rapidoOf(known);
+  const fee = known ? (rapido ? 0 : Number(known.feePaise)) : deliveryFeePaise;
+  const rapidoAreas = known ? [] : areas.filter(a => a.mode === "RAPIDO");
 
   return <div className="container page-section cart-page">
           <div className="cart-title"><h1 ref={heading} tabIndex={-1}>Your Cart <span>({items.length})</span></h1><p className="page-intro">Review your selection before checkout</p><Link href="/search" className="button secondary">Continue shopping</Link></div>
@@ -158,7 +166,7 @@ export function CartContent({ deliveryFeePaise, feeVaries = false, offers = [] }
 );
       })}
       {confirmClear ? <div className="clear-confirm" role="group" aria-label="Confirm clearing cart"><p>Remove all items from your cart?</p><button type="button" className="button secondary" onClick={() => setConfirmClear(false)}>Keep items</button><button type="button" className="button primary" onClick={() => { clearCart(); setConfirmClear(false); setMessage("Cart cleared."); heading.current?.focus(); }}>Clear all items</button></div> : <button type="button" className="plain-button clear-cart" onClick={() => setConfirmClear(true)}>Clear cart</button>}
-    </div><aside className="cart-summary" aria-labelledby="summary-title"><h2 id="summary-title">Order summary <span className="item-badge">{items.length} {items.length === 1 ? "item" : "items"}</span></h2><p>{items.length} {items.length === 1 ? "item" : "items"} <span aria-hidden="true">&middot;</span> {formatWeight(items.reduce((sum, item) => sum + (item.rawWeightGrams??0), 0))} before cleaning</p><CouponPicker offers={offers} items={items} applied={applied} /><dl className="cart-totals"><div><dt>Subtotal</dt><dd data-subtotal>{formatMoney(cartSubtotalPaise(items))}</dd></div>{applied && <div className="cart-discount"><dt>Coupon ({applied.offer.code})</dt><dd data-discount>−{formatMoney(discountPaise)}</dd></div>}{deliveryFeePaise !== null && <div><dt>Delivery</dt><dd data-delivery-fee>{feeVaries ? "from " : ""}{formatMoney(deliveryFeePaise)}</dd></div>}<div className="cart-total"><dt>Total</dt><dd aria-live="polite" data-cart-total>{formatMoney(cartSubtotalPaise(items) - discountPaise + (deliveryFeePaise ?? 0))}</dd></div></dl>{applied && <p className="coupon-savings">You save {formatMoney(discountPaise)} on this order</p>}{deliveryFeePaise !== null && <p className="summary-note">Free for store pickup.</p>}<Link href="/checkout" className="button primary cart-checkout">Proceed to Checkout</Link><p className="checkout-note">Final prices and delivery eligibility are checked at checkout.</p></aside></div>}
+    </div><aside className="cart-summary" aria-labelledby="summary-title"><h2 id="summary-title">Order summary <span className="item-badge">{items.length} {items.length === 1 ? "item" : "items"}</span></h2><p>{items.length} {items.length === 1 ? "item" : "items"} <span aria-hidden="true">&middot;</span> {formatWeight(items.reduce((sum, item) => sum + (item.rawWeightGrams??0), 0))} before cleaning</p><CouponPicker offers={offers} items={items} applied={applied} /><dl className="cart-totals"><div><dt>Subtotal</dt><dd data-subtotal>{formatMoney(cartSubtotalPaise(items))}</dd></div>{applied && <div className="cart-discount"><dt>Coupon ({applied.offer.code})</dt><dd data-discount>−{formatMoney(discountPaise)}</dd></div>}{rapido ? <div><dt>Delivery</dt><dd data-delivery-fee>Via Rapido</dd></div> : fee !== null && <div><dt>Delivery</dt><dd data-delivery-fee>{feeVaries && !known ? "from " : ""}{formatMoney(fee)}</dd></div>}<div className="cart-total"><dt>Total</dt><dd aria-live="polite" data-cart-total>{formatMoney(cartSubtotalPaise(items) - discountPaise + (fee ?? 0))}</dd></div></dl>{rapido && <p className="summary-note rapido-note" data-rapido-note>{rapidoNote(rapido)}</p>}{rapidoAreas.length > 0 && <p className="summary-note rapido-note" data-rapido-note>Delivery to {rapidoAreas.map(a => a.name || a.pincode).join(", ")} is via Rapido, paid separately to Rapido{rapidoAreas.some(a => a.advanceRequired) ? "; some need advance payment" : ""}.</p>}{applied && <p className="coupon-savings">You save {formatMoney(discountPaise)} on this order</p>}{deliveryFeePaise !== null && <p className="summary-note">Free for store pickup.</p>}<Link href="/checkout" className="button primary cart-checkout">Proceed to Checkout</Link><p className="checkout-note">Final prices and delivery eligibility are checked at checkout.</p></aside></div>}
     {editing && editingProduct && <ProductSelection key={editing.id} product={editingProduct} item={editing} onClose={() => setEditingId(null)} onSaved={() => { setError(""); setMessage(editing.productName + " selection updated."); }} />}
   </div>;
 }

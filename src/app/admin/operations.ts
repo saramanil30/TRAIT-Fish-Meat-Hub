@@ -42,7 +42,19 @@ export async function operationalAction(_:ActionState,f:FormData):Promise<Action
    const store=id(f,"store"),pincode=text(f,"pincode").trim();
    const existing=text(f,"id")?null:(await staffRpc<{id:string;pincode:string;version:number}[]>(token,"delivery_areas",{target_store:store})).find(a=>a.pincode===pincode);
    const target=text(f,"id")?{id:id(f,"id"),version:number(f,"version")}:existing?{id:existing.id,version:Number(existing.version)}:null;
-   await staffRpc(token,"save_delivery_area",{target_id:target?.id??null,target_store:store,expected_version:target?.version??null,area_pincode:pincode,area_name:text(f,"name"),fee_paise:rupees(f,"fee"),minimum_paise:rupees(f,"minimum"),active:text(f,"active")==="true"});
+   // Via Rapido adds ₹0 to our total (the database stores 0 regardless); estimate and advance apply to Rapido only.
+   const mode=text(f,"mode")==="RAPIDO"?"RAPIDO":"SHOP",rapido=mode==="RAPIDO";
+   await staffRpc(token,"save_delivery_area",{target_id:target?.id??null,target_store:store,expected_version:target?.version??null,area_pincode:pincode,area_name:text(f,"name"),fee_paise:rapido?0:rupees(f,"fee"),minimum_paise:rupees(f,"minimum"),active:text(f,"active")==="true",
+    mode,estimate:rapido?text(f,"estimate").replace(/\s+/g," ").trim().slice(0,120)||null:null,advance_required:rapido&&text(f,"advance")==="true"});
+  }
+  else if(kind==="rapido-link"){
+   // ADMIN/OWNER only (the database checks the role, store access and that it is a Rapido order); blank clears the link.
+   if((await requireStaff("orders")).context.role==="EMPLOYEE")throw new Error("Forbidden");
+   const link=text(f,"link").trim();
+   if(link&&(link.length>500||new URL(link).protocol!=="https:"))return {error:"Paste the Rapido tracking link starting with https://."};
+   await staffRpc(token,"set_rapido_tracking",{target_order:id(f,"id"),link_url:link||null});
+   revalidatePath("/admin","layout");
+   return {success:link?"Rapido tracking link saved. It shows on the customer's tracking page and in WhatsApp messages.":"Rapido tracking link removed."};
   }
   else if(kind==="slot"){
    // Times arrive as "HH:MM" from time inputs; api.save_delivery_slot checks ADMIN/OWNER, store access, order of times and capacity.

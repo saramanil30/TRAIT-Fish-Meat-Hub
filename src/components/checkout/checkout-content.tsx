@@ -18,6 +18,7 @@ import { quantityOptionText } from "@/lib/pricing";
 import { shopOrderKey, type ShopOrderDetails } from "@/lib/whatsapp";
 import { rememberCustomer, useSavedCustomer } from "@/lib/saved-customer";
 import { slotDate, slotDayName, slotLabel, slotRange, slotTime, type SlotDay } from "@/lib/delivery-slots";
+import { areaForPincode, pincodeOfMasked, rapidoOf, type DeliveryArea } from "@/lib/delivery-mode";
 
 const fields = [
   { key: "name", label: "Customer Name", autoComplete: "name", max: 80 },
@@ -29,7 +30,7 @@ const fields = [
   { key: "state", label: "State", autoComplete: "address-level1", max: 120 },
   { key: "pincode", label: "Pincode", autoComplete: "postal-code", max: 6 },
 ] as const;
-export function CheckoutContent({ buyNow = false, deliveryFeePaise = null, feeVaries = false, offers = [], slotDays = [], asapOpen = false, onlinePay = false }: { onlinePay?: boolean; buyNow?: boolean; deliveryFeePaise?: number | null; feeVaries?: boolean; offers?: readonly CartOffer[]; slotDays?: readonly SlotDay[]; asapOpen?: boolean }) {
+export function CheckoutContent({ buyNow = false, deliveryFeePaise = null, feeVaries = false, areas = [], offers = [], slotDays = [], asapOpen = false, onlinePay = false }: { onlinePay?: boolean; buyNow?: boolean; deliveryFeePaise?: number | null; feeVaries?: boolean; areas?: readonly DeliveryArea[]; offers?: readonly CartOffer[]; slotDays?: readonly SlotDay[]; asapOpen?: boolean }) {
   const cart = useCart();
   const buyNowItems = useBuyNow();
   // Buy now checks out only its own item; the cart is left as it was.
@@ -68,6 +69,11 @@ export function CheckoutContent({ buyNow = false, deliveryFeePaise = null, feeVa
   // "Now (ASAP)" is the default while the shop is open: no slot chosen means ASAP. When it is closed, a slot is required.
   const asap = asapOpen && !chosenSlot;
   const when = draft.deliveryMethod === "pickup" ? "Pick up" : "Deliver";
+  // The pincode's area (typed, or the end of a saved address) gives the delivery mode before review; the review quote is authoritative.
+  const area = draft.deliveryMethod === "delivery" ? areaForPincode(areas, selectedSaved ? pincodeOfMasked(selectedSaved.masked) : draft.pincode) : undefined;
+  const rapido = draft.deliveryMethod !== "delivery" ? undefined : quote && review ? quote.rapido ?? undefined : rapidoOf(area);
+  // "Advance payment required" hides cash on delivery; the server refuses cash for that area too.
+  const advance = !!rapido?.advanceRequired;
   const title = useRef<HTMLHeadingElement>(null);
   // Before review, the applied coupon is estimated in the browser; the review step shows the server's recalculated quote.
   function withCoupon(totals: OrderTotals): OrderTotals {
@@ -117,6 +123,7 @@ export function CheckoutContent({ buyNow = false, deliveryFeePaise = null, feeVa
     event.preventDefault();
     if (submitting.current) return;
     const invalid = validateCheckout(details);
+    if (advance && details.paymentMethod === "cash") invalid.paymentMethod = "Delivery to this pincode needs advance payment. Choose " + (onlinePay ? "Pay online or UPI." : "UPI.");
     if (slotDays.length && !chosenSlot && !asapOpen) invalid.slotId = "Choose a " + (draft.deliveryMethod === "pickup" ? "pickup" : "delivery") + " slot.";
     setErrors(invalid); setError("");
     if (Object.keys(invalid).length) {
@@ -168,7 +175,7 @@ export function CheckoutContent({ buyNow = false, deliveryFeePaise = null, feeVa
   if (ready && pending) return <div className="container page-section"><h1>Confirm your pending order</h1><p>A previous submission needs confirmation. Retry the same order to avoid placing it twice.</p>{error&&<p role="alert">{error}</p>}<button className="button primary" disabled={saving} onClick={retryPending}>{saving?"Checking…":"Check order confirmation"}</button></div>;
   if (!ready) return <div className="container page-section"><p role="status">Loading your checkout...</p></div>;
   if (!items.length && !saving) return <div className="container page-section"><p className="eyebrow">Checkout</p><h1>{buyNow ? "Nothing to buy yet" : "Your cart is empty"}</h1><p>{buyNow ? "Choose a product and press Buy now to check it out on its own." : "Add a selection before starting checkout."}</p><Link className="button secondary" href="/search">Continue shopping</Link></div>;
-  const totals = quote && review ? quote : withCoupon(orderTotals(items, draft.deliveryMethod, deliveryFeePaise ?? 0));
+  const totals = quote && review ? quote : withCoupon(orderTotals(items, draft.deliveryMethod, area ? (rapido ? 0 : Number(area.feePaise)) : deliveryFeePaise ?? 0));
   const actionLabel = saving ? "Please wait..." : review ? "Place order" : "Continue";
   return <div className="container page-section checkout-page">
     {buyNow ? <Link className="back-link" href="/search">&larr; Continue shopping</Link> : <Link className="back-link" href="/cart">&larr; Back to cart</Link>}
@@ -179,7 +186,7 @@ export function CheckoutContent({ buyNow = false, deliveryFeePaise = null, feeVa
     <div className={(review ? "checkout-layout checkout-review" : "checkout-layout") + (summaryOpen ? " summary-open" : "")}><form id="checkout-form" noValidate onSubmit={submit} className="checkout-form"><fieldset disabled={saving} style={{border:0,padding:0,minWidth:0}}>
       {error && <p role="alert" className="cart-error">{error}</p>}
       {Object.keys(errors).length > 0 && <p role="alert" className="cart-error">Please correct the highlighted fields.</p>}
-      {review ? <section className="order-panel"><h2>Ready for a final look?</h2><CustomerDetails customer={draft} savedAddress={selectedSaved} slot={chosenSlot && draft.slotDate ? slotLabel({ ...chosenSlot, date: draft.slotDate }) : asap ? "Now (ASAP)" : undefined} /><p className="field-help">Please review the current prices and delivery charge.</p><button className="plain-button" type="button" onClick={() => { setReview(false); focusTitle(); }}>Edit details</button></section> : <><section className="order-panel checkout-details-panel">
+      {review ? <section className="order-panel"><h2>Ready for a final look?</h2><CustomerDetails customer={draft} rapido={rapido} savedAddress={selectedSaved} slot={chosenSlot && draft.slotDate ? slotLabel({ ...chosenSlot, date: draft.slotDate }) : asap ? "Now (ASAP)" : undefined} /><p className="field-help">Please review the current prices and delivery charge.</p><button className="plain-button" type="button" onClick={() => { setReview(false); focusTitle(); }}>Edit details</button></section> : <><section className="order-panel checkout-details-panel">
         <fieldset><legend><span className="section-number">1</span> Delivery method</legend><div className="checkout-options">{([ ["delivery", "Home Delivery"], ["pickup", "Store Pickup"] ] as const).map(([value, label]) => <label className="choice" key={value}><input type="radio" name="deliveryMethod" value={value} checked={draft.deliveryMethod === value} onChange={() => change("deliveryMethod", value)} />{label}</label>)}</div></fieldset>
         {shownDay && <fieldset className="slot-picker" id="checkout-slotId" tabIndex={-1} aria-invalid={!!errors.slotId} aria-describedby={errors.slotId ? "error-slotId" : undefined}><legend><span className="section-number">2</span> {draft.deliveryMethod === "pickup" ? "Pickup" : "Delivery"} time</legend>
           {asapOpen && <label className="slot-card slot-asap"><input type="radio" name="slot" value="asap" checked={asap} onChange={chooseAsap} /><span className="slot-name">{when} now (ASAP)</span><small>{draft.deliveryMethod === "pickup" ? "We start preparing it right away" : "We prepare and send it right away"}</small></label>}
@@ -204,9 +211,9 @@ export function CheckoutContent({ buyNow = false, deliveryFeePaise = null, feeVa
           <p className="field-help">We save your details to process and deliver your orders.</p>
         </div>
         {draft.deliveryMethod === "pickup" && <p className="field-help">No delivery address is needed. See our delivery and pickup page for the store location and opening hours.</p>}
-        </section><fieldset className="order-panel payment-panel"><legend><span className="section-number">{shownDay ? 4 : 3}</span> Payment method</legend><div className="checkout-options">{([ ...(onlinePay ? [["online", "Pay online now (UPI, card, netbanking)"] as const] : []), ["cash", draft.deliveryMethod === "pickup" ? "Cash at pickup" : "Cash on Delivery"], ["upi", "UPI at delivery / pickup"] ] as const).map(([value, label]) => <label className="choice" key={value}><input type="radio" name="paymentMethod" value={value} checked={draft.paymentMethod === value} onChange={() => change("paymentMethod", value)} />{label}</label>)}</div><p className="field-help">{draft.paymentMethod === "online" ? "You pay securely with Razorpay right after placing the order. Unpaid online orders are cancelled after 30 minutes." : "Pay by cash or UPI when you receive your order at delivery or pickup."}</p></fieldset>
+        </section><fieldset className="order-panel payment-panel" id="checkout-paymentMethod" tabIndex={-1} aria-invalid={!!errors.paymentMethod} aria-describedby={errors.paymentMethod ? "error-paymentMethod" : undefined}><legend><span className="section-number">{shownDay ? 4 : 3}</span> Payment method</legend><div className="checkout-options">{([ ...(onlinePay ? [["online", "Pay online now (UPI, card, netbanking)"] as const] : []), ...(advance ? [] : [["cash", draft.deliveryMethod === "pickup" ? "Cash at pickup" : "Cash on Delivery"] as const]), ["upi", advance ? "UPI before dispatch" : "UPI at delivery / pickup"] as const ] as const).map(([value, label]) => <label className="choice" key={value}><input type="radio" name="paymentMethod" value={value} checked={draft.paymentMethod === value} onChange={() => change("paymentMethod", value)} />{label}</label>)}</div>{errors.paymentMethod && <p className="cart-error" id="error-paymentMethod">{errors.paymentMethod}</p>}<p className="field-help">{advance ? "Delivery to this pincode is via Rapido and needs advance payment, so cash on delivery is not available." + (draft.paymentMethod === "upi" ? " Pay by UPI before we send your order; we confirm it with you." : "") : draft.paymentMethod === "online" ? "You pay securely with Razorpay right after placing the order. Unpaid online orders are cancelled after 30 minutes." : "Pay by cash or UPI when you receive your order at delivery or pickup."}</p></fieldset>
       </>}
-    </fieldset></form><OrderSummary id="checkout-summary" deliveryConfirmed={!!quote && review} pickup={draft.deliveryMethod === "pickup"} feeVaries={feeVaries} editable={!buyNow} items={quote && review ? items.map((item,i)=>({...item,...quote.lines[i]})) : items} totals={totals} coupon={<CouponPicker offers={offers} items={items} applied={applied} onChange={() => { setError(""); setQuote(undefined); setReview(false); }} />}
+    </fieldset></form><OrderSummary id="checkout-summary" deliveryConfirmed={!!quote && review} pickup={draft.deliveryMethod === "pickup"} rapido={rapido} feeVaries={feeVaries && !area} editable={!buyNow} items={quote && review ? items.map((item,i)=>({...item,...quote.lines[i]})) : items} totals={totals} coupon={<CouponPicker offers={offers} items={items} applied={applied} onChange={() => { setError(""); setQuote(undefined); setReview(false); }} />}
       action={<><button type="submit" form="checkout-form" className="button primary checkout-submit" disabled={saving || !items.length}>{actionLabel}</button>{error && <p className="cart-error checkout-action-error">{error}</p>}</>} /></div>
     <div className="checkout-bottom-bar"><div><small>Total</small><strong>{formatMoney(totals.grandTotalPaise)}</strong></div><button type="submit" form="checkout-form" className="button primary" disabled={saving || !items.length}>{actionLabel}</button></div>
   </div>;

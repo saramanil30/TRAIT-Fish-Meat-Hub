@@ -6,7 +6,7 @@ import { slotLabel, type OrderSlot } from "@/lib/delivery-slots";
 import { PrintNow } from "./print-now";
 
 type Ticket = {
- order: { id: string; order_number: string; status: string; fulfillment_method: string; total_paise: number; created_at: string; discount_paise?: number; fulfillment_snapshot?: { name?: string; mobileE164?: string; address?: Record<string, string>; slot?: OrderSlot } };
+ order: { id: string; order_number: string; status: string; fulfillment_method: string; total_paise: number; created_at: string; discount_paise?: number; fulfillment_snapshot?: { name?: string; mobileE164?: string; address?: Record<string, string>; slot?: OrderSlot; deliveryRule?: { mode?: string } | null } };
  items: { id: string; raw_weight_grams: number | null; sale_quantity?: number; pricing_basis?: string; units_per_pack?: number; line_total_paise: number; instructions: string; product_snapshot: { productName: string; preparationName: string } }[];
  payments: { id: string; method: string; status: string; amountPaise: number }[];
 };
@@ -29,7 +29,7 @@ export async function OrderTickets({ token, ids, back }: { token: string; ids: s
   {tickets.map(({ order, items, payments }) => {
    const c = order.fulfillment_snapshot, pickup = order.fulfillment_method === "STORE_PICKUP", address = deliveryAddress(c?.address), payment = payments[payments.length - 1];
    return <article key={order.id} className="ticket">
-    <header><strong className="ticket-number">{order.order_number}</strong><span className="ticket-mode">{pickup ? "PICKUP" : "DELIVERY"}</span></header>
+    <header><strong className="ticket-number">{order.order_number}</strong><span className="ticket-mode">{pickup ? "PICKUP" : c?.deliveryRule?.mode === "RAPIDO" ? "RAPIDO" : "DELIVERY"}</span></header>
     <p className="ticket-when">{c?.slot ? slotLabel(c.slot) : "ASAP"}</p>
     <p className="ticket-small">Placed {new Date(order.created_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" })}</p>
     <ol className="ticket-items">{items.map(i => <li key={i.id}>

@@ -25,6 +25,7 @@
     "test:product-save-db": "node tests/product-save-db.mjs",
     "test:publish-offering-db": "node tests/publish-offering-db.mjs",
     "test:delivery-areas-db": "node tests/delivery-areas-db.mjs",
+    "test:rapido-db": "node tests/rapido-delivery-db.mjs",
     "test:order-lookup-db": "node tests/order-lookup-db.mjs",
     "test:stock-db": "node tests/stock-db.mjs",
     "test:delivery-slots-db": "node tests/delivery-slots-db.mjs",

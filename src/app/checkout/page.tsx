@@ -8,5 +8,5 @@ export const metadata: Metadata = { title: "Checkout", robots: { index: false } 
 export default async function Page({ searchParams }: { searchParams: Promise<{ buy?: string | string[] }> }) {
   // Shown from the start; the review step replaces it with the server's quote for the customer's pincode.
   const [fee, offers, slotDays, asap] = await Promise.all([storeDeliveryFee(), cartOffers().catch(() => []), deliverySlotOptions(), asapAvailable()]);
-  return <CheckoutContent buyNow={(await searchParams).buy === "now"} deliveryFeePaise={fee.feePaise} feeVaries={fee.varies} offers={offers} slotDays={slotDays} asapOpen={asap} onlinePay={onlinePaymentsEnabled()} />;
+  return <CheckoutContent buyNow={(await searchParams).buy === "now"} deliveryFeePaise={fee.feePaise} feeVaries={fee.varies} areas={fee.areas} offers={offers} slotDays={slotDays} asapOpen={asap} onlinePay={onlinePaymentsEnabled()} />;
 }

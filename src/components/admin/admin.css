@@ -297,3 +297,4 @@
 .admin-brand-cart { flex-shrink:0; padding:6px 10px; border-radius:6px; background:#d90000; color:#fff; font-size:12px; font-weight:700; }
 .admin-brand-favicon { display:flex; align-items:center; gap:8px; font-size:13px; }
 .admin-brand-favicon img { image-rendering:auto; border:1px solid #ddd; }
+.ord-rapido{margin-top:8px}

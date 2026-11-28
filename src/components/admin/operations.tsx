@@ -9,9 +9,10 @@ import { deliveryAddress } from "@/lib/address";
 import { headers } from "next/headers";
 import { whatsappLink, customerStatusMessage, WHATSAPP_WINDOW } from "@/lib/whatsapp";
 import { onlinePaymentsEnabled, payLinkPath } from "@/lib/razorpay";
+import { rapidoNote } from "@/lib/delivery-mode";
 import { SLOT_DATE, SLOT_ID, slotDate, slotDayName, slotLabel, slotRange, type OrderSlot } from "@/lib/delivery-slots";
-type Order={discount_paise?:number;offer_snapshot?:{title:string};id:string;order_number:string;status:string;fulfillment_method:string;total_paise:number;version:number;created_at:string;slot?:OrderSlot|null;fulfillment_snapshot?:{name?:string;mobileE164?:string;address?:Record<string,string>;slot?:OrderSlot}};
-type Detail={order:Order;items:{id:string;raw_weight_grams:number|null;sale_quantity?:number;pricing_basis?:string;units_per_pack?:number;line_total_paise:number;instructions:string;product_snapshot:{productName:string;preparationName:string}}[];payments:{id:string;method:string;status:string;amountPaise:number;refundedPaise?:number;version:number;providerReference?:string|null;chargeReference?:string|null;pendingRefundPaise?:number;unsentRefund?:boolean;payUntil?:string|null}[];stock?:StockMove[]};
+type Order={discount_paise?:number;offer_snapshot?:{title:string};id:string;order_number:string;status:string;fulfillment_method:string;total_paise:number;version:number;created_at:string;slot?:OrderSlot|null;fulfillment_snapshot?:{name?:string;mobileE164?:string;address?:Record<string,string>;slot?:OrderSlot;deliveryRule?:{mode?:string;rapidoEstimate?:string|null;advanceRequired?:boolean}|null}};
+type Detail={order:Order;rapidoTrackingUrl?:string|null;items:{id:string;raw_weight_grams:number|null;sale_quantity?:number;pricing_basis?:string;units_per_pack?:number;line_total_paise:number;instructions:string;product_snapshot:{productName:string;preparationName:string}}[];payments:{id:string;method:string;status:string;amountPaise:number;refundedPaise?:number;version:number;providerReference?:string|null;chargeReference?:string|null;pendingRefundPaise?:number;unsentRefund?:boolean;payUntil?:string|null}[];stock?:StockMove[]};
 type StockMove={id:string;kind:"ORDER"|"CANCEL_RESTORE";productName:string;measure:"GRAMS"|"PACKS";change:number;before:number|null;after:number|null;note:string|null};
 const stockAmount=(m:StockMove,n:number)=>m.measure==="GRAMS"?formatWeight(n):String(n);
 /** "Seer Fish: −1 kg (3 kg → 2 kg)"; restores show "+", skipped restores show the note. */
@@ -86,6 +87,9 @@ export async function Operations({token,context,store,orderId,section,before,cur
    // Unpaid online order: the WhatsApp message carries a signed "Retry payment" link.
    const unpaidOnline=payment?.method==="ONLINE"&&["PENDING","FAILED"].includes(payment.status)&&order.status!=="CANCELLED"?payment:undefined;
    const payLink=unpaidOnline&&onlinePaymentsEnabled()?payLinkPath(unpaidOnline.id):undefined;
+   // Via Rapido (from the order's own snapshot): ₹0 delivery in our total, the customer pays Rapido; staff paste Rapido's tracking link.
+   const rule=customer?.deliveryRule,rapido=!pickup&&rule?.mode==="RAPIDO"?rapidoNote({estimate:rule.rapidoEstimate,advanceRequired:rule.advanceRequired}):undefined;
+   const rapidoLink=d?.rapidoTrackingUrl??undefined;
    const step=nextStep(order);
    const status=order.status==="DELIVERED"&&pickup?"Picked up":statusText[order.status]??order.status;
    const canCancel=manager&&!["DELIVERED","CANCELLED"].includes(order.status);
@@ -93,7 +97,7 @@ export async function Operations({token,context,store,orderId,section,before,cur
    return <details key={o.id} className="ord-row" data-order-id={o.id} open={o.id===orderId}>
     <summary>
      <span className="ord-line"><strong className="ord-number">{order.order_number}</strong><span className={badge(order.status)}>{status}</span><OrderClock createdAt={order.created_at} status={order.status} pickup={pickup} slot={orderSlot}/><strong className="ord-total">{formatMoney(Number(order.total_paise))}</strong></span>
-     <span className="ord-line ord-meta"><span>{customer?.name||"Customer"}</span><span>{d?d.items.length+" item"+(d.items.length===1?"":"s"):"…"}</span><span>{pickup?"Pickup":"Delivery"}</span><span className="ord-slot">{orderSlot?slotDayName(orderSlot.date)+" · "+orderSlot.name+" "+slotRange(orderSlot.startsAt,orderSlot.endsAt):"ASAP"}</span>{payment&&<span className={badge(payment.status)}>{payment.method==="ONLINE"&&payment.status==="PAID"?"Paid online":(methodText[payment.method]??payment.method)+" · "+(paymentText[payment.status]??payment.status)}</span>}</span>
+     <span className="ord-line ord-meta"><span>{customer?.name||"Customer"}</span><span>{d?d.items.length+" item"+(d.items.length===1?"":"s"):"…"}</span><span>{pickup?"Pickup":rapido?"Via Rapido":"Delivery"}</span><span className="ord-slot">{orderSlot?slotDayName(orderSlot.date)+" · "+orderSlot.name+" "+slotRange(orderSlot.startsAt,orderSlot.endsAt):"ASAP"}</span>{payment&&<span className={badge(payment.status)}>{payment.method==="ONLINE"&&payment.status==="PAID"?"Paid online":(methodText[payment.method]??payment.method)+" · "+(paymentText[payment.status]??payment.status)}</span>}</span>
     </summary>
     {!d?<p role="alert">Details unavailable. Reload the page.</p>:<div className="ord-body">
      <div className="ord-actions">
@@ -122,9 +126,13 @@ export async function Operations({token,context,store,orderId,section,before,cur
      {!!order.discount_paise&&<p className="ord-note">Offer {order.offer_snapshot?.title}: −{formatMoney(Number(order.discount_paise))}</p>}
      <div className="ord-customer">
       <p><strong>{customer?.name||"Customer"}</strong>{customer?.mobileE164&&<> · <a href={"tel:"+customer.mobileE164}>{customer.mobileE164}</a></>}</p>
-      {customer?.mobileE164&&<a className="admin-button secondary ord-whatsapp" href={whatsappLink(customer.mobileE164,customerStatusMessage({name:customer.name,number:order.order_number,totalPaise:Number(order.total_paise),status:order.status,pickup,site,slot:orderSlot?slotLabel(orderSlot):undefined,payLink}))} target={WHATSAPP_WINDOW}>WhatsApp customer</a>}
+      {customer?.mobileE164&&<a className="admin-button secondary ord-whatsapp" href={whatsappLink(customer.mobileE164,customerStatusMessage({name:customer.name,number:order.order_number,totalPaise:Number(order.total_paise),status:order.status,pickup,site,slot:orderSlot?slotLabel(orderSlot):undefined,payLink,rapido,rapidoLink}))} target={WHATSAPP_WINDOW}>WhatsApp customer</a>}
       <p><strong>{pickup?"Pickup":"Delivery"}:</strong> {orderSlot?slotLabel(orderSlot):"ASAP"}</p>
       {pickup?<p>Store pickup</p>:<><p>{address.line}</p>{address.landmark&&<p className="ord-note">Landmark: {address.landmark}</p>}</>}
+      {rapido&&<div className="ord-rapido"><p className="ord-note"><strong>Delivery via Rapido.</strong> {rapido}</p>
+       {rapidoLink&&<p><a href={rapidoLink} target="_blank" rel="noopener noreferrer">Open Rapido tracking</a></p>}
+       {manager&&order.status!=="CANCELLED"&&<OperationalForm operation="rapido-link" id={order.id} label={rapidoLink?"Update link":"Save link"} className="ord-form" buttonClassName="ord-small"><label>Rapido tracking link<input name="link" type="url" inputMode="url" maxLength={500} placeholder="https://…" defaultValue={rapidoLink??""}/></label><p className="admin-muted">Shown on the customer&apos;s tracking page and in WhatsApp messages. Leave blank and save to remove it.</p></OperationalForm>}
+      </div>}
       <p className="admin-muted">Placed {new Date(order.created_at).toLocaleString("en-IN",{timeZone:"Asia/Kolkata",dateStyle:"medium",timeStyle:"short"})}</p>
      </div>
      {manager&&d.payments.some(p=>p.status==="PAID"||p.status==="REFUNDED")&&<PaymentHistory token={token} order={order.id}/>}

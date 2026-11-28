@@ -1661,3 +1661,8 @@ main.storefront .home-page { --text-primary:#171c23; --text-secondary:#575d67; -
   .site-header .brand-copy small { font-size:10px; }
   .site-header .brand-copy em { font-size:9px; }
 }
+/* Via Rapido: delivery note and the Rapido tracking link on confirmation and tracking. */
+.order-rapido { margin: 1rem 0; padding: 1rem; border: 1px solid var(--border); border-radius: 12px; }
+.order-rapido p { margin: 0 0 .75rem; }
+.order-rapido p:last-child { margin-bottom: 0; }
+.rapido-note { font-weight: 600; }

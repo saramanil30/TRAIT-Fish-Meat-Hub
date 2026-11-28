@@ -6,5 +6,5 @@ export const metadata: Metadata = { title: "Your cart", robots: { index: false }
 export default async function Page() {
   // Fee shown in the cart comes from the store's delivery settings; checkout still quotes the exact charge server-side.
   const [fee, offers] = await Promise.all([storeDeliveryFee(), cartOffers().catch(() => [])]);
-  return <CartContent deliveryFeePaise={fee.feePaise} feeVaries={fee.varies} offers={offers} />;
+  return <CartContent deliveryFeePaise={fee.feePaise} feeVaries={fee.varies} areas={fee.areas} offers={offers} />;
 }
