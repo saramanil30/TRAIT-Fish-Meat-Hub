@@ -907,18 +907,11 @@ h3 { letter-spacing:.01em; }
 .product-grid .product-card { height:auto; }
 .product-bottom { margin-top:0; }
 
-/* Sticky header: the logo/search/cart row, the offer strip and the category pills stay on screen while the page scrolls.
-   Desktop: the whole block, contact bar included. Mobile: the 40px contact bar (plus its 1px border) scrolls off (negative top), the rest sticks. */
-.site-top { position:sticky; top:0; z-index:40; background:white; box-shadow:var(--shadow-soft); }
+/* Header (contact bar, logo/search/cart row, offer strip, category pills) scrolls away with the page on every screen;
+   nothing in it is sticky, so pages need no header offsets. */
+.site-top { position:static; background:white; box-shadow:var(--shadow-soft); }
 .site-top .site-header { box-shadow:none; border-bottom:0; }
 .category-bar { background:white; border-top:1px solid var(--border); }
-html { scroll-padding-top:190px; }
-@media(min-width:1200px) { .cart-summary,.checkout-form+.order-summary { top:196px; } }
-@media(max-width:767px) {
-  .site-top { top:-41px; box-shadow:0 2px 10px rgb(18 20 23 / 8%); }
-  .site-top .utility-content { height:40px; min-height:40px; overflow:hidden; }
-  html { scroll-padding-top:200px; }
-}
 
 /* Cart: compact light table header; per-row labels only where there is no header (mobile). */
 .cart-table-heading { background:var(--brand-red); color:#fff; padding:6px 20px; font-size:14px; line-height:1.6; border-bottom:0; }
@@ -1031,11 +1024,9 @@ main.storefront .cart-title h1 span { color:#ffb4ab; }
   .site-top .header-main { order:2; }
   .site-top .category-bar { order:3; }
   .site-top .collection-strip { order:4; }
-  html:has(.site-top .collection-strip) { scroll-padding-top:232px; }
 }
 @media(max-width:767px) {
   .site-top .collection-strip .container { font-size:12px; }
-  html:has(.site-top .collection-strip) { scroll-padding-top:200px; }
 }
 
 /* Selected category pill, including "All" on the homepage. */
@@ -1117,9 +1108,7 @@ main.storefront .cart-title h1 span { color:#ffb4ab; }
   .order-lookup-timeline li { flex-direction:column; gap:0; }
 }
 
-/* Cart and checkout: the header scrolls away completely (nothing sticky), so no header offsets. */
-.site-top.is-static, .site-top.is-static .site-header { position:static; }
-html:has(.site-top.is-static) { scroll-padding-top:0; }
+/* Cart and checkout: the header scrolls away like every page (no header offsets). */
 @media(min-width:1200px) { main.storefront .cart-summary, main.storefront .checkout-form+.order-summary { top:24px; } }
 
 /* Checkout, distraction-free: minimal header, compact top row, sticky summary (desktop), summary toggle and bottom bar (mobile). */
